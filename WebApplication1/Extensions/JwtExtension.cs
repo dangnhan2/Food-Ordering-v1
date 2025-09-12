@@ -31,7 +31,7 @@ namespace Food_Ordering.Extensions
                 .AddRoles<IdentityRole>()
                 .AddRoleManager<RoleManager<IdentityRole>>()
                 .AddUserManager<UserManager<User>>()
-                .AddSignInManager<UserManager<User>>()
+                .AddSignInManager<SignInManager<User>>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
 

@@ -6,6 +6,8 @@
         {
             services.AddConnectionString();
             services.AddJwtConfig();
+            services.AddDI();
+            services.AddSwaggerConfigure();
             return services;
         }
     }

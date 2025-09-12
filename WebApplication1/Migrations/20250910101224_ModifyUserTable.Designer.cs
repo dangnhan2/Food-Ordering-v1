@@ -3,6 +3,7 @@ using System;
 using Food_Ordering.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Food_Ordering.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250910101224_ModifyUserTable")]
+    partial class ModifyUserTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -186,8 +189,7 @@ namespace Food_Ordering.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId")
-                        .IsUnique();
+                    b.HasIndex("UserId");
 
                     b.ToTable("RefreshTokens");
                 });
@@ -468,8 +470,8 @@ namespace Food_Ordering.Migrations
             modelBuilder.Entity("Food_Ordering.Models.RefreshTokens", b =>
                 {
                     b.HasOne("Food_Ordering.Models.User", "User")
-                        .WithOne("RefreshTokens")
-                        .HasForeignKey("Food_Ordering.Models.RefreshTokens", "UserId")
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -545,9 +547,6 @@ namespace Food_Ordering.Migrations
             modelBuilder.Entity("Food_Ordering.Models.User", b =>
                 {
                     b.Navigation("Orders");
-
-                    b.Navigation("RefreshTokens")
-                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }
