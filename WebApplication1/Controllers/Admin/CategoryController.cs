@@ -1,31 +1,26 @@
 ﻿using Food_Ordering.DTOs.Request;
 using Food_Ordering.Services;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Sprache;
 
-namespace Food_Ordering.Controllers
+namespace Food_Ordering.Controllers.Admin
 {
-    [Route("api/v1/[controller]")]
+    [Route("api/v1/admin/[controller]")]
     [ApiController]
-    [Authorize]
-    public class UserController : ControllerBase
+    public class CategoryController : ControllerBase
     {
-        private readonly IUserService _userService;
+        private readonly IMenuCategoryService _menuCategory;
 
-        public UserController(IUserService userService)
+        public CategoryController(IMenuCategoryService menuCategory)
         {
-            _userService = userService;
-        }
+            _menuCategory = menuCategory;
+        }   
 
-        [HttpPost("{id}")]
-        public async Task<IActionResult> Update(string id, UserRequest request)
+        [HttpPut("{id}")]       
+        public async Task<IActionResult> Update(Guid id, [FromBody] MenuCategoryRequest request)
         {
             try
             {
-                var result = await _userService.UserUpdateAsync(id,request);
+                var result = await _menuCategory.Update(id, request);
 
                 if (!result.Status)
                 {
@@ -41,7 +36,8 @@ namespace Food_Ordering.Controllers
                     Message = result.Data,
                     StatusCode = StatusCodes.Status400BadRequest
                 });
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 return BadRequest(new
                 {
@@ -51,12 +47,13 @@ namespace Food_Ordering.Controllers
             }
         }
 
-        [HttpPost("upload/{id}")]
-        public async Task<IActionResult> Upload(string id, IFormFile file)
+        [HttpPost]
+        public async Task<IActionResult> Add([FromBody] MenuCategoryRequest request)
         {
             try
             {
-                var result = await _userService.UploadAvatarAsync(id, file);
+                var result = await _menuCategory.Add(request);
+
                 if (!result.Status)
                 {
                     return BadRequest(new
@@ -69,13 +66,38 @@ namespace Food_Ordering.Controllers
                 return Ok(new
                 {
                     Message = result.Data,
-                    StatusCode = StatusCodes.Status200OK
+                    StatusCode = StatusCodes.Status400BadRequest
                 });
-            }catch(InvalidOperationException ex)
+            }
+            catch (Exception ex)
             {
                 return BadRequest(new
                 {
-                    Message = ex.Message,
+                    Message = ex.InnerException.Message ?? ex.Message,
+                    StatusCode = StatusCodes.Status400BadRequest
+                });
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            try
+            {
+                var result = await _menuCategory.Delete(id);
+
+                if (!result.Status)
+                {
+                    return BadRequest(new
+                    {
+                        Message = result.Error,
+                        StatusCode = StatusCodes.Status400BadRequest
+                    });
+                }
+
+                return Ok(new
+                {
+                    Message = result.Data,
                     StatusCode = StatusCodes.Status400BadRequest
                 });
             }

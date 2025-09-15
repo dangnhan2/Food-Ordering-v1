@@ -11,11 +11,14 @@ namespace Food_Ordering.Repositories.UnitOfWork
             _context = context;
             RefreshToken = new RefreshTokenRepo(_context);   
             UserRepo = new UserRepo(_context);
+            MenuCategoryRepo = new MenuCategoryRepo(_context);
         }
 
         public IRefreshTokenRepo RefreshToken { get; }
 
         public IUserRepo UserRepo { get; }
+
+        public IMenuCategoryRepo MenuCategoryRepo { get; }
 
         public void Dispose()
         {
