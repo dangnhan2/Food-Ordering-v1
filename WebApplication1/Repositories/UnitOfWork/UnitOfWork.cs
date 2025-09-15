@@ -9,10 +9,13 @@ namespace Food_Ordering.Repositories.UnitOfWork
         public UnitOfWork(ApplicationDbContext context)
         {
             _context = context;
-            RefreshToken = new RefreshTokenRepo(_context);         
+            RefreshToken = new RefreshTokenRepo(_context);   
+            UserRepo = new UserRepo(_context);
         }
 
         public IRefreshTokenRepo RefreshToken { get; }
+
+        public IUserRepo UserRepo { get; }
 
         public void Dispose()
         {

@@ -17,6 +17,7 @@ namespace Food_Ordering.Services.Auth
         private readonly IJwtService _jwtService;
         private readonly IEmailService _emailService;
         private readonly IUnitOfWork _unitOfWork;
+        private const string defaultAvatar = "https://res.cloudinary.com/dtihvekmn/image/upload/v1751645852/istockphoto-1337144146-612x612_llpkam.jpg",
 
         public AccountService(UserManager<User> userManager, IJwtService jwtService, IEmailService emailService, IUnitOfWork unitOfWork)
         {
@@ -204,7 +205,7 @@ namespace Food_Ordering.Services.Auth
                 FullName = register.FullName,
                 UserName = register.FullName,
                 Email = register.Email,
-                ImageUrl = "https://res.cloudinary.com/dtihvekmn/image/upload/v1751645852/istockphoto-1337144146-612x612_llpkam.jpg",
+                ImageUrl = defaultAvatar,
                 EmailConfirmed = false,
                 NormalizedEmail = register.Email.ToUpper(),
             };
