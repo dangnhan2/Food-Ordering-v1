@@ -4,6 +4,7 @@
     {
         public IRefreshTokenRepo RefreshToken { get; }
         public IUserRepo UserRepo { get; }
+        public IMenuCategoryRepo MenuCategoryRepo { get; }
         Task SaveAsync();
     }
 }
