@@ -15,6 +15,7 @@ namespace Food_Ordering.Extensions
             services.AddScoped<IRefreshTokenRepo, RefreshTokenRepo>();
             services.AddScoped<IUserRepo, UserRepo>();
             services.AddScoped<IMenuCategoryRepo, MenuCategoryRepo>();
+            services.AddScoped<IMenuItemRepo , MenuItemRepo>();
 
             services.AddScoped<IJwtService, JwtService>();
             services.AddScoped<IMenuCategoryService, MenuCategoryService>();
@@ -22,6 +23,7 @@ namespace Food_Ordering.Extensions
             services.AddScoped<IAccountService, AccountService>();
             services.AddScoped<IUserService, UserService>();
             services.AddTransient<IEmailService, EmailService>();
+            services.AddScoped<IMenuItemService, MenuItemService>();
             return services;
         }
     }
