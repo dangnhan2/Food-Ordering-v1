@@ -5,8 +5,8 @@ namespace Food_Ordering.DTOs.Request
     public class OrderItemRequest
     {
         public Guid MenuItemsId { get; set; }
+        public string DishName { get; set; }
         public int Quantity { get; set; }
-        public double UnitPrice { get; set; }
-        public double SubTotal { get; set; }
+        public int UnitPrice { get; set; }
     }
 }

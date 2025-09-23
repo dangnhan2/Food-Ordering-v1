@@ -9,11 +9,7 @@ namespace Food_Ordering.Validations
             // Kiểm tra UserId
             RuleFor(x => x.UserId)
                 .NotEmpty().WithMessage("UserId không được để trống.");
-
-            // Kiểm tra ToTalAmount
-            RuleFor(x => x.ToTalAmount)
-                .GreaterThanOrEqualTo(0).WithMessage("Tổng số tiền phải lớn hơn hoặc bằng 0.");
-
+            
             // Kiểm tra PaymentMethod
             RuleFor(x => x.PaymentMethod)
                 .NotEmpty().WithMessage("Phương thức thanh toán không được để trống.")

@@ -1,5 +1,5 @@
 ﻿using Food_Ordering.DTOs.QueryParams;
-using Food_Ordering.Services;
+using Food_Ordering.Services.Order;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 

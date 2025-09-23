@@ -1,7 +1,7 @@
 ﻿using Food_Ordering.DTOs.QueryParams;
 using Food_Ordering.DTOs.Request;
 using Food_Ordering.Models.Enum;
-using Food_Ordering.Services;
+using Food_Ordering.Services.Order;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Sprache;
@@ -83,5 +83,26 @@ namespace Food_Ordering.Controllers
                 });
             }
         }
+
+
     }
 }
+
+//{
+//    "userId": "c604b2d9-573a-497d-a29b-9ff87f04352a",
+//  "paymentMethod": "QR",
+//  "items": [
+//{
+//        "menuItemsId": "430208d4-2228-4362-9282-d8ba0784225b",
+//      "dishName": "Cà phê sữa",
+//      "quantity": 2,
+//      "unitPrice": 15000,
+//    },
+//    {
+//        "menuItemsId": "aa9c3862-ef3e-49a5-a759-bf51fe618b6c",
+//      "dishName": "Phở gà",
+//      "quantity": 2,
+//      "unitPrice": 40000,
+//    }
+//  ]
+//}

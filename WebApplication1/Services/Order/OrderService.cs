@@ -6,20 +6,24 @@ using Food_Ordering.Extensions.Helper;
 using Food_Ordering.Models;
 using Food_Ordering.Models.Enum;
 using Food_Ordering.Repositories.UnitOfWork;
+using Food_Ordering.Services.Payment;
 using Food_Ordering.Validations;
 using Microsoft.EntityFrameworkCore;
+using Net.payOS.Types;
 
-namespace Food_Ordering.Services
+namespace Food_Ordering.Services.Order
 {
     public class OrderService : IOrderService
     {
         private readonly IUnitOfWork _unitOfWork;
-        public OrderService(IUnitOfWork unitOfWork)
+        private readonly IPayOSService _payOSService;
+        public OrderService(IUnitOfWork unitOfWork, IPayOSService payOSService)
         {
             _unitOfWork = unitOfWork;
+            _payOSService = payOSService;
         }
 
-        public async Task<Response<string>> AddAsync(OrderRequest request)
+        public async Task<dynamic> AddAsync(OrderRequest request)
         {
             var validator = new OrderValidator();
             var result = await validator.ValidateAsync(request);
@@ -32,13 +36,17 @@ namespace Food_Ordering.Services
                 }
             }
 
+            int orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
+            int total = 0;
+            List<ItemData> items = new List<ItemData>();
+
             Orders order = new Orders
             {
                 Id = Guid.NewGuid(),
                 UserId = request.UserId,
                 Status = OrderStatus.Pending,
-                ToTalAmount = request.ToTalAmount,
                 PaymentMethod = request.PaymentMethod,
+                TransactionId = orderCode
             };
 
             foreach(var item in request.Items)
@@ -50,15 +58,22 @@ namespace Food_Ordering.Services
                     MenuItemsId = item.MenuItemsId,
                     Quantity = item.Quantity,
                     UnitPrice = item.UnitPrice,
-                    SubTotal = item.SubTotal,
+                    SubTotal = item.Quantity * item.UnitPrice,
+
                 };
 
+                total += orderItems.SubTotal;
+                items.Add(new ItemData(item.DishName, item.Quantity, item.UnitPrice));
                 order.Items.Add(orderItems);
             }
 
+            order.ToTalAmount = total;
+
             _unitOfWork.OrderRepo.Add(order);
             await _unitOfWork.SaveAsync();
-            return Response<string>.Success("Tạo đơn thành công", StatusCodes.Status201Created);
+
+            var paymentLink =  await _payOSService.CreatePaymentLink(orderCode, total, items);
+            return Response<dynamic>.Success(paymentLink, StatusCodes.Status201Created);
         }
 
         public async Task<Response<string>> DeleteAsync(Guid id)

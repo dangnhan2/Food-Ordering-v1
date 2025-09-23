@@ -3,6 +3,8 @@ using Food_Ordering.Repositories.UnitOfWork;
 using Food_Ordering.Services;
 using Food_Ordering.Services.Auth;
 using Food_Ordering.Services.Email;
+using Food_Ordering.Services.Order;
+using Food_Ordering.Services.Payment;
 using Food_Ordering.Services.Storage;
 
 namespace Food_Ordering.Extensions
@@ -26,6 +28,7 @@ namespace Food_Ordering.Extensions
             services.AddScoped<IUserService, UserService>();
             services.AddTransient<IEmailService, EmailService>();
             services.AddScoped<IDishService, DishService>();
+            services.AddTransient<IPayOSService, PayOSService>();
             return services;
         }
     }
