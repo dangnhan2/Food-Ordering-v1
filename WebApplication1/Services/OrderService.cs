@@ -1,4 +1,5 @@
-﻿using Food_Ordering.DTOs.QueryParams;
+﻿using CloudinaryDotNet.Actions;
+using Food_Ordering.DTOs.QueryParams;
 using Food_Ordering.DTOs.Request;
 using Food_Ordering.DTOs.Response;
 using Food_Ordering.Extensions.Helper;
@@ -27,7 +28,7 @@ namespace Food_Ordering.Services
             {
                 foreach (var error in result.Errors)
                 {
-                    return Response<string>.Fail(error.ErrorMessage);
+                    return Response<string>.Fail(error.ErrorMessage, StatusCodes.Status400BadRequest);
                 }
             }
 
@@ -51,11 +52,13 @@ namespace Food_Ordering.Services
                     UnitPrice = item.UnitPrice,
                     SubTotal = item.SubTotal,
                 };
+
+                order.Items.Add(orderItems);
             }
 
             _unitOfWork.OrderRepo.Add(order);
             await _unitOfWork.SaveAsync();
-            return Response<string>.Success("Tạo đơn thành công");
+            return Response<string>.Success("Tạo đơn thành công", StatusCodes.Status201Created);
         }
 
         public async Task<Response<string>> DeleteAsync(Guid id)
@@ -64,12 +67,12 @@ namespace Food_Ordering.Services
 
             if(order == null)
             {
-                return Response<string>.Fail("Không tìm thấy order");
+                return Response<string>.Fail("Không tìm thấy order", StatusCodes.Status404NotFound);
             }
 
             _unitOfWork.OrderRepo.Delete(order);
             await _unitOfWork.SaveAsync();
-            return Response<string>.Success("Xóa order thành công");
+            return Response<string>.Success("Xóa order thành công", StatusCodes.Status200OK);
         }
 
         public async Task<Response<PagingResponse<OrderDto>>> GetAllAsync(OrderQuery query)
@@ -90,7 +93,7 @@ namespace Food_Ordering.Services
 
             PagingResponse<OrderDto> response = new PagingResponse<OrderDto>(await ordersToDto.ToListAsync(), orders.Count(), query.Page, query.PageSize);
 
-            return Response<PagingResponse<OrderDto>>.Success(response);
+            return Response<PagingResponse<OrderDto>>.Success(response, StatusCodes.Status200OK);
         }
 
         public async Task<Response<OrderDto>> GetByIdAsync(Guid id)
@@ -99,7 +102,7 @@ namespace Food_Ordering.Services
 
             if(order == null)
             {
-                return Response<OrderDto>.Fail("Không tìm thấy order");
+                return Response<OrderDto>.Fail("Không tìm thấy order", StatusCodes.Status404NotFound);
             }
 
             var orderToDto = new OrderDto
@@ -109,16 +112,35 @@ namespace Food_Ordering.Services
                 Status = order.Status,
                 ToTalAmount = order.ToTalAmount,
                 PaymentMethod = order.PaymentMethod,
-                Items = order.Items.Select(i => new OrderItemDto
+                OrderItems = order.Items.Select(i => new OrderItemDto
                 {
-
+                    MenuItemsId = i.MenuItemsId,
+                    ItemName = i.MenuItems.Name,
+                    ImageUrl = i.MenuItems.ImageUrl,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice,
+                    SubTotal = i.SubTotal
                 }).ToList(),
             };
+
+            return Response<OrderDto>.Success(orderToDto, StatusCodes.Status200OK);
         }
 
-        public Task<Response<string>> UpdateAsync(Guid id)
+        public async Task<Response<string>> UpdateAsync(Guid id, OrderStatus status)
         {
-            throw new NotImplementedException();
+            var order = await _unitOfWork.OrderRepo.GetByIdAsync(id);
+
+            if(order == null)
+            {
+                return Response<string>.Fail("Không tìm thấy order", StatusCodes.Status404NotFound);
+            }
+
+            order.Status = status;
+
+            _unitOfWork.OrderRepo.Update(order);    
+            await _unitOfWork.SaveAsync();
+
+            return Response<string>.Success("Cập nhật order thành công", StatusCodes.Status200OK);
         }
     }
 }

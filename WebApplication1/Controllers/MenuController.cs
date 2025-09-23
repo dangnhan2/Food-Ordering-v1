@@ -10,9 +10,9 @@ namespace Food_Ordering.Controllers
     [ApiController]
     public class MenuController : ControllerBase
     {
-        private readonly IMenuItemService _menuItemService;
+        private readonly IDishService _menuItemService;
 
-        public MenuController(IMenuItemService menuItemService)
+        public MenuController(IDishService menuItemService)
         {
             _menuItemService = menuItemService;
         }

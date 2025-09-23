@@ -30,7 +30,11 @@ namespace Food_Ordering.Repositories
 
         public async Task<Orders?> GetByIdAsync(Guid id)
         {
-            return await _context.Orders.Include(o => o.User).FirstOrDefaultAsync(o => o.Id == id);
+            return await _context.Orders
+                .Include(o => o.User)
+                .Include(o => o.Items)
+                   .ThenInclude(o => o.MenuItems)
+                .FirstOrDefaultAsync(o => o.Id == id);
         }
 
         public void Update(Orders item)

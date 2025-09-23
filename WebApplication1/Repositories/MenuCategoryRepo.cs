@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Food_Ordering.Repositories
 {
-    public class MenuCategoryRepo : IMenuCategoryRepo
+    public class MenuCategoryRepo : IDishRepo
     {
         private readonly ApplicationDbContext _context;
 

@@ -7,9 +7,11 @@ namespace Food_Ordering.DTOs.Response
     {
         public Guid Id { get; set; }
         public DateTime OrderDate { get; set; } = DateTime.UtcNow;
+        public DateTime ExpiredAt { get; set; } = DateTime.UtcNow.AddMinutes(10);
         public OrderStatus Status { get; set; }
         public double ToTalAmount { get; set; }
         public string PaymentMethod { get; set; }
-        public ICollection<OrderItemDto> Items = new List<OrderItemDto>();  
+        public int TransactionId { get; set; }
+        public ICollection<OrderItemDto> OrderItems { get; set; } = new List<OrderItemDto>();  
     }
 }

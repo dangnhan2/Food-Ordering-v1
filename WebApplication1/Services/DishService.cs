@@ -11,13 +11,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Food_Ordering.Services
 {
-    public class MenuItemService : IMenuItemService
+    public class DishService : IDishService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICloudinaryService _cloudinaryService;
         private const string folder = "Thumbnail";
 
-        public MenuItemService(IUnitOfWork unitOfWork, ICloudinaryService cloudinary)
+        public DishService(IUnitOfWork unitOfWork, ICloudinaryService cloudinary)
         {
             _unitOfWork = unitOfWork;
             _cloudinaryService = cloudinary;
@@ -31,14 +31,14 @@ namespace Food_Ordering.Services
             {
                 foreach (var error in result.Errors)
                 {
-                    return Response<string>.Fail(error.ErrorMessage);
+                    return Response<string>.Fail(error.ErrorMessage, StatusCodes.Status400BadRequest);
                 }
             }
 
             var items = _unitOfWork.MenuItemRepo.GetAll();
 
             if (await items.AnyAsync(i => i.Name.Trim().ToLower() == request.Name.Trim().ToLower())) {
-                return Response<string>.Fail("Menu đã tồn tại");
+                return Response<string>.Fail("Menu đã tồn tại", StatusCodes.Status400BadRequest);
             }
 
             var response = await _cloudinaryService.UploadImage(request.File, folder);
@@ -58,7 +58,7 @@ namespace Food_Ordering.Services
             await _unitOfWork.MenuItemRepo.AddAsync(item);
             await _unitOfWork.SaveAsync();
 
-            return Response<string>.Success("Thêm menu thành công");
+            return Response<string>.Success("Thêm menu thành công", StatusCodes.Status201Created);
         }
 
         public async Task<Response<string>> Delete(Guid id)
@@ -67,7 +67,7 @@ namespace Food_Ordering.Services
 
             if(menu == null)
             {
-                return Response<string>.Fail("Không tìm thấy menu");
+                return Response<string>.Fail("Không tìm thấy menu", StatusCodes.Status404NotFound);
             }
 
             await _cloudinaryService.DeleteImage(menu.ImageUrl);
@@ -75,7 +75,7 @@ namespace Food_Ordering.Services
             _unitOfWork.MenuItemRepo.Delete(menu);
             await _unitOfWork.SaveAsync();
 
-            return Response<string>.Success("Xóa menu thành công");
+            return Response<string>.Success("Xóa menu thành công", StatusCodes.Status200OK);
         }
 
         public async Task<Response<PagingResponse<MenuItemDto>>> GetAll(MenuItemQuery query)
@@ -111,7 +111,7 @@ namespace Food_Ordering.Services
             });
 
             PagingResponse<MenuItemDto> response = new PagingResponse<MenuItemDto>(await itemsToDto.ToListAsync(), items.Count(), query.Page, query.PageSize);
-            return Response<PagingResponse<MenuItemDto>>.Success(response);
+            return Response<PagingResponse<MenuItemDto>>.Success(response, StatusCodes.Status200OK);
         }
 
         public async Task<Response<string>> Update(Guid id, MenuItemRequest request)
@@ -123,14 +123,14 @@ namespace Food_Ordering.Services
             {
                 foreach (var error in result.Errors)
                 {
-                    return Response<string>.Fail(error.ErrorMessage);
+                    return Response<string>.Fail(error.ErrorMessage, StatusCodes.Status400BadRequest);
                 }
             }
 
             var menu = await _unitOfWork.MenuItemRepo.GetByIdAsync(id);
             
             if (menu == null) {
-                return Response<string>.Fail("Không tìm thấy menu");
+                return Response<string>.Fail("Không tìm thấy menu", StatusCodes.Status404NotFound);
             }
             
             if (request.File != null)
@@ -152,7 +152,7 @@ namespace Food_Ordering.Services
             _unitOfWork.MenuItemRepo.Update(menu);
             await _unitOfWork.SaveAsync();
 
-            return Response<string>.Success("Cập nhật menu thành công");
+            return Response<string>.Success("Cập nhật menu thành công", StatusCodes.Status200OK);
         }
     }
 }

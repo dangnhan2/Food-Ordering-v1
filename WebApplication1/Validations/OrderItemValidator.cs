@@ -6,10 +6,6 @@ namespace Food_Ordering.Validations
     public class OrderItemValidator : AbstractValidator<OrderItemRequest>
     {
         public OrderItemValidator() {
-            // Kiểm tra trường OrderId
-            RuleFor(x => x.OrderId)
-                .NotEmpty().WithMessage("Id đơn hàng không được để trống.");
-
             // Kiểm tra trường MenuItemsId
             RuleFor(x => x.MenuItemsId)
                 .NotEmpty().WithMessage("Id món ăn không được để trống.");

@@ -5,22 +5,24 @@
         public string? Error { get; set; }
         public bool Status { get; set; }
         public T Data { get; set; }
+        public int StatusCode { get; set; }
 
-        public Response(string message, bool status, T data)
+        public Response(string message, bool status, T data, int statusCode)
         {
             Error = message;
             Status = status;
             Data = data;
+            StatusCode = statusCode;
         }
 
-        public static Response<T> Success(T data)
+        public static Response<T> Success(T data, int code)
         {
-            return new Response<T> (null, true, data);
+            return new Response<T> (null, true, data, code);
         }
 
-        public static Response<T> Fail (string error)
+        public static Response<T> Fail (string error, int code)
         {
-            return new Response<T> (error, false, default(T));
+            return new Response<T> (error, false, default(T), code);
         }
     }
 }

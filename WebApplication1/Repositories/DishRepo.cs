@@ -5,11 +5,11 @@ using System.Threading.Tasks;
 
 namespace Food_Ordering.Repositories
 {
-    public class MenuItemRepo : IMenuItemRepo
+    public class DishRepo : IMenuItemRepo
     {
         private readonly ApplicationDbContext _context;
 
-        public MenuItemRepo(ApplicationDbContext context)
+        public DishRepo(ApplicationDbContext context)
         {
             _context = context;
         }

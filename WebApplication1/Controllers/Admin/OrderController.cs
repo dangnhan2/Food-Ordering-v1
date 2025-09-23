@@ -1,4 +1,4 @@
-﻿using Food_Ordering.DTOs.Request;
+﻿using Food_Ordering.DTOs.QueryParams;
 using Food_Ordering.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -7,37 +7,39 @@ namespace Food_Ordering.Controllers.Admin
 {
     [Route("api/v1/admin/[controller]")]
     [ApiController]
-    public class MenuController : ControllerBase
+    public class OrderController : ControllerBase
     {
-        private readonly IDishService _menuItemService;
+        private readonly IOrderService _orderService;
 
-        public MenuController(IDishService menuItemService)
+        public OrderController(IOrderService orderService)
         {
-            _menuItemService = menuItemService;
+            _orderService = orderService;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> AddMenu([FromForm] MenuItemRequest request)
+        [HttpGet]
+        public async Task<IActionResult> Get([FromQuery] OrderQuery query)
         {
             try
             {
-                var result = await _menuItemService.Add(request);
+                var result = await _orderService.GetAllAsync(query);
 
                 if (!result.Status)
                 {
                     return BadRequest(new
                     {
                         Message = result.Error,
-                        StatusCode = StatusCodes.Status400BadRequest
+                        StatusCode = result.StatusCode
                     });
                 }
 
                 return Ok(new
                 {
-                    Message = result.Data,
-                    StatusCode = StatusCodes.Status200OK
+                    Message = "Lấy dữ liệu thành công",
+                    StatusCode = result.StatusCode,
+                    Data = result.Data
                 });
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 return BadRequest(new
                 {
@@ -47,26 +49,27 @@ namespace Food_Ordering.Controllers.Admin
             }
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateMenu(Guid id,[FromForm] MenuItemRequest request)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(Guid id)
         {
             try
             {
-                var result = await _menuItemService.Update(id, request);
+                var result = await _orderService.GetByIdAsync(id);
 
                 if (!result.Status)
                 {
                     return BadRequest(new
                     {
                         Message = result.Error,
-                        StatusCode = StatusCodes.Status400BadRequest
+                        StatusCode = result.StatusCode
                     });
                 }
 
                 return Ok(new
                 {
-                    Message = result.Data,
-                    StatusCode = StatusCodes.Status200OK
+                    Message = "Lấy dữ liệu thành công",
+                    StatusCode = result.StatusCode,
+                    Data = result.Data
                 });
             }
             catch (Exception ex)
@@ -80,25 +83,26 @@ namespace Food_Ordering.Controllers.Admin
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteMenu(Guid id)
+        public async Task<IActionResult> Delete(Guid id)
         {
             try
             {
-                var result = await _menuItemService.Delete(id);
+                var result = await _orderService.DeleteAsync(id);
 
                 if (!result.Status)
                 {
                     return BadRequest(new
                     {
                         Message = result.Error,
-                        StatusCode = StatusCodes.Status400BadRequest
+                        StatusCode = result.StatusCode
                     });
                 }
 
                 return Ok(new
                 {
                     Message = result.Data,
-                    StatusCode = StatusCodes.Status200OK
+                    StatusCode = result.StatusCode,
+
                 });
             }
             catch (Exception ex)

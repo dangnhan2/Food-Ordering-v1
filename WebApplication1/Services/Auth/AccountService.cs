@@ -37,7 +37,7 @@ namespace Food_Ordering.Services.Auth
             {
                 foreach(var error in result.Errors)
                 {
-                    return Response<string>.Fail($"{error.ErrorMessage}");
+                    return Response<string>.Fail($"{error.ErrorMessage}", StatusCodes.Status400BadRequest);
                 }
             }
 
@@ -45,7 +45,7 @@ namespace Food_Ordering.Services.Auth
 
             if (user == null)
             {
-                return Response<string>.Fail("Không tìm thấy người dùng");
+                return Response<string>.Fail("Không tìm thấy người dùng", StatusCodes.Status404NotFound);
             }
 
             var response = await _userManager.ChangePasswordAsync(user, password.Password, password.NewPassword);
@@ -53,11 +53,11 @@ namespace Food_Ordering.Services.Auth
             if (!response.Succeeded)
             {
                 foreach(var error in response.Errors) {
-                    return Response<string>.Fail($"Thay đổi mật khẩu không thành công. {error.Description}");
+                    return Response<string>.Fail($"Thay đổi mật khẩu không thành công. {error.Description}", StatusCodes.Status400BadRequest);
                 }
             }
 
-            return Response<string>.Success("Thay đổi mật khẩu thành công");
+            return Response<string>.Success("Thay đổi mật khẩu thành công", StatusCodes.Status200OK);
         }
 
         public async Task<Response<LoginResponse>> Login(LoginRequest login, HttpContext context)
@@ -70,7 +70,7 @@ namespace Food_Ordering.Services.Auth
             {
                 foreach (var error in result.Errors)
                 {
-                    return Response<LoginResponse>.Fail(error.ErrorMessage);
+                    return Response<LoginResponse>.Fail(error.ErrorMessage, StatusCodes.Status400BadRequest);
                 }
             }
 
@@ -79,12 +79,12 @@ namespace Food_Ordering.Services.Auth
 
             if (user == null || !isValidPassword)
             {
-                return Response<LoginResponse>.Fail("Thông tin đăng nhập sai, vui lòng thử lại");
+                return Response<LoginResponse>.Fail("Thông tin đăng nhập sai, vui lòng thử lại", StatusCodes.Status400BadRequest);
             }
 
             if (!user.EmailConfirmed)
             {
-                return Response<LoginResponse>.Fail("Email chưa được xác nhận, hãy xác nhận email của bạn");
+                return Response<LoginResponse>.Fail("Email chưa được xác nhận, hãy xác nhận email của bạn", StatusCodes.Status400BadRequest);
             }
 
             var roles = await _userManager.GetRolesAsync(user);
@@ -117,7 +117,7 @@ namespace Food_Ordering.Services.Auth
                 Token = tokens.AccessToken,
             };
 
-            return Response<LoginResponse>.Success(response);
+            return Response<LoginResponse>.Success(response, StatusCodes.Status200OK);
         }
 
         public async Task<Response<string>> Logout(HttpContext context)
@@ -128,13 +128,13 @@ namespace Food_Ordering.Services.Auth
 
             if(validRefresh == null)
             {
-                return Response<string>.Fail("Token is invalid");
+                return Response<string>.Fail("Token is invalid", StatusCodes.Status401Unauthorized);
             }
 
             _unitOfWork.RefreshToken.Remove(validRefresh);
             await _unitOfWork.SaveAsync();
 
-            return Response<string>.Success("Đăng xuất thành công");
+            return Response<string>.Success("Đăng xuất thành công", StatusCodes.Status200OK);
         }
 
         public async Task<Response<LoginResponse>> Refresh(HttpContext context)
@@ -175,7 +175,7 @@ namespace Food_Ordering.Services.Auth
                        SameSite = SameSiteMode.None,
                    });
 
-            return Response<LoginResponse>.Success(response);
+            return Response<LoginResponse>.Success(response, StatusCodes.Status200OK);
         }
 
         public async Task<Response<string>> Register(RegisterRequest register)
@@ -189,7 +189,7 @@ namespace Food_Ordering.Services.Auth
             {
                 foreach(var error in result.Errors)
                 {
-                    return Response<string>.Fail(error.ErrorMessage);
+                    return Response<string>.Fail(error.ErrorMessage, StatusCodes.Status400BadRequest);
                 }
             }
 
@@ -197,7 +197,7 @@ namespace Food_Ordering.Services.Auth
 
             if(isValidEmail != null)
             {
-                return Response<string>.Fail("Email đã tồn tại, hãy sử dụng email khác");
+                return Response<string>.Fail("Email đã tồn tại, hãy sử dụng email khác", StatusCodes.Status400BadRequest);
             }
 
             var newUser = new User
@@ -216,7 +216,7 @@ namespace Food_Ordering.Services.Auth
             {   
                 foreach (var error in response.Errors)
                 {
-                    return Response<string>.Fail($"Đăng kí không thành công");
+                    return Response<string>.Fail($"Đăng kí không thành công", StatusCodes.Status400BadRequest);
                 }              
             }
 
@@ -234,7 +234,7 @@ namespace Food_Ordering.Services.Auth
 
             await _emailService.SendEmailAsync(newUser.Email, subject, htmlBody);
 
-            return Response<string>.Success("Một email đã được gửi tới email của bạn. Hãy nhấn vào đường link để xác nhận");
+            return Response<string>.Success("Một email đã được gửi tới email của bạn. Hãy nhấn vào đường link để xác nhận", StatusCodes.Status200OK);
         }
 
 
