@@ -4,7 +4,6 @@ namespace Food_Ordering.DTOs.Response
 {
     public class OrderItemDto
     {
-        public Guid OrderId { get; set; }
         public Guid MenuItemsId { get; set; }
         public string? ItemName { get; set; }
         public string? ImageUrl { get; set; }

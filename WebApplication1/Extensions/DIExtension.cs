@@ -14,16 +14,18 @@ namespace Food_Ordering.Extensions
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IRefreshTokenRepo, RefreshTokenRepo>();
             services.AddScoped<IUserRepo, UserRepo>();
-            services.AddScoped<IMenuCategoryRepo, MenuCategoryRepo>();
-            services.AddScoped<IMenuItemRepo , MenuItemRepo>();
+            services.AddScoped<IDishRepo, MenuCategoryRepo>();
+            services.AddScoped<IMenuItemRepo , DishRepo>();
+            services.AddScoped<IOrderRepo, OrderRepo>();
 
+            services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IJwtService, JwtService>();
             services.AddScoped<IMenuCategoryService, MenuCategoryService>();
             services.AddScoped<ICloudinaryService , CloudinaryService>();
             services.AddScoped<IAccountService, AccountService>();
             services.AddScoped<IUserService, UserService>();
             services.AddTransient<IEmailService, EmailService>();
-            services.AddScoped<IMenuItemService, MenuItemService>();
+            services.AddScoped<IDishService, DishService>();
             return services;
         }
     }

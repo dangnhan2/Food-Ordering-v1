@@ -43,7 +43,7 @@ namespace Food_Ordering.Services.Storage
 
             if (!allowedExtensions.Contains(fileExtension))
             {
-                Response<string>.Fail($"Hãy upload các file có đuôi {string.Join(" ,", allowedExtensions)}");
+                Response<string>.Fail($"Hãy upload các file có đuôi {string.Join(" ,", allowedExtensions)}", StatusCodes.Status400BadRequest);
             }
 
             using var stream = file.OpenReadStream();
@@ -57,7 +57,7 @@ namespace Food_Ordering.Services.Storage
             var result = await _cloudinary.UploadAsync(uploadParams);
 
             //Console.WriteLine(result);
-            return Response<string>.Success(result.SecureUrl.ToString()); 
+            return Response<string>.Success(result.SecureUrl.ToString(), StatusCodes.Status200OK); 
                 
         }
 

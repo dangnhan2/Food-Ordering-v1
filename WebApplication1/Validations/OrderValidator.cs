@@ -10,10 +10,6 @@ namespace Food_Ordering.Validations
             RuleFor(x => x.UserId)
                 .NotEmpty().WithMessage("UserId không được để trống.");
 
-            // Kiểm tra Status
-            RuleFor(x => x.Status)
-                .IsInEnum().WithMessage("Trạng thái đơn hàng không hợp lệ.");
-
             // Kiểm tra ToTalAmount
             RuleFor(x => x.ToTalAmount)
                 .GreaterThanOrEqualTo(0).WithMessage("Tổng số tiền phải lớn hơn hoặc bằng 0.");

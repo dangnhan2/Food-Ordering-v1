@@ -2,7 +2,7 @@
 
 namespace Food_Ordering.Repositories
 {
-    public interface IMenuCategoryRepo
+    public interface IDishRepo
     {
         public IQueryable<MenuCategories> GetAll();
         public Task<MenuCategories?> GetByIdAsync(Guid id);

@@ -26,7 +26,7 @@ namespace Food_Ordering.Services
 
             if(user == null)
             {
-                return Response<UserDto>.Fail("Người dùng không tồn tại");
+                return Response<UserDto>.Fail("Người dùng không tồn tại", StatusCodes.Status404NotFound);
             }
 
             var userToDto = new UserDto
@@ -39,7 +39,7 @@ namespace Food_Ordering.Services
                 Phone = user.PhoneNumber
             };
 
-            return Response<UserDto>.Success(userToDto);
+            return Response<UserDto>.Success(userToDto, StatusCodes.Status200OK);
         }
 
         public async Task<Response<PagingResponse<UserDto>>> GetUsersAsync(UserQuery query)
@@ -72,7 +72,7 @@ namespace Food_Ordering.Services
                 Phone = u.PhoneNumber
             }).ToListAsync();
 
-            return Response<PagingResponse<UserDto>>.Success(new PagingResponse<UserDto>(usersToDto, users.Count(), query.page, query.pageSize));
+            return Response<PagingResponse<UserDto>>.Success(new PagingResponse<UserDto>(usersToDto, users.Count(), query.page, query.pageSize), StatusCodes.Status200OK);
         }
 
         public async Task<Response<string>> UploadAvatarAsync(string id, IFormFile file)
@@ -81,7 +81,7 @@ namespace Food_Ordering.Services
 
             if(user == null)
             {
-                Response<string>.Fail("Không tìm thấy người dùng");
+                Response<string>.Fail("Không tìm thấy người dùng", StatusCodes.Status404NotFound);
             }
 
             var result = await _cloudinaryService.UploadImage(file, folder);
@@ -96,7 +96,7 @@ namespace Food_Ordering.Services
                 user.ImageUrl = result.Data;
             }
 
-            return Response<string>.Success("Thay đổi hình đại diện thành công");
+            return Response<string>.Success("Thay đổi hình đại diện thành công", StatusCodes.Status200OK);
         }
 
         public async Task<Response<string>> UserUpdateAsync(string id, UserRequest request)
@@ -108,7 +108,7 @@ namespace Food_Ordering.Services
             {
                 foreach(var error in result.Errors)
                 {
-                    return Response<string>.Fail(error.ErrorMessage);
+                    return Response<string>.Fail(error.ErrorMessage, StatusCodes.Status400BadRequest);
                 }
             }
 
@@ -116,13 +116,13 @@ namespace Food_Ordering.Services
 
             if(await users.AnyAsync(u => u.PhoneNumber == request.Phone))
             {
-                return Response<string>.Fail("Số điện thoại đã được đăng ký");
+                return Response<string>.Fail("Số điện thoại đã được đăng ký", StatusCodes.Status400BadRequest);
             }
 
             var user = await _unitOfWork.UserRepo.GetUserAsync(id);
 
             if (user == null) {
-                return Response<string>.Fail("Không tìm thấy người dùng");
+                return Response<string>.Fail("Không tìm thấy người dùng", StatusCodes.Status404NotFound);
             }
 
             user.UserName = request.UserName;
@@ -132,7 +132,7 @@ namespace Food_Ordering.Services
             _unitOfWork.UserRepo.UpdateUser(user);
             await _unitOfWork.SaveAsync();
 
-            return Response<string>.Success("Cập nhật thông tin thành công");
+            return Response<string>.Success("Cập nhật thông tin thành công", StatusCodes.Status200OK);
             
         }
     }

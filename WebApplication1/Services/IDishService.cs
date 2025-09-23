@@ -4,7 +4,7 @@ using Food_Ordering.DTOs.Response;
 
 namespace Food_Ordering.Services
 {
-    public interface IMenuItemService
+    public interface IDishService
     {   
         public Task<Response<PagingResponse<MenuItemDto>>> GetAll(MenuItemQuery query);
         public Task<Response<string>> Add(MenuItemRequest request);
