@@ -28,6 +28,13 @@ namespace Food_Ordering.Repositories
             return _context.Orders.AsQueryable();
         }
 
+        public IEnumerable<Orders> GetAllOrdersExpired()
+        {
+            return _context.Orders
+                .Where(o => o.Status == Models.Enum.OrderStatus.Pending && o.ExpiredAt < DateTime.UtcNow)
+                .ToList();
+        }
+
         public async Task<Orders?> GetByIdAsync(Guid id)
         {
             return await _context.Orders
