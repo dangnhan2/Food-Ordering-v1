@@ -1,5 +1,7 @@
 ﻿using DotNetEnv;
 using Food_Ordering.Data;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.EntityFrameworkCore;
 
 namespace Food_Ordering.Extensions
@@ -13,6 +15,14 @@ namespace Food_Ordering.Extensions
             services.AddEntityFrameworkNpgsql().AddDbContext<ApplicationDbContext>(otps =>
             {
                 otps.UseNpgsql(connection);
+            });
+
+            services.AddHangfire(config =>
+            {
+                config.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
+                      .UseSimpleAssemblyNameTypeSerializer()
+                      .UseRecommendedSerializerSettings()
+                      .UsePostgreSqlStorage(connection);
             });
             return services;
         }
