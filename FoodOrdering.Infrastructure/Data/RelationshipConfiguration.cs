@@ -24,6 +24,19 @@ namespace FoodOrdering.Infrastructure.Data
                     om.OrderId, om.MenuId
                 });
 
+            builder.Entity<CartItems>()
+                .HasKey(ct => new {ct.MenuId, ct.CartId });
+
+            builder.Entity<CartItems>()
+                .HasOne(ct => ct.Menu)
+                .WithMany(ct => ct.CartItems)
+                .HasForeignKey(ct => ct.MenuId);
+
+            builder.Entity<CartItems>()
+                .HasOne(ct => ct.Cart)
+                .WithMany(ct => ct.CartItems)
+                .HasForeignKey(ct => ct.CartId);
+
             builder.Entity<VoucherRedemptions>()
                 .HasOne(vr => vr.User)
                 .WithMany(vr => vr.VoucherRedemptions)

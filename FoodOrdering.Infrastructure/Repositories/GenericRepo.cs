@@ -28,9 +28,9 @@ namespace FoodOrdering.Infrastructure.Repository
            return await _context.Set<T>().Where(predicate).ToListAsync();
         }
 
-        public async Task<IEnumerable<T>> GetAllAsync()
+        public IQueryable<T> GetAll()
         {
-            return await _context.Set<T>().ToListAsync();
+            return _context.Set<T>().AsQueryable();
         }
 
         public async Task<T?> GetByIdAsync(Guid id)

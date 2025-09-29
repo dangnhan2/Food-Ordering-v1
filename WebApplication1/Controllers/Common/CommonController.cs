@@ -1,4 +1,6 @@
-﻿using FoodOrdering.Application.Services.Interface;
+﻿using FoodOrdering.Application.DTOs.QueryParams;
+using FoodOrdering.Application.Services;
+using FoodOrdering.Application.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,10 +11,11 @@ namespace FoodOrdering.Presentation.Controllers.Common
     public class CommonController : ControllerBase
     {
         private readonly ICategoryService _categoryService;
-
-        public CommonController(ICategoryService categoryService)
+        private readonly IMenuService _menuService;
+        public CommonController(ICategoryService categoryService, IMenuService menuService)
         {
             _categoryService = categoryService;
+            _menuService = menuService;
         }
 
         [HttpGet("category")]
@@ -35,6 +38,63 @@ namespace FoodOrdering.Presentation.Controllers.Common
                 {
                     Message = ex.InnerException.Message ?? ex.Message,
                     StatusCodes = StatusCodes.Status400BadRequest
+                });
+            }
+        }
+
+        [HttpGet("menu")]
+        public async Task<IActionResult> GetMenus([FromQuery] MenuParams menuParams)
+        {
+            try
+            {
+                var result = await _menuService.GetAllAsync(menuParams);
+
+                return Ok(new
+                {
+                    result.Message,
+                    result.Code,
+                    result.Data
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    Message = ex.InnerException.Message ?? ex.Message,
+                    StatusCode = StatusCodes.Status400BadRequest
+                });
+            }
+        }
+
+        [HttpGet("menu/{id}")]
+        public async Task<IActionResult> GetMenuById(Guid id)
+        {
+            try
+            {
+                var result = await _menuService.GetByIdAsync(id);
+
+                if (!result.IsSuccess)
+                {
+                    return BadRequest(new
+                    {
+                        result.Message,
+                        result.Code
+                    });
+                }
+
+                return Ok(new
+                {
+                    result.Message,
+                    result.Code,
+                    result.Data
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    Message = ex.InnerException.Message ?? ex.Message,
+                    StatusCode = StatusCodes.Status400BadRequest
                 });
             }
         }

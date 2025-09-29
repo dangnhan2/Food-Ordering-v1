@@ -3,6 +3,7 @@ using System;
 using FoodOrdering.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FoodOrdering.Infrastructure.Migrations
 {
     [DbContext(typeof(FoodOrderingDbContext))]
-    partial class FoodOrderingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250928132700_AddTableCartNCartItem")]
+    partial class AddTableCartNCartItem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -403,13 +406,13 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("d9a5e0be-3a3b-4aaa-afc6-047efa857780"),
+                            Id = new Guid("13e06384-021b-402b-8c12-c4607189b626"),
                             Name = "Customer",
                             NormalizedName = "CUSTOMER"
                         },
                         new
                         {
-                            Id = new Guid("600fe2bd-845a-442d-8d75-c216ef876b95"),
+                            Id = new Guid("bff4375f-b678-493e-86c8-3a663ec0d769"),
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         });

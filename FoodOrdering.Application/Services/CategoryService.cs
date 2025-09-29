@@ -4,6 +4,7 @@ using FoodOrdering.Application.Repositories;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,13 +26,13 @@ namespace FoodOrdering.Application.Services
 
         public async Task<Result<IEnumerable<CategoryDTO>>> GetAllAsync()
         {
-            var categories = await _unitOfWork.Category.GetAllAsync();
+            var categories = _unitOfWork.Category.GetAll();
 
-            var categoriesToDTO = categories.Select(c => new CategoryDTO
+            var categoriesToDTO = await categories.Select(c => new CategoryDTO
             {
                 Id = c.Id,
                 Name = c.Name,
-            });
+            }).ToListAsync();
 
             return Result<IEnumerable<CategoryDTO>>.Success("Lấy dữ liệu thành công", categoriesToDTO, 200);
         }
@@ -73,7 +74,7 @@ namespace FoodOrdering.Application.Services
                 }
             }
             
-            var categories = await _unitOfWork.Category.GetAllAsync();
+            var categories = _unitOfWork.Category.GetAll();
             var category = await _unitOfWork.Category.GetByIdAsync(id);
 
             if (category == null)
