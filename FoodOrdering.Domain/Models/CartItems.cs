@@ -6,15 +6,14 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Domain.Models
 {
-    public class OrderMenus
+    public class CartItems
     {
         public Guid Id { get; set; }
-        public Orders Orders { get; set; } = null!;
-        public Guid OrderId { get; set; }
-        public Menus Menus { get; set; } = null!;
+        public Guid CartId { get; set; }
+        public Carts Cart { get; set; } = null!;
         public Guid MenuId { get; set; }
+        public Menus Menu { get; set; } = null!;
         public int Quantity { get; set; }
         public int UnitPrice { get; set; }
-        public int SubTotal { get; set; }
     }
 }

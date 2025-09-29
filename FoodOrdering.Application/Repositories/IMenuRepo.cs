@@ -9,5 +9,6 @@ namespace FoodOrdering.Application.Repositories
 {
     public interface IMenuRepo : IGenericRepo<Menus>
     {
+        public Task<Menus?> GetMenuWithCategoryAsync(Guid id);
     }
 }
