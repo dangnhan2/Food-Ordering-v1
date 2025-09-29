@@ -19,7 +19,8 @@ namespace FoodOrdering.Infrastructure.Data
         public DbSet<RefreshTokens> RefreshTokens { get; set; }
         public DbSet<OrderMenus> OrderMenus { get; set; }
         public DbSet<User> Users { get; set; }
-        
+        public DbSet<Carts> Carts { get; set; }
+        public DbSet<CartItems> CartItems { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

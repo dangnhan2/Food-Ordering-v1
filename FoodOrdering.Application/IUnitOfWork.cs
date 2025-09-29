@@ -15,6 +15,7 @@ namespace FoodOrdering.Application
        ICategoryRepo Category { get; }
        IVoucherRepo Voucher { get; }
        IRefreshTokenRepo RefreshToken { get; }
+       ICartRepo Cart { get; }
        Task SaveChangeAsync();
     }
 }

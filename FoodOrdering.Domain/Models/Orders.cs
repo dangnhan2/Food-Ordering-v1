@@ -11,8 +11,8 @@ namespace FoodOrdering.Domain.Models
     public class Orders
     {
         public Guid Id { get; set; }
-        public string CustomerName { get; set; } = null!;
-        public string PhoneNumber { get; set; } = null!;
+        public Guid UserId { get; set; }
+        public User User { get; set; }
         public string Address { get; set; } = null!;
         public string? Note { get; set; }
         public DateTime OrderDate { get; set; } = DateTime.UtcNow;

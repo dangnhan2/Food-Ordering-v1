@@ -4,6 +4,7 @@ using FoodOrdering.Application.Repositories;
 using FoodOrdering.Application.Services;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Infrastructure;
+using FoodOrdering.Infrastructure.Repositories;
 using FoodOrdering.Infrastructure.Repository;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -20,6 +21,8 @@ namespace Food_Ordering.Extensions
             services.AddScoped<ICategoryRepo, CategoryRepo>();
             services.AddScoped<IMenuRepo, MenuRepo>();
             services.AddScoped<IMenuService, MenuService>();
+            services.AddScoped<ICartRepo, CartRepo>();
+            services.AddScoped<ICartService, CartService>();
             //services.AddScoped<IRefreshTokenRepo, RefreshTokenRepo>();
             //services.AddScoped<IUserRepo, UserRepo>();
             //services.AddScoped<IDishRepo, MenuCategoryRepo>();
