@@ -56,10 +56,12 @@ namespace FoodOrdering.Application.Services
                 return Result<Carts>.Fail("Không tìm thấy giỏ hàng", StatusCodes.Status404NotFound);
 
             foreach(var dish in request.CartItems)
-            {
+            {   
+                // Find item if it already exists in cart
                 var existItem = cart.CartItems.FirstOrDefault(i => i.MenuId == dish.MenuId);
                 if(existItem != null)
                 {   
+                    // Increase/Decrease if quantity > 0 else quantity = 0 => remove
                     if(dish.Quantity > 0)                   
                         existItem.Quantity = dish.Quantity;                   
                     else                   
