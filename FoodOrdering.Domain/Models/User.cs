@@ -16,5 +16,6 @@ namespace FoodOrdering.Domain.Models
         public Carts Carts { get; set; }
         public RefreshTokens RefreshTokens { get; set; }
         public ICollection<VoucherRedemptions> VoucherRedemptions { get; set; } = new List<VoucherRedemptions>();
+        public ICollection<Orders> Orders { get; set; } = new List<Orders>();
     }
 }
