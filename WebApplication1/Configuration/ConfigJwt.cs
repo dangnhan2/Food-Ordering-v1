@@ -22,7 +22,8 @@ namespace Food_Ordering.Extensions
                 opts.Password.RequireNonAlphanumeric = false;
 
                 opts.User.RequireUniqueEmail = true;
-                opts.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -._@+ ";
+                opts.User.AllowedUserNameCharacters = null;
+                //"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -._@+ ";
             });
 
 

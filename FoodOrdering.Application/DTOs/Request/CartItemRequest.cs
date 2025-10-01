@@ -8,7 +8,6 @@ namespace FoodOrdering.Application.DTOs.Request
 {
     public class CartItemRequest
     {
-        public Guid CartId { get; set; }
         public Guid MenuId { get; set; }
         public int Quantity { get; set; }
         public int UnitPrice { get; set; }

@@ -104,6 +104,38 @@ namespace FoodOrdering.Presentation.Controllers.Common
             }
         }
 
+        [HttpGet("cart")]
+        public async Task<IActionResult> GetCartByCustomer(Guid id)
+        {
+            try
+            {
+                var result = await _cartService.GetCartByCustomer(id);
+
+                if (!result.IsSuccess)
+                {
+                    return BadRequest(new
+                    {
+                        result.Message,
+                        result.Code
+                    });
+                }
+
+                return Ok(new
+                {
+                    result.Message,
+                    result.Code,
+                    result.Data
+                });
+            }catch(Exception ex)
+            {
+                return BadRequest(new
+                {
+                    Message = ex.InnerException.Message ?? ex.Message,
+                    StatusCode = StatusCodes.Status400BadRequest
+                });
+            }
+        }
+
         [HttpPost("cart")]
         public async Task<IActionResult> AddToCart([FromBody] CartRequest request)
         {
@@ -199,5 +231,6 @@ namespace FoodOrdering.Presentation.Controllers.Common
                 });
             }
         }
+
     }
 }
