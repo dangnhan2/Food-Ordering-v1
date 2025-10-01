@@ -9,5 +9,6 @@ namespace FoodOrdering.Application.Repositories
 {
     public interface IRefreshTokenRepo : IGenericRepo<RefreshTokens>
     {
+        public Task<RefreshTokens?> GetTokenByRefreshToken(string refreshToken); 
     }
 }

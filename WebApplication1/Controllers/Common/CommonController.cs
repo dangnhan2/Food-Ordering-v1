@@ -155,12 +155,14 @@ namespace FoodOrdering.Presentation.Controllers.Common
                     result.Code,
                 });
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 return BadRequest(new
                 {
                     Message = ex.InnerException.Message ?? ex.Message,
                     StatusCode = StatusCodes.Status400BadRequest
                 });
             }
+        }
     }
 }
