@@ -127,3 +127,5 @@ namespace FoodOrdering.Infrastructure.Identity
         }
     }
 }
+
+//"userId": "fc548332-1f60-4194-923d-9eb424523f3c"

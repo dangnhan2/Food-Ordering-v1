@@ -45,24 +45,30 @@ namespace FoodOrdering.Application.Services
 
         public async Task<Result<string>> UploadImage(IFormFile file, string folder)
         {
-            var fileExtension = Path.GetExtension(file.FileName);
-            if (!allowedExtensions.Contains(fileExtension))
+            try
             {
-                return Result<string>.Fail($"Hãy upload các file có đuôi {string.Join(" ,", allowedExtensions)}", StatusCodes.Status400BadRequest);
+                var fileExtension = Path.GetExtension(file.FileName);
+                if (!allowedExtensions.Contains(fileExtension))
+                {
+                    return Result<string>.Fail($"Hãy upload các file có đuôi {string.Join(" ,", allowedExtensions)}", StatusCodes.Status400BadRequest);
+                }
+
+                using var stream = file.OpenReadStream();
+
+                var uploadParams = new ImageUploadParams
+                {
+                    File = new FileDescription(file.FileName, stream),
+                    Folder = folder
+                };
+
+                var result = await _cloudinary.UploadAsync(uploadParams);
+
+                Console.WriteLine(result);
+                return Result<string>.Success("Up ảnh thành công", result.SecureUrl.ToString(), StatusCodes.Status200OK);
+            }catch(FileNotFoundException ex)
+            {
+                throw new FileNotFoundException("File was empty", ex);
             }
-
-            using var stream = file.OpenReadStream();
-
-            var uploadParams = new ImageUploadParams
-            {
-                File = new FileDescription(file.FileName, stream),
-                Folder = folder
-            };
-
-            var result = await _cloudinary.UploadAsync(uploadParams);
-
-            Console.WriteLine(result);
-            return Result<string>.Success("Up ảnh thành công", result.SecureUrl.ToString(), StatusCodes.Status200OK);
 
         }
 

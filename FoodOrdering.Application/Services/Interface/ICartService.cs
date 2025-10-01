@@ -14,5 +14,6 @@ namespace FoodOrdering.Application.Services.Interface
     {
         public Task<Result<Carts>> AddToCartAsync(CartRequest request);
         public Task<Result<Carts>> UpdateToCartAsync(Guid id, CartRequest request);
+        public Task<Result<CartDTO>> GetCartByCustomer(Guid id);
     }
 }

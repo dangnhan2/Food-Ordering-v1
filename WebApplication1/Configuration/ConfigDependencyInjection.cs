@@ -27,21 +27,9 @@ namespace Food_Ordering.Extensions
             services.AddScoped<ICartService, CartService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ITokenService, TokenService>();
-            //services.AddScoped<IRefreshTokenRepo, RefreshTokenRepo>();
-            //services.AddScoped<IUserRepo, UserRepo>();
-            //services.AddScoped<IDishRepo, MenuCategoryRepo>();
-            //services.AddScoped<IMenuItemRepo , DishRepo>();
-            //services.AddScoped<IOrderRepo, OrderRepo>();
+            services.AddScoped<IOrderRepo, OrderRepo>();
+            services.AddScoped<IOrderService, OrderService>();
 
-            //services.AddScoped<IOrderService, OrderService>();
-            //services.AddScoped<IJwtService, JwtService>();
-            //services.AddScoped<IMenuCategoryService, MenuCategoryService>();
-            //services.AddScoped<ICloudinaryService , CloudinaryService>();
-            //services.AddScoped<IAccountService, AccountService>();
-            //services.AddScoped<IUserService, UserService>();
-            //services.AddTransient<IEmailService, EmailService>();
-            //services.AddScoped<IDishService, DishService>();
-            //services.AddTransient<IPayOSService, PayOSService>();
             return services;
         }
     }

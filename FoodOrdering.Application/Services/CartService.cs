@@ -33,6 +33,7 @@ namespace FoodOrdering.Application.Services
             {
                 var item = new CartItems
                 {
+                    Id = Guid.NewGuid(),
                     CartId = cart.Id,
                     MenuId = dish.MenuId,
                     Quantity = dish.Quantity,
@@ -46,6 +47,31 @@ namespace FoodOrdering.Application.Services
             await _unitOfWork.SaveChangeAsync();
 
             return Result<Carts>.Success("Thêm vào giỏ hàng thành công", cart, StatusCodes.Status201Created);
+        }
+
+        public async Task<Result<CartDTO>> GetCartByCustomer(Guid id)
+        {
+            var cart = await _unitOfWork.Cart.GetCartByCustomerAsync(id);
+
+            if (cart == null)
+                return Result<CartDTO>.Fail("Không tìm thấy giỏ hàng", StatusCodes.Status404NotFound);
+
+            var cartToDTO = new CartDTO
+            {
+                Id = cart.Id,
+                UserId = id,
+                Items = cart.CartItems.Select(ct => new CartItemDTO
+                {
+                    Id = ct.Id,
+                    MenuId = ct.MenuId,
+                    MenuName = ct.Menu.Name,
+                    ImageUrl = ct.Menu.ImageUrl,
+                    Quantity = ct.Quantity,
+                    UnitPrice = ct.UnitPrice
+                }).ToList()
+            };
+
+            return Result<CartDTO>.Success("Lấy dữ liệu thành công", cartToDTO, StatusCodes.Status200OK);
         }
 
         public async Task<Result<Carts>> UpdateToCartAsync(Guid id, CartRequest request)
@@ -68,9 +94,11 @@ namespace FoodOrdering.Application.Services
                         cart.CartItems.Remove(existItem);                    
                 }
                 else
-                {
+                {   
+                    // add to cart if its a new item
                     var item = new CartItems
                     {
+                        Id = Guid.NewGuid(),
                         CartId = cart.Id,
                         MenuId = dish.MenuId,
                         Quantity = dish.Quantity,
@@ -81,7 +109,11 @@ namespace FoodOrdering.Application.Services
                 }
             }
 
-            _unitOfWork.Cart.Update(cart);
+            if (cart.CartItems.Count() > 0)
+                _unitOfWork.Cart.Update(cart);
+            else
+                _unitOfWork.Cart.Remove(cart);
+
             await _unitOfWork.SaveChangeAsync();
 
             return Result<Carts>.Success("Cập nhật giỏ hàng thành công", cart, StatusCodes.Status200OK);

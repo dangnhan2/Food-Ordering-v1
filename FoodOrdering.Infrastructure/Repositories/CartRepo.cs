@@ -23,6 +23,14 @@ namespace FoodOrdering.Infrastructure.Repositories
             _context.Carts.RemoveRange(carts);
         }
 
+        public async Task<Carts?> GetCartByCustomerAsync(Guid id)
+        {
+            return await _context.Carts
+                .Include(c => c.CartItems)
+                .ThenInclude(ct => ct.Menu)
+                .FirstOrDefaultAsync(c => c.UserId == id);
+        }
+
         public async Task<Carts?> GetCartWithCartItemAsync(Guid id)
         {
             return await _context.Carts.Include(c => c.CartItems).FirstOrDefaultAsync(c => c.Id == id);

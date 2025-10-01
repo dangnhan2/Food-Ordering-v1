@@ -135,7 +135,15 @@ namespace FoodOrdering.Presentation.Controllers.Admin
                     result.Message,
                     result.Code
                 });
-            }catch(Exception ex)
+            }catch(FileNotFoundException ex)
+            {
+                return BadRequest(new
+                {
+                    ex.Message,
+                    StatusCode = StatusCodes.Status400BadRequest
+                });
+            }
+            catch(Exception ex)
             {
                 return BadRequest(new
                 {
