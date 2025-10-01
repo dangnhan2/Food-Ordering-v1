@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Food_Ordering.Extensions
 {
-    public static class IdentityConfigure
+    public static class ConfigIdentity
     {
         public static IServiceCollection AddIdentity(this IServiceCollection services)
         {

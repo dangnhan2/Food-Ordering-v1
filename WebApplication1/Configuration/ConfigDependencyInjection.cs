@@ -1,16 +1,18 @@
 ﻿using CloudinaryDotNet;
 using FoodOrdering.Application;
+using FoodOrdering.Application.Auth;
 using FoodOrdering.Application.Repositories;
 using FoodOrdering.Application.Services;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Infrastructure;
+using FoodOrdering.Infrastructure.Identity;
 using FoodOrdering.Infrastructure.Repositories;
 using FoodOrdering.Infrastructure.Repository;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Food_Ordering.Extensions
 {
-    public static class DIExtension
+    public static class ConfigDependencyInjection
     {
         public static IServiceCollection AddDI(this IServiceCollection services)
         {
@@ -23,6 +25,8 @@ namespace Food_Ordering.Extensions
             services.AddScoped<IMenuService, MenuService>();
             services.AddScoped<ICartRepo, CartRepo>();
             services.AddScoped<ICartService, CartService>();
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<ITokenService, TokenService>();
             //services.AddScoped<IRefreshTokenRepo, RefreshTokenRepo>();
             //services.AddScoped<IUserRepo, UserRepo>();
             //services.AddScoped<IDishRepo, MenuCategoryRepo>();

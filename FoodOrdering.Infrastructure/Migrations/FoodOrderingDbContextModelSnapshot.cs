@@ -43,7 +43,7 @@ namespace FoodOrdering.Infrastructure.Migrations
 
                     b.HasIndex("CartId");
 
-                    b.ToTable("CartItems");
+                    b.ToTable("CartItems", (string)null);
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.Carts", b =>
@@ -63,7 +63,7 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Carts");
+                    b.ToTable("Carts", (string)null);
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.Categories", b =>
@@ -78,7 +78,7 @@ namespace FoodOrdering.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.Menus", b =>
@@ -120,7 +120,7 @@ namespace FoodOrdering.Infrastructure.Migrations
 
                     b.HasIndex("CategoriesId");
 
-                    b.ToTable("Menus");
+                    b.ToTable("Menus", (string)null);
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.OrderMenus", b =>
@@ -147,7 +147,7 @@ namespace FoodOrdering.Infrastructure.Migrations
 
                     b.HasIndex("MenuId");
 
-                    b.ToTable("OrderMenus");
+                    b.ToTable("OrderMenus", (string)null);
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.Orders", b =>
@@ -189,7 +189,7 @@ namespace FoodOrdering.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.RefreshTokens", b =>
@@ -216,7 +216,7 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("RefreshTokens");
+                    b.ToTable("RefreshTokens", (string)null);
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.User", b =>
@@ -342,7 +342,7 @@ namespace FoodOrdering.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Voucher");
+                    b.ToTable("Voucher", (string)null);
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.VoucherRedemptions", b =>
@@ -371,7 +371,7 @@ namespace FoodOrdering.Infrastructure.Migrations
 
                     b.HasIndex("VoucherID");
 
-                    b.ToTable("VoucherRedemptions");
+                    b.ToTable("VoucherRedemptions", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
