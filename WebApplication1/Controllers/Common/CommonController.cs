@@ -14,11 +14,13 @@ namespace FoodOrdering.Presentation.Controllers.Common
         private readonly ICategoryService _categoryService;
         private readonly IMenuService _menuService;
         private readonly ICartService _cartService;
-        public CommonController(ICategoryService categoryService, IMenuService menuService, ICartService cartService)
+        private readonly IOrderService _orderService;
+        public CommonController(ICategoryService categoryService, IMenuService menuService, ICartService cartService, IOrderService orderService)
         {
             _categoryService = categoryService;
             _menuService = menuService;
             _cartService = cartService;
+            _orderService = orderService;
         }
 
         [HttpGet("category")]
@@ -113,8 +115,8 @@ namespace FoodOrdering.Presentation.Controllers.Common
                 {
                     return BadRequest(new
                     {
-                       result.Message,
-                       result.Code,
+                        result.Message,
+                        result.Code,
                     });
                 }
 
@@ -124,7 +126,8 @@ namespace FoodOrdering.Presentation.Controllers.Common
                     result.Code,
                 });
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 return BadRequest(new
                 {
                     Message = ex.InnerException.Message ?? ex.Message,
@@ -139,6 +142,38 @@ namespace FoodOrdering.Presentation.Controllers.Common
             try
             {
                 var result = await _cartService.UpdateToCartAsync(id, request);
+
+                if (!result.IsSuccess)
+                {
+                    return BadRequest(new
+                    {
+                        result.Message,
+                        result.Code,
+                    });
+                }
+
+                return Ok(new
+                {
+                    result.Message,
+                    result.Code,
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    Message = ex.InnerException.Message ?? ex.Message,
+                    StatusCode = StatusCodes.Status400BadRequest
+                });
+            }
+        }
+
+        [HttpGet("order")]
+        public async Task<IActionResult> CreateOrder([FromBody] OrderRequest request)
+        {
+            try
+            {
+                var result = await _orderService.CreateOrderAsync(request);
 
                 if (!result.IsSuccess)
                 {
