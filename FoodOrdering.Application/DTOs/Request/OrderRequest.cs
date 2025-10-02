@@ -8,7 +8,6 @@ namespace FoodOrdering.Application.DTOs.Request
 {
     public class OrderRequest
     {   
-        public Guid Id { get; set; }
         public Guid UserId { get; set; }
         public string Address { get; set; }
         public string? Note { get; set; }

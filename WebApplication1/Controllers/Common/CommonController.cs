@@ -220,6 +220,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
                 {
                     result.Message,
                     result.Code,
+                    result.Data
                 });
             }
             catch (Exception ex)

@@ -11,6 +11,7 @@ namespace FoodOrdering.Application.DTOs.Request
     {
         public Guid OrderId { get; set; }
         public Guid MenuId { get; set; }
+        public string MenuName { get; set; }
         public int Quantity { get; set; }
         public int UnitPrice { get; set; }
         public int SubTotal { get; set; }

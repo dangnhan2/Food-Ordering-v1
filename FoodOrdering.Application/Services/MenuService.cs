@@ -93,6 +93,20 @@ namespace FoodOrdering.Application.Services
             if (menuParams.IsAvailable.HasValue)
                 menus = menus.Where(m => m.IsAvailable == menuParams.IsAvailable.Value);
 
+            //sort
+            if (!string.IsNullOrEmpty(menuParams.SortBy))
+            {
+                var sortBy = menuParams.SortBy.ToLower();
+                var sortOrder = menuParams.SortOrder?.ToLower() ?? "asc";
+
+                menus = sortBy
+                switch
+                {
+                    "price" => sortOrder == "desc" ? menus.OrderByDescending(m => m.Price) : menus.OrderBy(m => m.Price),
+                    "soldQuantity" => sortOrder == "desc" ? menus.OrderByDescending(m => m.SoldQuantity) : menus.OrderBy(m => m.SoldQuantity)
+                };
+            }
+
             var menusToDTO = await menus.Select(m => new MenuDTO
             {
                 Id = m.Id,
@@ -104,7 +118,7 @@ namespace FoodOrdering.Application.Services
                 CreatedAt = m.CreatedAt,
                 SoldQuantity = m.SoldQuantity,
                 StockQuantity = m.StockQuantity
-            }).Paging(menuParams.Page, menuParams.PageSize).ToListAsync();
+            }).Paging(menuParams.Page, menuParams.PageSize).AsNoTracking().ToListAsync();
 
             return Result<PagingReponse<MenuDTO>>.Success(
                 "Lấy dữ liệu thành công",
