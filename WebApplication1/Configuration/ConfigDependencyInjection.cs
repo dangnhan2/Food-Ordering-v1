@@ -1,11 +1,13 @@
 ﻿using CloudinaryDotNet;
 using FoodOrdering.Application;
 using FoodOrdering.Application.Auth;
+using FoodOrdering.Application.Payment;
 using FoodOrdering.Application.Repositories;
 using FoodOrdering.Application.Services;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Infrastructure;
 using FoodOrdering.Infrastructure.Identity;
+using FoodOrdering.Infrastructure.Payment;
 using FoodOrdering.Infrastructure.Repositories;
 using FoodOrdering.Infrastructure.Repository;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +31,7 @@ namespace Food_Ordering.Extensions
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IOrderRepo, OrderRepo>();
             services.AddScoped<IOrderService, OrderService>();
+            services.AddTransient<IPaymentGateway, PaymentGateway>();
 
             return services;
         }

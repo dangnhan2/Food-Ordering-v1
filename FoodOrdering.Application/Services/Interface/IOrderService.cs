@@ -12,7 +12,7 @@ namespace FoodOrdering.Application.Services.Interface
 {
     public interface IOrderService
     {
-        public Task<Result<Orders>> CreateOrderAsync(OrderRequest request);
+        public Task<Result<dynamic>> CreateOrderAsync(OrderRequest request);
         public Task<Result<PagingReponse<OrderDTO>>> GetAllAsync(OrderParams orderParams);
         public Task<Result<PagingReponse<OrderDTO>>> GetAllAsyncByCustomer(Guid id, OrderParams orderParams);
     }

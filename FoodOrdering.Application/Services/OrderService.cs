@@ -1,11 +1,14 @@
-﻿using FoodOrdering.Application.DTOs.QueryParams;
+﻿using Food_Ordering.Models.Enum;
+using FoodOrdering.Application.DTOs.QueryParams;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Extension;
+using FoodOrdering.Application.Payment;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Net.payOS.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,10 +20,12 @@ namespace FoodOrdering.Application.Services
     public class OrderService : IOrderService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IPaymentGateway _paymentGateway;
 
-        public OrderService(IUnitOfWork unitOfWork)
+        public OrderService(IUnitOfWork unitOfWork, IPaymentGateway paymentGateway)
         {
             _unitOfWork = unitOfWork;
+            _paymentGateway = paymentGateway;
         }
 
         public async Task<Result<PagingReponse<OrderDTO>>> GetAllAsync(OrderParams orderParams)
@@ -49,10 +54,16 @@ namespace FoodOrdering.Application.Services
                 StatusCodes.Status200OK);
         }
 
-        public async Task<Result<Orders>> CreateOrderAsync(OrderRequest request)
+        public async Task<Result<dynamic>> CreateOrderAsync(OrderRequest request)
         {
-            int totalAmount = 0;
             int orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
+
+            var cart = await _unitOfWork.Cart.GetCartByCustomerAsync(request.UserId);
+
+            if (cart == null)
+                return Result<dynamic>.Fail("Không tìm thấy giỏ hàng", StatusCodes.Status404NotFound);
+
+            List<ItemData> items = new List<ItemData>();
 
             var order = new Orders
             {
@@ -60,38 +71,44 @@ namespace FoodOrdering.Application.Services
                 UserId = request.UserId,
                 Address = request.Address,
                 Note = request.Note,
-                Status = Food_Ordering.Models.Enum.OrderStatus.Pending,
+                Status = OrderStatus.Pending,
+                ToTalAmount = request.TotalAmount,
                 PaymentMethod = "QRCODE",
                 TransactionId = orderCode
             };
 
-            foreach(var item in request.Menus)
+            foreach(var item in cart.CartItems)
             {
                 var orderItem = new OrderMenus
                 {
-                    OrderId = item.OrderId,
+                    OrderId = order.Id,
                     MenuId = item.MenuId,
                     Quantity = item.Quantity,
                     UnitPrice = item.UnitPrice,
                     SubTotal = item.Quantity * item.UnitPrice
                 };
 
-                totalAmount += orderItem.SubTotal;
+                items.Add(new ItemData(item.Menu.Name, item.Quantity, item.UnitPrice));
                 order.OrderMenus.Add(orderItem);
             }
 
-            order.ToTalAmount = totalAmount;
+            _unitOfWork.Cart.Remove(cart);
             await _unitOfWork.Order.AddAsync(order);
             await _unitOfWork.SaveChangeAsync();
+
+            var response = await _paymentGateway.CreatePaymentLink(request.TotalAmount, orderCode, items);
             
-            return Result<Orders>.Success("Tạo order thành công", order, StatusCodes.Status201Created);
+            return Result<dynamic>.Success("Tạo đơn thành công", response, StatusCodes.Status201Created);
         }
 
         public async Task<Result<PagingReponse<OrderDTO>>> GetAllAsyncByCustomer(Guid id, OrderParams orderParams)
         {
             var orders = _unitOfWork.Order.GetAll();
 
-            var ordersToDTO = await orders.Where(o => o.UserId == id).Select(o => new OrderDTO
+            var ordersToDTO = await orders
+                .Where(o => o.UserId == id && (o.Status == OrderStatus.Paid || o.Status == OrderStatus.Pending))
+                .OrderByDescending(o => o.OrderDate)
+                .Select(o => new OrderDTO
             {
                 Id = o.Id,
                 OrderDate = o.OrderDate,

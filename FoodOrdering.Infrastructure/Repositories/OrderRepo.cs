@@ -1,6 +1,7 @@
 ﻿using FoodOrdering.Application.Repositories;
 using FoodOrdering.Domain.Models;
 using FoodOrdering.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,9 +10,16 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Infrastructure.Repository
 {
-    public class OrderRepo : GenericRepo<Orders>, IOrderRepo 
-    {
-        public OrderRepo(FoodOrderingDbContext context) : base(context) { }
+    public class OrderRepo : GenericRepo<Orders>, IOrderRepo
+    {   
+        private readonly FoodOrderingDbContext _context;
+        public OrderRepo(FoodOrderingDbContext context) : base(context) {
+           _context = context;
+        }
 
+        public async Task<Orders?> GetOrderByOrderCode(int code)
+        {
+            return await _context.Orders.FirstOrDefaultAsync(o => o.TransactionId == code);
+        }
     }
 }
