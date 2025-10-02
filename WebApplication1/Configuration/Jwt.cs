@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Food_Ordering.Extensions
 {
-    public static class ConfigJwt
+    public static class Jwt
     {
         public static IServiceCollection AddJwtConfig(this IServiceCollection services) {
             Env.Load();

@@ -13,11 +13,12 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         private readonly ICategoryService _categoryService;
         private readonly IMenuService _menuService;
         private readonly IOrderService _orderService;
-
-        public AdminController(ICategoryService categoryService, IMenuService menuService, IOrderService orderService) { 
+        private readonly IUserService _userService;
+        public AdminController(ICategoryService categoryService, IMenuService menuService, IOrderService orderService, IUserService userService) { 
            _categoryService = categoryService;
            _menuService = menuService;
            _orderService = orderService;
+           _userService = userService;
         }
 
         [HttpPost("category")]
@@ -218,7 +219,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         }
 
         [HttpGet("order")]
-        public async Task<IActionResult> GetOrder([FromQuery] OrderParams orderParams)
+        public async Task<IActionResult> GetOrders([FromQuery] OrderParams orderParams)
         {
             try
             {
@@ -232,6 +233,29 @@ namespace FoodOrdering.Presentation.Controllers.Admin
                 });
             }
             catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    Message = ex.InnerException.Message ?? ex.Message,
+                    StatusCode = StatusCodes.Status400BadRequest
+                });
+            }
+        }
+
+        [HttpGet("user")]
+        public async Task<IActionResult> GetUsers([FromQuery] UserParams userParams)
+        {
+            try
+            {
+                var result = await _userService.GetAllAsync(userParams);
+
+                return Ok(new
+                {
+                    result.Message,
+                    result.Code,
+                    result.Data
+                });
+            }catch(Exception ex)
             {
                 return BadRequest(new
                 {
