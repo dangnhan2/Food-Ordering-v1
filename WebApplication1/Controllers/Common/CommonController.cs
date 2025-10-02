@@ -15,12 +15,14 @@ namespace FoodOrdering.Presentation.Controllers.Common
         private readonly IMenuService _menuService;
         private readonly ICartService _cartService;
         private readonly IOrderService _orderService;
-        public CommonController(ICategoryService categoryService, IMenuService menuService, ICartService cartService, IOrderService orderService)
+        private readonly IUserService _userService;
+        public CommonController(ICategoryService categoryService, IMenuService menuService, ICartService cartService, IOrderService orderService, IUserService userService)
         {
             _categoryService = categoryService;
             _menuService = menuService;
             _cartService = cartService;
             _orderService = orderService;
+            _userService = userService;
         }
 
         [HttpGet("category")]
@@ -221,6 +223,75 @@ namespace FoodOrdering.Presentation.Controllers.Common
                     result.Message,
                     result.Code,
                     result.Data
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    Message = ex.InnerException.Message ?? ex.Message,
+                    StatusCode = StatusCodes.Status400BadRequest
+                });
+            }
+        }
+
+        [HttpPut("user/avatar/{id}")]
+        public async Task<IActionResult> UploadAvatar(Guid id, IFormFile file)
+        {
+            try
+            {
+                var result = await _userService.UploadAvatarAsync(id, file);
+
+                if (!result.IsSuccess)
+                {
+                    return BadRequest(new
+                    {
+                        result.Message,
+                        result.Code,
+                    });
+                }
+
+                return Ok(new
+                {
+                    result.Message,
+                    result.Code,
+                });
+            }
+            catch (FileNotFoundException ex)
+            {
+                return BadRequest(new
+                {
+                    ex.Message,
+                    StatusCodes.Status400BadRequest
+                });
+            }
+            catch (Exception ex) {
+                return BadRequest(new
+                {
+                    Message = ex.InnerException.Message ?? ex.Message,
+                    StatusCode = StatusCodes.Status400BadRequest
+                });
+            }
+        }
+
+        [HttpPut("user/{id}")]
+        public async Task<IActionResult> UpdateUser(Guid id, UserRequest request)
+        {
+            try
+            {
+                var result = await _userService.UploadProfileAsync(id, request);
+
+                if (!result.IsSuccess) {
+                    return BadRequest(new
+                    {
+                        result.Message,
+                        result.Code,
+                    });
+                }
+                return Ok(new
+                {
+                    result.Message,
+                    result.Code
                 });
             }
             catch (Exception ex)

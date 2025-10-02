@@ -2,7 +2,7 @@
 
 namespace Food_Ordering.Extensions
 {
-    public static class ConfigSwagger
+    public static class Swagger
     {
         public static IServiceCollection AddSwaggerConfigure(this IServiceCollection services)
         {

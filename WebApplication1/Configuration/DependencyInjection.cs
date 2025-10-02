@@ -14,7 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Food_Ordering.Extensions
 {
-    public static class ConfigDependencyInjection
+    public static class DependencyInjection
     {
         public static IServiceCollection AddDI(this IServiceCollection services)
         {
@@ -32,7 +32,8 @@ namespace Food_Ordering.Extensions
             services.AddScoped<IOrderRepo, OrderRepo>();
             services.AddScoped<IOrderService, OrderService>();
             services.AddTransient<IPaymentGateway, PaymentGateway>();
-
+            services.AddScoped<IUserRepo, UserRepo>();
+            services.AddScoped<IUserService, UserService>();
             return services;
         }
     }
