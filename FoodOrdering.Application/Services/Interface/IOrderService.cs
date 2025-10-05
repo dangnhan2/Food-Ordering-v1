@@ -12,8 +12,8 @@ namespace FoodOrdering.Application.Services.Interface
 {
     public interface IOrderService
     {
-        public Task<Result<dynamic>> CreateOrderAsync(OrderRequest request);
-        public Task<Result<PagingReponse<OrderDTO>>> GetAllAsync(OrderParams orderParams);
-        public Task<Result<PagingReponse<OrderDTO>>> GetAllAsyncByCustomer(Guid id, OrderParams orderParams);
+        public Task<ApiResponse<dynamic>> CreateOrderAsync(OrderRequest request);
+        public Task<ApiResponse<PagingReponse<OrderDTO>>> GetAllAsync(OrderParams orderParams);
+        public Task<ApiResponse<PagingReponse<OrderDTO>>> GetAllAsyncByCustomer(Guid id, OrderParams orderParams);
     }
 }

@@ -13,8 +13,7 @@ namespace FoodOrdering.Application.Validator
         public LoginValidator() {
             // Kiểm tra trường Email
             RuleFor(x => x.Email)
-                .NotEmpty().WithMessage("Địa chỉ email không được để trống.")
-                .EmailAddress().WithMessage("Địa chỉ email không hợp lệ.");
+                .NotEmpty().WithMessage("Email không được để trống.");
 
             // Kiểm tra trường Password
             RuleFor(x => x.Password)

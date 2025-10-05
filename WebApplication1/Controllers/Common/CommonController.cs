@@ -35,7 +35,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
                 return Ok(new
                 {
                     result.Message,
-                    result.Code,
+                    result.StatusCode,
                     result.Data
                 });
             }
@@ -59,7 +59,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
                 return Ok(new
                 {
                     result.Message,
-                    result.Code,
+                    result.StatusCode,
                     result.Data
                 });
             }
@@ -85,14 +85,14 @@ namespace FoodOrdering.Presentation.Controllers.Common
                     return BadRequest(new
                     {
                         result.Message,
-                        result.Code
+                        result.StatusCode
                     });
                 }
 
                 return Ok(new
                 {
                     result.Message,
-                    result.Code,
+                    result.StatusCode,
                     result.Data
                 });
             }
@@ -118,14 +118,14 @@ namespace FoodOrdering.Presentation.Controllers.Common
                     return BadRequest(new
                     {
                         result.Message,
-                        result.Code
+                        result.StatusCode
                     });
                 }
 
                 return Ok(new
                 {
                     result.Message,
-                    result.Code,
+                    result.StatusCode,
                     result.Data
                 });
             }catch(Exception ex)
@@ -150,14 +150,14 @@ namespace FoodOrdering.Presentation.Controllers.Common
                     return BadRequest(new
                     {
                         result.Message,
-                        result.Code,
+                        result.StatusCode,
                     });
                 }
 
                 return Ok(new
                 {
                     result.Message,
-                    result.Code,
+                    result.StatusCode,
                 });
             }
             catch (Exception ex)
@@ -182,14 +182,14 @@ namespace FoodOrdering.Presentation.Controllers.Common
                     return BadRequest(new
                     {
                         result.Message,
-                        result.Code,
+                        result.StatusCode,
                     });
                 }
 
                 return Ok(new
                 {
                     result.Message,
-                    result.Code,
+                    result.StatusCode,
                 });
             }
             catch (Exception ex)
@@ -214,14 +214,14 @@ namespace FoodOrdering.Presentation.Controllers.Common
                     return BadRequest(new
                     {
                         result.Message,
-                        result.Code,
+                        result.StatusCode,
                     });
                 }
 
                 return Ok(new
                 {
                     result.Message,
-                    result.Code,
+                    result.StatusCode,
                     result.Data
                 });
             }
@@ -247,14 +247,14 @@ namespace FoodOrdering.Presentation.Controllers.Common
                     return BadRequest(new
                     {
                         result.Message,
-                        result.Code,
+                        result.StatusCode,
                     });
                 }
 
                 return Ok(new
                 {
                     result.Message,
-                    result.Code,
+                    result.StatusCode,
                 });
             }
             catch (FileNotFoundException ex)
@@ -285,13 +285,13 @@ namespace FoodOrdering.Presentation.Controllers.Common
                     return BadRequest(new
                     {
                         result.Message,
-                        result.Code,
+                        result.StatusCode,
                     });
                 }
                 return Ok(new
                 {
                     result.Message,
-                    result.Code
+                    result.StatusCode
                 });
             }
             catch (Exception ex)

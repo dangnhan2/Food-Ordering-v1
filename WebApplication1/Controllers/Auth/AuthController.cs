@@ -27,14 +27,14 @@ namespace FoodOrdering.Presentation.Controllers.Auth
                     return BadRequest(new
                     {
                         result.Message,
-                        result.Code
+                        result.StatusCode
                     });
                 }
 
                 return Ok(new
                 {
                     result.Message,
-                    result.Code,
+                    result.StatusCode,
                     result.Data
                 });
             }
@@ -60,14 +60,14 @@ namespace FoodOrdering.Presentation.Controllers.Auth
                     return BadRequest(new
                     {
                         result.Message,
-                        result.Code
+                        result.StatusCode
                     });
                 }
 
                 return Ok(new
                 {
                     result.Message,
-                    result.Code
+                    result.StatusCode
                 });
             }
             catch (Exception ex)
@@ -75,7 +75,7 @@ namespace FoodOrdering.Presentation.Controllers.Auth
                 return BadRequest(new
                 {
                     Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCodes.Status400BadRequest
+                    StatusCode = StatusCodes.Status400BadRequest
                 });
             }
         }
@@ -92,23 +92,15 @@ namespace FoodOrdering.Presentation.Controllers.Auth
                     return BadRequest(new
                     {
                         result.Message,
-                        result.Code
+                        result.StatusCode
                     });
                 }
 
                 return Ok(new
                 {
                     result.Message,
-                    result.Code,
+                    result.StatusCode,
                     result.Data
-                });
-            }
-            catch (NullReferenceException ex)
-            {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCodes.Status400BadRequest
                 });
             }
             catch (Exception ex)
@@ -116,7 +108,7 @@ namespace FoodOrdering.Presentation.Controllers.Auth
                 return BadRequest(new
                 {
                     Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCodes.Status400BadRequest
+                    StatusCode = StatusCodes.Status400BadRequest
                 });
             }
         }
@@ -132,14 +124,14 @@ namespace FoodOrdering.Presentation.Controllers.Auth
                     return BadRequest(new
                     {
                         result.Message,
-                        result.Code,
+                        result.StatusCode,
                     });
                 }
 
                 return Ok(new
                 {
                     result.Message,
-                    result.Code,
+                    result.StatusCode,
                 });
             }
             catch (Exception ex)
@@ -147,17 +139,41 @@ namespace FoodOrdering.Presentation.Controllers.Auth
                 return BadRequest(new
                 {
                     Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCodes.Status400BadRequest
-                });
-            }
-            finally
-            {
-                 BadRequest(new
-                {
-                    Message = "Đăng kí không thành công",
-                    Code = StatusCodes.Status400BadRequest
+                    StatusCode =  StatusCodes.Status400BadRequest
                 });
             }
         }
+
+        [HttpPost("verify-email")]
+        public async Task<IActionResult> VerifyEmail([FromBody] EmailVerifyRequest request)
+        {
+            try
+            {
+                var result = await _authService.VerifyEmail(request);
+
+                if (!result.IsSuccess)
+                {
+                    return BadRequest(new
+                    {
+                        result.Message,
+                        result.StatusCode,
+                    });
+                }
+
+                return Ok(new
+                {
+                    result.Message,
+                    result.StatusCode,
+                });
+            }catch(Exception ex)
+            {
+                return BadRequest(new
+                {
+                    Message = ex.InnerException.Message ?? ex.Message,
+                    StatusCodes.Status400BadRequest
+                });
+            }
+        }
+     
     }
 }

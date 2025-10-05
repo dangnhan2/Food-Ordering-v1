@@ -20,7 +20,7 @@ namespace FoodOrdering.Application.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<Result<Carts>> AddToCartAsync(CartRequest request)
+        public async Task<ApiResponse<Carts>> AddToCartAsync(CartRequest request)
         {
             var cart = new Carts
             {
@@ -46,15 +46,15 @@ namespace FoodOrdering.Application.Services
             await _unitOfWork.Cart.AddAsync(cart);
             await _unitOfWork.SaveChangeAsync();
 
-            return Result<Carts>.Success("Thêm vào giỏ hàng thành công", cart, StatusCodes.Status201Created);
+            return ApiResponse<Carts>.Success("Thêm vào giỏ hàng thành công", cart, StatusCodes.Status201Created);
         }
 
-        public async Task<Result<CartDTO>> GetCartByCustomer(Guid id)
+        public async Task<ApiResponse<CartDTO>> GetCartByCustomer(Guid id)
         {
             var cart = await _unitOfWork.Cart.GetCartByCustomerAsync(id);
 
             if (cart == null)
-                return Result<CartDTO>.Fail("Không tìm thấy giỏ hàng", StatusCodes.Status404NotFound);
+                return ApiResponse<CartDTO>.Fail("Không tìm thấy giỏ hàng", StatusCodes.Status404NotFound);
 
             var cartToDTO = new CartDTO
             {
@@ -71,15 +71,15 @@ namespace FoodOrdering.Application.Services
                 }).ToList()
             };
 
-            return Result<CartDTO>.Success("Lấy dữ liệu thành công", cartToDTO, StatusCodes.Status200OK);
+            return ApiResponse<CartDTO>.Success("Lấy dữ liệu thành công", cartToDTO, StatusCodes.Status200OK);
         }
 
-        public async Task<Result<Carts>> UpdateToCartAsync(Guid id, CartRequest request)
+        public async Task<ApiResponse<Carts>> UpdateToCartAsync(Guid id, CartRequest request)
         {
             var cart = await _unitOfWork.Cart.GetCartWithCartItemAsync(id);
 
             if(cart == null)            
-                return Result<Carts>.Fail("Không tìm thấy giỏ hàng", StatusCodes.Status404NotFound);
+                return ApiResponse<Carts>.Fail("Không tìm thấy giỏ hàng", StatusCodes.Status404NotFound);
 
             foreach(var dish in request.CartItems)
             {   
@@ -116,7 +116,7 @@ namespace FoodOrdering.Application.Services
 
             await _unitOfWork.SaveChangeAsync();
 
-            return Result<Carts>.Success("Cập nhật giỏ hàng thành công", cart, StatusCodes.Status200OK);
+            return ApiResponse<Carts>.Success("Cập nhật giỏ hàng thành công", cart, StatusCodes.Status200OK);
             
         }
     }

@@ -11,6 +11,6 @@ namespace FoodOrdering.Application.Services.Interface
     public interface ICloudinaryService
     {
         public Task DeleteImage(string url);
-        public Task<Result<string>> UploadImage(IFormFile file, string folder);
+        public Task<ApiResponse<string>> UploadImage(IFormFile file, string folder);
     }
 }

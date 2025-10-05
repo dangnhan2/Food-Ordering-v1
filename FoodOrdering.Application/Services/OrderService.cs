@@ -28,7 +28,7 @@ namespace FoodOrdering.Application.Services
             _paymentGateway = paymentGateway;
         }
 
-        public async Task<Result<PagingReponse<OrderDTO>>> GetAllAsync(OrderParams orderParams)
+        public async Task<ApiResponse<PagingReponse<OrderDTO>>> GetAllAsync(OrderParams orderParams)
         {
             var orders = _unitOfWork.Order.GetAll();
 
@@ -49,19 +49,19 @@ namespace FoodOrdering.Application.Services
                 }).ToList()
             }).Paging(orderParams.Page, orderParams.PageSize).ToListAsync();
 
-            return Result<PagingReponse<OrderDTO>>.Success("Lấy dữ liệu thành công",
+            return ApiResponse<PagingReponse<OrderDTO>>.Success("Lấy dữ liệu thành công",
                 new PagingReponse<OrderDTO>(orderParams.Page, orderParams.PageSize, orders.Count(), ordersToDTO),
                 StatusCodes.Status200OK);
         }
 
-        public async Task<Result<dynamic>> CreateOrderAsync(OrderRequest request)
+        public async Task<ApiResponse<dynamic>> CreateOrderAsync(OrderRequest request)
         {
             int orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
 
             var cart = await _unitOfWork.Cart.GetCartByCustomerAsync(request.UserId);
 
             if (cart == null)
-                return Result<dynamic>.Fail("Không tìm thấy giỏ hàng", StatusCodes.Status404NotFound);
+                return ApiResponse<dynamic>.Fail("Không tìm thấy giỏ hàng", StatusCodes.Status404NotFound);
 
             List<ItemData> items = new List<ItemData>();
 
@@ -98,10 +98,10 @@ namespace FoodOrdering.Application.Services
 
             var response = await _paymentGateway.CreatePaymentLink(request.TotalAmount, orderCode, items);
             
-            return Result<dynamic>.Success("Tạo đơn thành công", response, StatusCodes.Status201Created);
+            return ApiResponse<dynamic>.Success("Tạo đơn thành công", response, StatusCodes.Status201Created);
         }
 
-        public async Task<Result<PagingReponse<OrderDTO>>> GetAllAsyncByCustomer(Guid id, OrderParams orderParams)
+        public async Task<ApiResponse<PagingReponse<OrderDTO>>> GetAllAsyncByCustomer(Guid id, OrderParams orderParams)
         {
             var orders = _unitOfWork.Order.GetAll();
 
@@ -125,7 +125,7 @@ namespace FoodOrdering.Application.Services
                 }).ToList()
             }).Paging(orderParams.Page, orderParams.PageSize).ToListAsync();
 
-            return Result<PagingReponse<OrderDTO>>.Success("Lấy dữ liệu thành công",
+            return ApiResponse<PagingReponse<OrderDTO>>.Success("Lấy dữ liệu thành công",
                 new PagingReponse<OrderDTO>(orderParams.Page, orderParams.PageSize, orders.Count(), ordersToDTO),
                 StatusCodes.Status200OK);
         }

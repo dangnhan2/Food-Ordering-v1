@@ -31,7 +31,7 @@ namespace FoodOrdering.Application.Services
             _defaultAvatar = Env.GetString("DEFAULT_AVATAR");
         }
 
-        public async Task<Result<PagingReponse<UserDTO>>> GetAllAsync(UserParams userParams)
+        public async Task<ApiResponse<PagingReponse<UserDTO>>> GetAllAsync(UserParams userParams)
         {
             var users = _unitOfWork.User.GetAll();
 
@@ -53,17 +53,17 @@ namespace FoodOrdering.Application.Services
                 ImageUrl = u.ImageUrl,
             }).Paging(userParams.Page, userParams.PageSize).AsNoTracking().ToListAsync();
 
-            return Result<PagingReponse<UserDTO>>.Success("Lấy dữ liệu thành công",
+            return ApiResponse<PagingReponse<UserDTO>>.Success("Lấy dữ liệu thành công",
                 new PagingReponse<UserDTO>(userParams.Page, userParams.PageSize, users.Count(), usersToDTO),
                 StatusCodes.Status200OK);
         } 
 
-        public async Task<Result<User>> UploadAvatarAsync(Guid id, IFormFile file)
+        public async Task<ApiResponse<User>> UploadAvatarAsync(Guid id, IFormFile file)
         {
             var user = await _unitOfWork.User.GetByIdAsync(id);
 
             if (user == null)
-                return Result<User>.Fail("Không tìm thấy user", StatusCodes.Status404NotFound);
+                return ApiResponse<User>.Fail("Không tìm thấy user", StatusCodes.Status404NotFound);
 
             var url = await _cloudinaryService.UploadImage(file, folder);
             if (user.ImageUrl != _defaultAvatar)
@@ -79,11 +79,11 @@ namespace FoodOrdering.Application.Services
             _unitOfWork.User.Update(user);
             await _unitOfWork.SaveChangeAsync();
 
-            return Result<User>.Success("Upload thành công", user, StatusCodes.Status200OK);
+            return ApiResponse<User>.Success("Upload thành công", user, StatusCodes.Status200OK);
 
         }
 
-        public async Task<Result<User>> UploadProfileAsync(Guid id, UserRequest request)
+        public async Task<ApiResponse<User>> UploadProfileAsync(Guid id, UserRequest request)
         {
             var validator = new UserValidation();
             var result = await validator.ValidateAsync(request);
@@ -91,14 +91,14 @@ namespace FoodOrdering.Application.Services
             {
                 foreach(var error in result.Errors)
                 {
-                    return Result<User>.Fail(error.ErrorMessage, StatusCodes.Status400BadRequest);
+                    return ApiResponse<User>.Fail(error.ErrorMessage, StatusCodes.Status400BadRequest);
                 }
             }
 
             var user = await _unitOfWork.User.GetByIdAsync(id);
 
             if (user == null)
-                return Result<User>.Fail("Không tìm thấy user", StatusCodes.Status404NotFound);
+                return ApiResponse<User>.Fail("Không tìm thấy user", StatusCodes.Status404NotFound);
 
             user.FullName = request.FullName;
             user.Email = request.Email;
@@ -106,7 +106,7 @@ namespace FoodOrdering.Application.Services
             _unitOfWork.User.Update(user);
             await _unitOfWork.SaveChangeAsync();
 
-            return Result<User>.Success("Cập nhật thông tin người dùng thành công", user, StatusCodes.Status200OK);
+            return ApiResponse<User>.Success("Cập nhật thông tin người dùng thành công", user, StatusCodes.Status200OK);
 
         }
     }

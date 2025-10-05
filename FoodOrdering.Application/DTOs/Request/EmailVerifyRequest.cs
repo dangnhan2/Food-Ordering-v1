@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.DTOs.Request
 {
-    public class RegisterRequest
-    {   
+    public class EmailVerifyRequest
+    {
         public string Email { get; set; }
-        public string Password { get; set; }
-        public string ConfirmPassword { get; set; }
+        public string Otp { get; set; }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using FoodOrdering.Application.Repositories;
 using FoodOrdering.Domain.Models;
 using FoodOrdering.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,14 @@ namespace FoodOrdering.Infrastructure.Repository
 {
     public class UserRepo : GenericRepo<User>, IUserRepo
     {
-        public UserRepo(FoodOrderingDbContext context) : base(context) { }
+        private readonly FoodOrderingDbContext _context;
+        public UserRepo(FoodOrderingDbContext context) : base(context) {
+            _context = context;
+        }
+
+        public async Task<User?> GetUserByEmail(string email)
+        {
+            return await _context.Users.Include(u => u.EmailOtp).FirstOrDefaultAsync(u => u.Email == email);
+        }
     }
 }

@@ -13,8 +13,8 @@ namespace FoodOrdering.Application.Services.Interface
 {
     public interface IUserService
     {
-        public Task<Result<PagingReponse<UserDTO>>> GetAllAsync(UserParams userParams);
-        public Task<Result<User>> UploadProfileAsync(Guid id, UserRequest request);
-        public Task<Result<User>> UploadAvatarAsync(Guid id, IFormFile file);
+        public Task<ApiResponse<PagingReponse<UserDTO>>> GetAllAsync(UserParams userParams);
+        public Task<ApiResponse<User>> UploadProfileAsync(Guid id, UserRequest request);
+        public Task<ApiResponse<User>> UploadAvatarAsync(Guid id, IFormFile file);
     }
 }

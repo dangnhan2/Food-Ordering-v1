@@ -27,27 +27,21 @@ namespace FoodOrdering.Application.Services
             _cloudinaryService = cloudinaryService;
         }
 
-        public async Task<Result<Menus>> AddAsync(MenuRequest request)
+        public async Task<ApiResponse<Menus>> AddAsync(MenuRequest request)
         {
-            var validator = new MenuValidatior();
-            var result = await validator.ValidateAsync(request);
-            if (!result.IsValid)
-            {
-                foreach (var error in result.Errors)
-                {
-                    return Result<Menus>.Fail($"{error.ErrorMessage}", 400);
-                }
-            }
-            
+            var result = await new MenuValidatior().ValidateAsync(request);
+            if (!result.IsValid)            
+                 return ApiResponse<Menus>.Fail(result.ToDictionary(), 400);
+                      
             var menus = _unitOfWork.Menu.GetAll();
 
             if (menus.Any(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower()))
-                return Result<Menus>.Fail($"Menu {request.Name} đã tồn tại", StatusCodes.Status400BadRequest);
+                return ApiResponse<Menus>.Fail($"Menu {request.Name} đã tồn tại", StatusCodes.Status400BadRequest);
 
             var url = await _cloudinaryService.UploadImage(request.ImageUrl, folder);
 
             if (!url.IsSuccess)
-                return Result<Menus>.Fail(url.Message, 400);
+                return ApiResponse<Menus>.Fail(url.Message, 400);
 
             var menu = new Menus
             {
@@ -64,23 +58,23 @@ namespace FoodOrdering.Application.Services
             await _unitOfWork.Menu.AddAsync(menu);
             await _unitOfWork.SaveChangeAsync();
 
-            return Result<Menus>.Success($"Thêm menu {menu.Name} thành công",menu, StatusCodes.Status201Created);
+            return ApiResponse<Menus>.Success($"Thêm menu {menu.Name} thành công",menu, StatusCodes.Status201Created);
         }
 
-        public async Task<Result<Menus>> DeleteAsync(Guid id)
+        public async Task<ApiResponse<Menus>> DeleteAsync(Guid id)
         {
             var menu = await _unitOfWork.Menu.GetByIdAsync(id);
 
             if(menu == null)            
-                return Result<Menus>.Fail("Không tìm thấy menu", StatusCodes.Status404NotFound);
+                return ApiResponse<Menus>.Fail("Không tìm thấy menu", StatusCodes.Status404NotFound);
             
             _unitOfWork.Menu.Remove(menu);
             await _unitOfWork.SaveChangeAsync();
 
-            return Result<Menus>.Success($"Xóa menu {menu.Name} thành công", menu, StatusCodes.Status200OK);
+            return ApiResponse<Menus>.Success($"Xóa menu {menu.Name} thành công", menu, StatusCodes.Status200OK);
         }
 
-        public async Task<Result<PagingReponse<MenuDTO>>> GetAllAsync(MenuParams menuParams)
+        public async Task<ApiResponse<PagingReponse<MenuDTO>>> GetAllAsync(MenuParams menuParams)
         {
             var menus = _unitOfWork.Menu.GetAll();
 
@@ -120,18 +114,18 @@ namespace FoodOrdering.Application.Services
                 StockQuantity = m.StockQuantity
             }).Paging(menuParams.Page, menuParams.PageSize).AsNoTracking().ToListAsync();
 
-            return Result<PagingReponse<MenuDTO>>.Success(
+            return ApiResponse<PagingReponse<MenuDTO>>.Success(
                 "Lấy dữ liệu thành công",
                 new PagingReponse<MenuDTO>(menuParams.Page, menuParams.PageSize, menus.Count(), menusToDTO), 
                 StatusCodes.Status200OK);
         }
 
-        public async Task<Result<MenuDTO>> GetByIdAsync(Guid id)
+        public async Task<ApiResponse<MenuDTO>> GetByIdAsync(Guid id)
         {
             var menu = await _unitOfWork.Menu.GetMenuWithCategoryAsync(id);
   
             if (menu == null)
-               return Result<MenuDTO>.Fail("Không tìm thấy menu", StatusCodes.Status404NotFound);
+               return ApiResponse<MenuDTO>.Fail("Không tìm thấy menu", StatusCodes.Status404NotFound);
            
             var menuToDto = new MenuDTO
             {
@@ -146,30 +140,24 @@ namespace FoodOrdering.Application.Services
                 StockQuantity = menu.StockQuantity
             };
 
-            return Result<MenuDTO>.Success("Lấy dữ liệu thành công", menuToDto, StatusCodes.Status200OK);
+            return ApiResponse<MenuDTO>.Success("Lấy dữ liệu thành công", menuToDto, StatusCodes.Status200OK);
         }
 
-        public async Task<Result<Menus>> UpdateAsync(Guid id, MenuRequest request)
+        public async Task<ApiResponse<Menus>> UpdateAsync(Guid id, MenuRequest request)
         {
-            var validator = new MenuValidatior();
-            var result = await validator.ValidateAsync(request);
+            var result = await new MenuValidatior().ValidateAsync(request);
             if (!result.IsValid)
-            {
-                foreach (var error in result.Errors)
-                {
-                    return Result<Menus>.Fail($"{error.ErrorMessage}", 400);
-                }
-            }
+                return ApiResponse<Menus>.Fail(result.ToDictionary(), 400);
 
             var menu = await _unitOfWork.Menu.GetByIdAsync(id);
 
             if (menu == null)
-                return Result<Menus>.Fail("Không tìm thấy menu", StatusCodes.Status404NotFound);
+                return ApiResponse<Menus>.Fail("Không tìm thấy menu", StatusCodes.Status404NotFound);
 
             var menus = _unitOfWork.Menu.GetAll();
 
             if (menus.Any(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower() && m.Id != id))
-                return Result<Menus>.Fail($"Menu {request.Name} đã tồn tại", StatusCodes.Status400BadRequest);
+                return ApiResponse<Menus>.Fail($"Menu {request.Name} đã tồn tại", StatusCodes.Status400BadRequest);
 
             if (request.ImageUrl != null)
             {
@@ -185,7 +173,7 @@ namespace FoodOrdering.Application.Services
             menu.IsAvailable = request.IsAvailble;
             menu.StockQuantity = request.StockQuantity;
 
-            return Result<Menus>.Success($"Cập nhật {menu.Name} thành công", menu, StatusCodes.Status200OK);
+            return ApiResponse<Menus>.Success($"Cập nhật {menu.Name} thành công", menu, StatusCodes.Status200OK);
         }
 
     }
