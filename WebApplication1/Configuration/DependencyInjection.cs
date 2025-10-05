@@ -1,11 +1,13 @@
 ﻿using CloudinaryDotNet;
 using FoodOrdering.Application;
 using FoodOrdering.Application.Auth;
+using FoodOrdering.Application.Email;
 using FoodOrdering.Application.Payment;
 using FoodOrdering.Application.Repositories;
 using FoodOrdering.Application.Services;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Infrastructure;
+using FoodOrdering.Infrastructure.Email;
 using FoodOrdering.Infrastructure.Identity;
 using FoodOrdering.Infrastructure.Payment;
 using FoodOrdering.Infrastructure.Repositories;
@@ -20,7 +22,6 @@ namespace Food_Ordering.Extensions
         {
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped(typeof(IGenericRepo<>), typeof(GenericRepo<>));
-            services.AddTransient<ICloudinaryService, CLoudinaryService>();
             services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped<ICategoryRepo, CategoryRepo>();
             services.AddScoped<IMenuRepo, MenuRepo>();
@@ -31,9 +32,13 @@ namespace Food_Ordering.Extensions
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IOrderRepo, OrderRepo>();
             services.AddScoped<IOrderService, OrderService>();
-            services.AddTransient<IPaymentGateway, PaymentGateway>();
             services.AddScoped<IUserRepo, UserRepo>();
             services.AddScoped<IUserService, UserService>();
+
+            services.AddTransient<ICloudinaryService, CLoudinaryService>();
+            services.AddTransient<IPaymentGateway, PaymentGateway>();
+            services.AddTransient<IEmailService, EmailService>();
+
             return services;
         }
     }

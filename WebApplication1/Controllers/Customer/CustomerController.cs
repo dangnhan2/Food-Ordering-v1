@@ -26,7 +26,7 @@ namespace FoodOrdering.Presentation.Controllers.Customer
                 return Ok(new
                 {
                     result.Message,
-                    result.Code,
+                    result.StatusCode,
                     result.Data
                 });
             }

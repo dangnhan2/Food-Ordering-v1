@@ -13,6 +13,6 @@ namespace FoodOrdering.Application.Payment
     {
         public Task<dynamic> CreatePaymentLink(int amount, int orderCode, List<ItemData> data);
         public Task<string> ConfirmWebHook(string url);
-        public Task<Result<string>> CallBack(HttpRequest request);
+        public Task<ApiResponse<string>> CallBack(HttpRequest request);
     }
 }

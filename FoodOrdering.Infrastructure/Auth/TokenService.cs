@@ -104,22 +104,22 @@ namespace FoodOrdering.Infrastructure.Identity
             return authResponse;
         }
 
-        public async Task<AuthResponse> GenerateToken(string refresh, HttpContext context)
+        public async Task<ApiResponse<AuthResponse>> GenerateRefreshToken(HttpContext context)
         {
-            var refreshToken = await _unitOfWork.RefreshToken.GetTokenByRefreshToken(refresh);
+            var refreshToken = context.Request.Cookies["refresh_token"];
+            if (refreshToken == null)
+                return ApiResponse<AuthResponse>.Fail("Token is invalid", StatusCodes.Status401Unauthorized);
 
-            if (refreshToken == null || refreshToken.ExpriedAt < DateTime.UtcNow)
-            {
-                throw new NullReferenceException("Token is invalid");
-            }
+            var existRefreshToken = await _unitOfWork.RefreshToken.GetTokenByRefreshToken(refreshToken);
 
-            var user = refreshToken.User;
+            if (existRefreshToken == null || existRefreshToken.ExpriedAt < DateTime.UtcNow)
+                return ApiResponse<AuthResponse>.Fail("Token is invalid", StatusCodes.Status401Unauthorized);
 
-            _unitOfWork.RefreshToken.Remove(refreshToken);
-            await _unitOfWork.SaveChangeAsync();           
+            var user = existRefreshToken.User;
 
+            _unitOfWork.RefreshToken.Remove(existRefreshToken);          
             var authResponse = await GenerateToken(user, context);
-            return authResponse;
+            return ApiResponse<AuthResponse>.Success("Refresh token successfull", authResponse, StatusCodes.Status200OK);
         }
     }
 }

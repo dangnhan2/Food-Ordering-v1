@@ -24,7 +24,7 @@ namespace FoodOrdering.Application.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<Result<IEnumerable<CategoryDTO>>> GetAllAsync()
+        public async Task<ApiResponse<IEnumerable<CategoryDTO>>> GetAllAsync()
         {
             var categories = _unitOfWork.Category.GetAll();
 
@@ -34,21 +34,14 @@ namespace FoodOrdering.Application.Services
                 Name = c.Name,
             }).ToListAsync();
 
-            return Result<IEnumerable<CategoryDTO>>.Success("Lấy dữ liệu thành công", categoriesToDTO, 200);
+            return ApiResponse<IEnumerable<CategoryDTO>>.Success("Lấy dữ liệu thành công", categoriesToDTO, 200);
         }
 
-        public async Task<Result<Categories>> AddAsync(CategoryRequest request)
+        public async Task<ApiResponse<Categories>> AddAsync(CategoryRequest request)
         {
-            var validator = new CategoryValidator();
-            var result = await validator.ValidateAsync(request);
-
-            if (!result.IsValid)
-            {
-                foreach (var error in result.Errors)
-                {
-                    return Result<Categories>.Fail($"{error.ErrorMessage}", 400);
-                }
-            }
+            var result = await new CategoryValidator().ValidateAsync(request);
+            if (!result.IsValid)          
+               return ApiResponse<Categories>.Fail(result.ToDictionary(), 400);
 
             Categories categories = new Categories
             {
@@ -58,10 +51,10 @@ namespace FoodOrdering.Application.Services
             await _unitOfWork.Category.AddAsync(categories);
             await _unitOfWork.SaveChangeAsync();
 
-            return Result<Categories>.Success($"Thêm menu {request.Name} thành công", categories, 201);
+            return ApiResponse<Categories>.Success($"Thêm menu {request.Name} thành công", categories, 201);
         }
 
-        public async Task<Result<Categories>> UpdateAsync(Guid id, CategoryRequest request)
+        public async Task<ApiResponse<Categories>> UpdateAsync(Guid id, CategoryRequest request)
         {
             var validator = new CategoryValidator();
             var result = await validator.ValidateAsync(request);
@@ -70,7 +63,7 @@ namespace FoodOrdering.Application.Services
             {
                 foreach (var error in result.Errors)
                 {
-                    return Result<Categories>.Fail($"{error.ErrorMessage}", 400);
+                    return ApiResponse<Categories>.Fail($"{error.ErrorMessage}", 400);
                 }
             }
             
@@ -79,12 +72,12 @@ namespace FoodOrdering.Application.Services
 
             if (category == null)
             {
-                return Result<Categories>.Fail("Không tìm thấy menu", 404);
+                return ApiResponse<Categories>.Fail("Không tìm thấy menu", 404);
             }
 
             if (categories.Any(c => c.Name.Equals(request.Name) && c.Id != id))
             {
-                return Result<Categories>.Fail("Menu đã tồn tại", 400);
+                return ApiResponse<Categories>.Fail("Menu đã tồn tại", 400);
             }
 
             category.Name = request.Name;
@@ -92,22 +85,22 @@ namespace FoodOrdering.Application.Services
             _unitOfWork.Category.Update(category);
             await _unitOfWork.SaveChangeAsync();
 
-            return Result<Categories>.Success($"Cập nhật menu {request.Name} thành công", category, 200);
+            return ApiResponse<Categories>.Success($"Cập nhật menu {request.Name} thành công", category, 200);
         }
 
-        public async Task<Result<Categories>> DeleteAsync(Guid id)
+        public async Task<ApiResponse<Categories>> DeleteAsync(Guid id)
         {
             var category = await _unitOfWork.Category.GetByIdAsync(id);
 
             if (category == null)
             {
-                return Result<Categories>.Fail("Không tìm thấy menu", 404);
+                return ApiResponse<Categories>.Fail("Không tìm thấy menu", 404);
             }
 
             _unitOfWork.Category.Remove(category);
             await _unitOfWork.SaveChangeAsync();
 
-            return Result<Categories>.Success($"Xóa menu {category.Name} thành công", category, 200);
+            return ApiResponse<Categories>.Success($"Xóa menu {category.Name} thành công", category, 200);
         }
     }
 }

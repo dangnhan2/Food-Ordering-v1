@@ -36,13 +36,13 @@ namespace FoodOrdering.Infrastructure.Payment
             _checksumKey = Env.GetString("PAYOS_CHECKSUM_KEY");
         }
 
-        public async Task<Result<string>> CallBack(HttpRequest request)
+        public async Task<ApiResponse<string>> CallBack(HttpRequest request)
         {
             using var reader = new StreamReader(request.Body, Encoding.UTF8);
             var rawJson = await reader.ReadToEndAsync();
 
             if (string.IsNullOrWhiteSpace(rawJson))
-                return Result<string>.Fail("Empty body", StatusCodes.Status400BadRequest);
+                return ApiResponse<string>.Fail("Empty body", StatusCodes.Status400BadRequest);
 
             //Console.WriteLine("Webhook raw: " + rawJson);
 
@@ -52,7 +52,7 @@ namespace FoodOrdering.Infrastructure.Payment
             var data = root["data"] as JObject;
 
             if (string.IsNullOrEmpty(signatureProvided) || data == null)
-                return Result<string>.Fail("Invalid payload", StatusCodes.Status400BadRequest);
+                return ApiResponse<string>.Fail("Invalid payload", StatusCodes.Status400BadRequest);
 
             // Build transactionStr = key=value&key2=value2...
             var sorted = data.Properties().OrderBy(p => p.Name, StringComparer.Ordinal).ToList();
@@ -72,25 +72,25 @@ namespace FoodOrdering.Infrastructure.Payment
 
             if (!string.Equals(signatureProvided, signatureComputed, StringComparison.OrdinalIgnoreCase))
             {
-                return Result<string>.Fail("Invalid signature", StatusCodes.Status401Unauthorized);
+                return ApiResponse<string>.Fail("Invalid signature", StatusCodes.Status401Unauthorized);
             }
 
             // check order if success 
             var code = data["orderCode"].ToObject<int>();
             if (code == null)
-                return Result<string>.Fail("Mã đơn hàng không hợp lệ", StatusCodes.Status400BadRequest);
+                return ApiResponse<string>.Fail("Mã đơn hàng không hợp lệ", StatusCodes.Status400BadRequest);
 
             var order = await _unitOfWork.Order.GetOrderByOrderCode(code);
 
             if (order == null)            
-                return Result<string>.Fail("Không tìm thấy order", StatusCodes.Status404NotFound);
+                return ApiResponse<string>.Fail("Không tìm thấy order", StatusCodes.Status404NotFound);
 
             order.Status = Food_Ordering.Models.Enum.OrderStatus.Paid;
 
             _unitOfWork.Order.Update(order);
             await _unitOfWork.SaveChangeAsync();
 
-            return Result<string>.Success("Webhook processed successfully", "", StatusCodes.Status200OK);
+            return ApiResponse<string>.Success("Webhook processed successfully", "", StatusCodes.Status200OK);
         }
 
         public async Task<string> ConfirmWebHook(string url)

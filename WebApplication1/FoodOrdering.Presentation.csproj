@@ -33,4 +33,8 @@
     <ProjectReference Include="..\FoodOrdering.Infrastructure\FoodOrdering.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Middleware\" />
+  </ItemGroup>
+
 </Project>

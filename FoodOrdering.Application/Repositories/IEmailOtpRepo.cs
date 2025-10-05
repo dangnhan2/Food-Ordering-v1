@@ -7,9 +7,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Repositories
 {
-    public interface IUserRepo : IGenericRepo<User>
+    public interface IEmailOtpRepo : IGenericRepo<EmailOtp>
     {
-        public Task<User?> GetUserByEmail(string email);
-
     }
 }

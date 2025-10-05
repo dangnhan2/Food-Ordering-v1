@@ -13,10 +13,10 @@ namespace FoodOrdering.Application.Services.Interface
 {
     public interface IMenuService
     {
-        public Task<Result<PagingReponse<MenuDTO>>> GetAllAsync(MenuParams menuParams);
-        public Task<Result<MenuDTO>> GetByIdAsync(Guid id);
-        public Task<Result<Menus>> AddAsync(MenuRequest request);
-        public Task<Result<Menus>> UpdateAsync(Guid id, MenuRequest request);
-        public Task<Result<Menus>> DeleteAsync(Guid id);
+        public Task<ApiResponse<PagingReponse<MenuDTO>>> GetAllAsync(MenuParams menuParams);
+        public Task<ApiResponse<MenuDTO>> GetByIdAsync(Guid id);
+        public Task<ApiResponse<Menus>> AddAsync(MenuRequest request);
+        public Task<ApiResponse<Menus>> UpdateAsync(Guid id, MenuRequest request);
+        public Task<ApiResponse<Menus>> DeleteAsync(Guid id);
     }
 }

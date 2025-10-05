@@ -3,9 +3,11 @@ using FoodOrdering.Application;
 using FoodOrdering.Application.Auth;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
+using FoodOrdering.Application.Email;
 using FoodOrdering.Application.Extension;
 using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
+using FoodOrdering.Infrastructure.Email;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +16,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Net.WebRequestMethods;
 
 namespace FoodOrdering.Infrastructure.Identity
 {
@@ -23,46 +26,46 @@ namespace FoodOrdering.Infrastructure.Identity
         private readonly ITokenService _tokenService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly string _avatar;
-
-        public AuthService(UserManager<User> userManager, ITokenService tokenService, IUnitOfWork unitOfWork)
+        private readonly IEmailService _emailService;
+      
+        public AuthService(UserManager<User> userManager, ITokenService tokenService, IUnitOfWork unitOfWork, IEmailService emailService)
         {
             Env.Load();
             _userManager = userManager;
             _tokenService = tokenService;
             _unitOfWork = unitOfWork;
             _avatar = Env.GetString("DEFAULT_AVATAR");
+            _emailService = emailService;        
         }
 
-        public async Task<Result<AuthResponse>> LoginAsync(LoginRequest request, HttpContext context)
+        public async Task<ApiResponse<AuthResponse>> LoginAsync(LoginRequest request, HttpContext context)
         {
-            var validator = new LoginValidator();
-            var result = await validator.ValidateAsync(request);
+            var result = await new LoginValidator().ValidateAsync(request);
             if (!result.IsValid)
-            {
-                foreach (var error in result.Errors)
-                {
-                    return Result<AuthResponse>.Fail(error.ErrorMessage, StatusCodes.Status400BadRequest);
-                }
-            }
+                return ApiResponse<AuthResponse>.Fail(result.ToDictionary(), StatusCodes.Status400BadRequest);           
 
             var user = await _userManager.FindByEmailAsync(request.Email);
             var isPasswordValid = await _userManager.CheckPasswordAsync(user, request.Password);
 
             if(user == null || !isPasswordValid)          
-                return Result<AuthResponse>.Fail("Thông tin đăng nhập không đúng", StatusCodes.Status400BadRequest);
-
+                return ApiResponse<AuthResponse>.Fail("Thông tin đăng nhập không đúng", StatusCodes.Status400BadRequest);
+            
             var authResponse = await _tokenService.GenerateToken(user, context);
 
-            return Result<AuthResponse>.Success("Đăng nhập thành công", authResponse, StatusCodes.Status200OK);
+            return ApiResponse<AuthResponse>.Success("Đăng nhập thành công", authResponse, StatusCodes.Status200OK);
         }
 
-        public async Task<Result<RefreshTokens>> LogoutAsync(HttpContext context)
+        public async Task<ApiResponse<RefreshTokens>> LogoutAsync(HttpContext context)
         {   
             var refreshToken =  context.Request.Cookies["refresh_token"];
+            
+            if(refreshToken == null) 
+                return ApiResponse<RefreshTokens>.Fail("Token is invalid", StatusCodes.Status401Unauthorized);
+
             var isExistToken = await _unitOfWork.RefreshToken.GetTokenByRefreshToken(refreshToken);
 
             if (isExistToken == null || isExistToken.ExpriedAt < DateTime.UtcNow)
-                return Result<RefreshTokens>.Fail("Token is invalid", StatusCodes.Status401Unauthorized);
+                return ApiResponse<RefreshTokens>.Fail("Token is invalid", StatusCodes.Status401Unauthorized);
 
             _unitOfWork.RefreshToken.Remove(isExistToken);
             await _unitOfWork.SaveChangeAsync();
@@ -78,51 +81,117 @@ namespace FoodOrdering.Infrastructure.Identity
                     Expires = DateTimeOffset.UnixEpoch
                 });
 
-            return Result<RefreshTokens>.Success("Đăng xuất thành công", isExistToken, StatusCodes.Status200OK);
+            return ApiResponse<RefreshTokens>.Success("Đăng xuất thành công", isExistToken, StatusCodes.Status200OK);
         }
 
-        public async Task<Result<AuthResponse>> RefreshTokenAsync(HttpContext context)
-        {   
-            var refreshToken = context.Request.Cookies["refresh_token"];
-            var authResponse = await _tokenService.GenerateToken(refreshToken, context);
-
-            return Result<AuthResponse>.Success("Refresh token successfull", authResponse, StatusCodes.Status200OK);
+        public async Task<ApiResponse<AuthResponse>> RefreshTokenAsync(HttpContext context)
+        {              
+            var response = await _tokenService.GenerateRefreshToken(context);
+            return ApiResponse<AuthResponse>.Success(response.Message, response.Data, response.StatusCode);
         }
 
-        public async Task<Result<User>> RegisterAsync(RegisterRequest request)
+        public async Task<ApiResponse<User>> RegisterAsync(RegisterRequest request)
         {
-                var validator = new RegisterValidator();
-                var result = await validator.ValidateAsync(request);
-                if (!result.IsValid)
-                {
-                    foreach (var error in result.Errors)
-                    {
-                        return Result<User>.Fail(error.ErrorMessage, StatusCodes.Status400BadRequest);
-                    }
-                }
+            var result = await new RegisterValidator().ValidateAsync(request);
 
-                var user = await _userManager.FindByEmailAsync(request.Email);
+            if (!result.IsValid)               
+               return ApiResponse<User>.Fail(result.ToDictionary(), StatusCodes.Status400BadRequest);
 
-                if (user != null)
-                    return Result<User>.Fail("Email đã được đăng kí", StatusCodes.Status400BadRequest);
+            var isExistUser = await _userManager.FindByEmailAsync(request.Email);
 
-                var newUser = new User
+            if (isExistUser != null)
+                return ApiResponse<User>.Fail("Email đã được đăng kí", StatusCodes.Status400BadRequest);
+
+            var newUser = new User
+            {
+                Id = Guid.NewGuid(),
+                UserName = GenerateString(),
+                FullName = GenerateString(),
+                ImageUrl = _avatar,
+                Email = request.Email,
+                NormalizedEmail = request.Email.ToUpper(),
+                PhoneNumber = null,
+                PhoneNumberConfirmed = false
+            };
+
+            var response = await _userManager.CreateAsync(newUser, request.Password);
+
+            if (!response.Succeeded)
+                return ApiResponse<User>.Fail($"Đăng kí không thành công : ${response.ToString()}", StatusCodes.Status400BadRequest);
+
+            //Create an EmailOtp object
+            var otp =  await GenerateOtp(newUser.Id);          
+          
+            // Add user to role
+            await _userManager.AddToRoleAsync(newUser, "Customer");
+
+            var htmlBody = $"<p>Mã xác nhận email của bạn là:</p> " +
+                $" <p class=\"otp\">{otp}</p> " +
+                $"<p>Mã sẽ hết hạn trong {5} phút. Không chia sẻ mã otp này cho bất kì ai</p>";
+
+            await _emailService.EmailSender(newUser.Email, "Mã xác nhận email", htmlBody);
+
+            return ApiResponse<User>.Success("Đăng kí thành công. Email đã được gửi tới email của bạn.", newUser, StatusCodes.Status200OK);           
+        }
+
+        public async Task<ApiResponse<string>> VerifyEmail(EmailVerifyRequest request)
+        {
+            var isExistUser = await _unitOfWork.User.GetUserByEmail(request.Email);
+
+            if(isExistUser == null)
+                return ApiResponse<string>.Fail("Không tìm thấy email", StatusCodes.Status404NotFound);
+
+            if (isExistUser.EmailConfirmed)
+                return ApiResponse<string>.Fail("Email đã được xác thực", StatusCodes.Status400BadRequest);
+
+            if (isExistUser.EmailOtp.Otp != request.Otp)
+                return ApiResponse<string>.Fail("Mã otp không hợp lệ hoặc hết hạn", StatusCodes.Status400BadRequest);
+
+            isExistUser.EmailConfirmed = true;
+
+            _unitOfWork.EmailOtp.Remove(isExistUser.EmailOtp);
+            await _userManager.UpdateAsync(isExistUser);
+            await _unitOfWork.SaveChangeAsync();
+
+            return ApiResponse<string>.Success("Xác nhận email thành công", "", StatusCodes.Status200OK);
+        }
+
+        private string GenerateString()
+        {
+            Random res = new Random();
+            string str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            int size = 10;
+
+            StringBuilder sb = new StringBuilder(size);
+
+            for (int i = 0; i < size; i++)
+            {
+                sb.Append(str[res.Next(str.Length)]);
+            }
+
+            return sb.ToString();
+        }
+        private async Task<string> GenerateOtp(Guid id)
+        {
+            try
+            {
+                var otp = new Random().Next(100000, 999999).ToString();
+
+                var emailOtp = new EmailOtp
                 {
                     Id = Guid.NewGuid(),
-                    Email = request.Email,
-                    UserName = request.FullName,
-                    NormalizedEmail = request.Email.ToUpper(),
-                    FullName = request.FullName,
-                    ImageUrl = _avatar
+                    UserId = id,
+                    Otp = otp
                 };
 
-                var response = await _userManager.CreateAsync(newUser, request.Password);
-                if (!response.Succeeded)
-                    return Result<User>.Fail("Đăng kí không thành công", StatusCodes.Status400BadRequest);
+                await _unitOfWork.EmailOtp.AddAsync(emailOtp);
+                await _unitOfWork.SaveChangeAsync();
 
-                await _userManager.AddToRoleAsync(newUser, "Customer");
-
-                return Result<User>.Success("Đăng kí thành công", newUser, StatusCodes.Status200OK);
+                return otp;
+            }catch(Exception ex)
+            {
+                throw;
+            }
             
         }
     }
