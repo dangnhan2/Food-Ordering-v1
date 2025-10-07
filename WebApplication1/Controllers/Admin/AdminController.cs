@@ -3,6 +3,7 @@ using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Twilio.Http;
 
 namespace FoodOrdering.Presentation.Controllers.Admin
 {
@@ -14,11 +15,14 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         private readonly IMenuService _menuService;
         private readonly IOrderService _orderService;
         private readonly IUserService _userService;
-        public AdminController(ICategoryService categoryService, IMenuService menuService, IOrderService orderService, IUserService userService) { 
-           _categoryService = categoryService;
-           _menuService = menuService;
-           _orderService = orderService;
-           _userService = userService;
+        private readonly IVoucherService _voucherService;
+        public AdminController(ICategoryService categoryService, IMenuService menuService, IOrderService orderService, IUserService userService, IVoucherService voucherService)
+        {
+            _categoryService = categoryService;
+            _menuService = menuService;
+            _orderService = orderService;
+            _userService = userService;
+            _voucherService = voucherService;
         }
 
         [HttpPost("category")]
@@ -42,12 +46,13 @@ namespace FoodOrdering.Presentation.Controllers.Admin
                     result.Message,
                     result.StatusCode,
                 });
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 return BadRequest(new
                 {
-                     Message = ex.InnerException.Message ?? ex.Message,
-                     StatusCodes.Status400BadRequest
+                    Message = ex.InnerException.Message ?? ex.Message,
+                    StatusCodes.Status400BadRequest
                 });
             }
         }
@@ -105,7 +110,8 @@ namespace FoodOrdering.Presentation.Controllers.Admin
                     result.Message,
                     result.StatusCode,
                 });
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 return BadRequest(new
                 {
@@ -136,7 +142,8 @@ namespace FoodOrdering.Presentation.Controllers.Admin
                     result.Message,
                     result.StatusCode
                 });
-            }catch(FileNotFoundException ex)
+            }
+            catch (FileNotFoundException ex)
             {
                 return BadRequest(new
                 {
@@ -144,7 +151,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
                     StatusCode = StatusCodes.Status400BadRequest
                 });
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return BadRequest(new
                 {
@@ -255,7 +262,8 @@ namespace FoodOrdering.Presentation.Controllers.Admin
                     result.StatusCode,
                     result.Data
                 });
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 return BadRequest(new
                 {
@@ -265,5 +273,130 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             }
         }
 
+        [HttpGet("voucher")]
+        public async Task<IActionResult> GetVoucher([FromQuery] VoucherParams voucherParams)
+        {
+            try
+            {
+                var result = await _voucherService.GetAllAsync(voucherParams);
+
+                if (!result.IsSuccess)
+                {
+                    return BadRequest(new
+                    {
+                        result.Message,
+                        result.StatusCode,
+                    });
+                }
+
+                return Ok(new
+                {
+                    result.Message,
+                    result.StatusCode,
+                    result.Data
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    Message = ex.InnerException?.Message ?? ex.Message,
+                    StatusCode = StatusCodes.Status400BadRequest
+                });
+            }
+        }
+
+        [HttpPost("voucher")]
+        public async Task<IActionResult> CreateVoucher([FromBody] VoucherRequest request)
+        {
+            try
+            {
+                var result = await _voucherService.AddAsync(request);
+
+                if (!result.IsSuccess)
+                {
+                    return BadRequest(new
+                    {
+                        result.Message,
+                        result.StatusCode,
+                    });
+                }
+                return Ok(new
+                {
+                    result.Message,
+                    result.StatusCode,
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    Message = ex.InnerException?.Message ?? ex.Message,
+                    StatusCode = StatusCodes.Status400BadRequest
+                });
+            }
+        }
+
+        [HttpPut("voucher/{id}")]
+        public async Task<IActionResult> UpdateVoucher(Guid id, [FromBody] VoucherRequest request)
+        {
+            try
+            {
+                var result = await _voucherService.UpdateAsync(id, request);
+
+                if (!result.IsSuccess)
+                {
+                    return BadRequest(new
+                    {
+                        result.Message,
+                        result.StatusCode,
+                    });
+                }
+                return Ok(new
+                {
+                    result.Message,
+                    result.StatusCode,
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    Message = ex.InnerException?.Message ?? ex.Message,
+                    StatusCode = StatusCodes.Status400BadRequest
+                });
+            }
+        }
+
+        [HttpDelete("voucher/{id}")]
+        public async Task<IActionResult> DeleteVoucher(Guid id)
+        {
+            try
+            {
+                var result = await _voucherService.DeleteAsync(id);
+
+                if (!result.IsSuccess)
+                {
+                    return BadRequest(new
+                    {
+                        result.Message,
+                        result.StatusCode,
+                    });
+                }
+                return Ok(new
+                {
+                    result.Message,
+                    result.StatusCode,
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    Message = ex.InnerException?.Message ?? ex.Message,
+                    StatusCode = StatusCodes.Status400BadRequest
+                });
+            }
+        }
     }
 }
