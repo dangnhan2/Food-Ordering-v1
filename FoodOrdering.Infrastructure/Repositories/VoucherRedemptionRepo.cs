@@ -1,0 +1,17 @@
+﻿using FoodOrdering.Application.Repositories;
+using FoodOrdering.Domain.Models;
+using FoodOrdering.Infrastructure.Data;
+using FoodOrdering.Infrastructure.Repository;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace FoodOrdering.Infrastructure.Repositories
+{
+    public class VoucherRedemptionRepo : GenericRepo<VoucherRedemptions> , IVoucherRedemptionRepo
+    {
+        public VoucherRedemptionRepo(FoodOrderingDbContext dbContext) : base(dbContext) { }
+    }
+}

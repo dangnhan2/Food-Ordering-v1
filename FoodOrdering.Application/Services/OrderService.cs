@@ -77,6 +77,7 @@ namespace FoodOrdering.Application.Services
                 TransactionId = orderCode
             };
 
+            // add menu to order
             foreach(var item in cart.CartItems)
             {
                 var orderItem = new OrderMenus
@@ -91,7 +92,7 @@ namespace FoodOrdering.Application.Services
                 items.Add(new ItemData(item.Menu.Name, item.Quantity, item.UnitPrice));
                 order.OrderMenus.Add(orderItem);
             }
-
+           
             _unitOfWork.Cart.Remove(cart);
             await _unitOfWork.Order.AddAsync(order);
             await _unitOfWork.SaveChangeAsync();
@@ -129,5 +130,6 @@ namespace FoodOrdering.Application.Services
                 new PagingReponse<OrderDTO>(orderParams.Page, orderParams.PageSize, orders.Count(), ordersToDTO),
                 StatusCodes.Status200OK);
         }
+
     }
 }
