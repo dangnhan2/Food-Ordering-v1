@@ -1,4 +1,5 @@
-﻿using Food_Ordering.Models.Enum;
+﻿using CloudinaryDotNet.Actions;
+using Food_Ordering.Models.Enum;
 using FoodOrdering.Application.DTOs.QueryParams;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
@@ -56,12 +57,12 @@ namespace FoodOrdering.Application.Services
 
         public async Task<ApiResponse<dynamic>> CreateOrderAsync(OrderRequest request)
         {
-            int orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
-
             var cart = await _unitOfWork.Cart.GetCartByCustomerAsync(request.UserId);
-
             if (cart == null)
                 return ApiResponse<dynamic>.Fail("Không tìm thấy giỏ hàng", StatusCodes.Status404NotFound);
+
+            int orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
+
 
             List<ItemData> items = new List<ItemData>();
 
@@ -92,7 +93,12 @@ namespace FoodOrdering.Application.Services
                 items.Add(new ItemData(item.Menu.Name, item.Quantity, item.UnitPrice));
                 order.OrderMenus.Add(orderItem);
             }
-           
+
+            //create voucher redemption
+            await CreateVouherRedemption(request.VoucherId, request.UserId, order.Id);
+            //update used count after create payment link
+            await UpdateVoucher(request.VoucherId);
+            
             _unitOfWork.Cart.Remove(cart);
             await _unitOfWork.Order.AddAsync(order);
             await _unitOfWork.SaveChangeAsync();
@@ -129,6 +135,31 @@ namespace FoodOrdering.Application.Services
             return ApiResponse<PagingReponse<OrderDTO>>.Success("Lấy dữ liệu thành công",
                 new PagingReponse<OrderDTO>(orderParams.Page, orderParams.PageSize, orders.Count(), ordersToDTO),
                 StatusCodes.Status200OK);
+        }
+
+        private async Task CreateVouherRedemption(Guid voucherId, Guid userId, Guid orderId)
+        {
+            var voucherRedemption = new VoucherRedemptions
+            {
+                Id = Guid.NewGuid(),
+                VoucherID = voucherId,
+                UserID = userId,
+                OrderID = orderId,
+                RedeemedAt = DateTime.UtcNow
+            };
+
+            await _unitOfWork.VoucherRedemption.AddAsync(voucherRedemption);
+        }
+
+        private async Task UpdateVoucher(Guid voucherId)
+        {
+            var voucher = await _unitOfWork.Voucher.GetByIdAsync(voucherId);
+
+            if (voucher == null)
+                throw new KeyNotFoundException("Không tìm thấy voucher");
+
+            voucher.UsedCount += 1;
+            _unitOfWork.Voucher.Update(voucher);
         }
 
     }

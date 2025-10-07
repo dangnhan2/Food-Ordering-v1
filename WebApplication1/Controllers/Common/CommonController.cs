@@ -224,6 +224,13 @@ namespace FoodOrdering.Presentation.Controllers.Common
                     result.StatusCode,
                     result.Data
                 });
+            }catch(KeyNotFoundException ex)
+            {
+                return BadRequest(new
+                {
+                    ex.Message,
+                    StatusCode = StatusCodes.Status404NotFound
+                });
             }
             catch (Exception ex)
             {

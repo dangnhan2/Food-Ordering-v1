@@ -278,7 +278,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         {
             try
             {
-                var result = await _voucherService.GetAllAsync(voucherParams);
+                var result = await _voucherService.GetAllByAdminAsync(voucherParams);
 
                 if (!result.IsSuccess)
                 {
