@@ -27,6 +27,7 @@ namespace FoodOrdering.Infrastructure
             RefreshToken = new RefreshTokenRepo(_context);
             Cart = new CartRepo(_context);
             EmailOtp = new EmailOtpRepo(_context);
+            VoucherRedemption = new VoucherRedemptionRepo(_context);
         }
 
         public IOrderRepo Order { get; }
@@ -44,6 +45,8 @@ namespace FoodOrdering.Infrastructure
         public ICartRepo Cart { get; }
 
         public IEmailOtpRepo EmailOtp { get; }
+
+        public IVoucherRedemptionRepo VoucherRedemption { get; }
 
         public void Dispose()
         {

@@ -5,7 +5,7 @@ namespace FoodOrdering.Domain.Models
     public class VoucherRedemptions
     {
         public Guid Id{ get; set; }
-        public Guid VoucherID { get; set; }
+        public Guid? VoucherID { get; set; }
         public Voucher Voucher { get; set; } = null!;
         public Guid UserID { get; set; }
         public User User { get; set; } = null!;
