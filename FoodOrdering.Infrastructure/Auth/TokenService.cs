@@ -23,20 +23,22 @@ namespace FoodOrdering.Infrastructure.Identity
         private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<User> _userManager;
         private readonly SymmetricSecurityKey _symmetricSecurityKey;
-
+        private readonly string _issuer;
+        private readonly string _audience;
         public TokenService(IUnitOfWork unitOfWork, UserManager<User> userManager)
         {
             Env.Load();
             _unitOfWork = unitOfWork;
             _userManager = userManager;
             _symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Env.GetString("SECRET_KEY")));
+            _issuer = Env.GetString("ISSUER");
+            _audience = Env.GetString("AUDIENCE");
         }
         public async Task<AuthResponse> GenerateToken(User user, HttpContext context)
         {
-            var credentials = new SigningCredentials(_symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
-            var issuer = Env.GetString("ISSUER");
-            var audience = Env.GetString("AUDIENCE");
-
+            var credentials = new SigningCredentials(_symmetricSecurityKey, SecurityAlgorithms.HmacSha256);  
+            
+            // add claim
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -51,21 +53,16 @@ namespace FoodOrdering.Infrastructure.Identity
                 Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddMinutes(5),
                 SigningCredentials = credentials,
-                Issuer = issuer,
-                Audience = audience,
+                Issuer = _issuer,
+                Audience = _audience,
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();
             var jwt = tokenHandler.CreateToken(tokenDescriptor);
             var token = tokenHandler.WriteToken(jwt);
 
+            // refreshToken
             string refresh = Guid.NewGuid().ToString() + "-" + Guid.NewGuid().ToString();
-
-            var tokens = new TokenResponse
-            {
-                AccessToken = token,
-                RefreshToken = refresh,
-            };
 
             var refreshToken = new RefreshTokens
             {
@@ -85,7 +82,7 @@ namespace FoodOrdering.Infrastructure.Identity
                     ImageUrl = user.ImageUrl,
                     Role = userRole.First()
                 },
-                AccessToken = tokens.AccessToken
+                AccessToken = token
             };
 
             await _unitOfWork.RefreshToken.AddAsync(refreshToken);
@@ -93,7 +90,7 @@ namespace FoodOrdering.Infrastructure.Identity
 
             context.Response.Cookies.Append(
                 "refresh_token",
-                tokens.RefreshToken,
+                refresh,
                 new CookieOptions
                 {
                     HttpOnly = true,

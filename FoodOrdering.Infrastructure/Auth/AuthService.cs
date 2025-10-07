@@ -105,8 +105,8 @@ namespace FoodOrdering.Infrastructure.Identity
             var newUser = new User
             {
                 Id = Guid.NewGuid(),
-                UserName = GenerateString(),
-                FullName = GenerateString(),
+                UserName = Extensions.GenerateString(10),
+                FullName = Extensions.GenerateString(10),
                 ImageUrl = _avatar,
                 Email = request.Email,
                 NormalizedEmail = request.Email.ToUpper(),
@@ -156,43 +156,22 @@ namespace FoodOrdering.Infrastructure.Identity
             return ApiResponse<string>.Success("Xác nhận email thành công", "", StatusCodes.Status200OK);
         }
 
-        private string GenerateString()
-        {
-            Random res = new Random();
-            string str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            int size = 10;
-
-            StringBuilder sb = new StringBuilder(size);
-
-            for (int i = 0; i < size; i++)
-            {
-                sb.Append(str[res.Next(str.Length)]);
-            }
-
-            return sb.ToString();
-        }
         private async Task<string> GenerateOtp(Guid id)
         {
-            try
+            var otp = new Random().Next(100000, 999999).ToString();
+
+            var emailOtp = new EmailOtp
             {
-                var otp = new Random().Next(100000, 999999).ToString();
+                Id = Guid.NewGuid(),
+                UserId = id,
+                Otp = otp
+            };
 
-                var emailOtp = new EmailOtp
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = id,
-                    Otp = otp
-                };
+            await _unitOfWork.EmailOtp.AddAsync(emailOtp);
+            await _unitOfWork.SaveChangeAsync();
 
-                await _unitOfWork.EmailOtp.AddAsync(emailOtp);
-                await _unitOfWork.SaveChangeAsync();
+            return otp;
 
-                return otp;
-            }catch(Exception ex)
-            {
-                throw;
-            }
-            
         }
     }
 }
