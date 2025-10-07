@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Infrastructure.Repository
 {
-    public class GenericRepo<T>  : IGenericRepo<T> where T : class
+    public class GenericRepo<T> : IGenericRepo<T> where T : class
     {   
         private readonly FoodOrderingDbContext _context;
         public GenericRepo(FoodOrderingDbContext context)
@@ -36,6 +36,11 @@ namespace FoodOrdering.Infrastructure.Repository
         public async Task<T?> GetByIdAsync(Guid id)
         {
             return await _context.Set<T>().FindAsync(id);
+        }
+
+        public async Task<T?> GetByIdAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _context.Set<T>().Where(predicate).FirstOrDefaultAsync();
         }
 
         public void Remove(T entity)

@@ -10,6 +10,7 @@ namespace FoodOrdering.Application.Repositories
     public interface IGenericRepo<T> where T : class
     {
         Task<T?> GetByIdAsync(Guid id);
+        Task<T?> GetByIdAsync(Expression<Func<T, bool>> predicate);
         IQueryable<T> GetAll();
         Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate);
         Task AddAsync(T entity);
