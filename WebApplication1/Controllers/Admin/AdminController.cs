@@ -122,7 +122,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         }
 
         [HttpPost("menu")]
-        public async Task<IActionResult> AddMenu([FromForm] MenuRequest request)
+        public async Task<IActionResult> AddMenu([FromBody] MenuRequest request)
         {
             try
             {
@@ -162,7 +162,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         }
 
         [HttpPut("menu/{id}")]
-        public async Task<IActionResult> UpdateMenu(Guid id, [FromForm] MenuRequest request)
+        public async Task<IActionResult> UpdateMenu(Guid id, [FromBody] MenuRequest request)
         {
             try
             {
