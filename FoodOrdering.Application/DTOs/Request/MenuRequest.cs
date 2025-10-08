@@ -11,7 +11,7 @@ namespace FoodOrdering.Application.DTOs.Request
 {
     public class MenuRequest
     {   
-        public IFormFile ImageUrl { get; set; }
+        public string? ImageUrl { get; set; }
         public string Name { get; set; } = null!;
         public Guid CategoriesId { get; set; }
         public string? Description { get; set; }

@@ -18,13 +18,10 @@ namespace FoodOrdering.Application.Services
     public class MenuService : IMenuService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly ICloudinaryService _cloudinaryService;
-        private const string folder = "Thumbnail";
 
-        public MenuService(IUnitOfWork unitOfWork, ICloudinaryService cloudinaryService)
+        public MenuService(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
-            _cloudinaryService = cloudinaryService;
         }
 
         public async Task<ApiResponse<Menus>> AddAsync(MenuRequest request)
@@ -38,18 +35,13 @@ namespace FoodOrdering.Application.Services
             if (menus.Any(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower()))
                 return ApiResponse<Menus>.Fail($"Menu {request.Name} đã tồn tại", StatusCodes.Status400BadRequest);
 
-            var url = await _cloudinaryService.UploadImage(request.ImageUrl, folder);
-
-            if (!url.IsSuccess)
-                return ApiResponse<Menus>.Fail(url.Message, 400);
-
             var menu = new Menus
             {
                 Name = request.Name,
                 CategoriesId = request.CategoriesId,
                 Description = request.Description,
                 Price = request.Price,
-                ImageUrl = url.Data,
+                ImageUrl = request.ImageUrl,
                 IsAvailable = request.IsAvailble,
                 StockQuantity = request.StockQuantity,
                 SoldQuantity = 0
@@ -150,23 +142,16 @@ namespace FoodOrdering.Application.Services
                 return ApiResponse<Menus>.Fail(result.ToDictionary(), 400);
 
             var menu = await _unitOfWork.Menu.GetByIdAsync(id);
+            var menus = _unitOfWork.Menu.GetAll();
 
             if (menu == null)
                 return ApiResponse<Menus>.Fail("Không tìm thấy menu", StatusCodes.Status404NotFound);
 
-            var menus = _unitOfWork.Menu.GetAll();
-
-            if (menus.Any(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower() && m.Id != id))
+            if (await menus.AnyAsync(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower() && m.Id != id))
                 return ApiResponse<Menus>.Fail($"Menu {request.Name} đã tồn tại", StatusCodes.Status400BadRequest);
 
-            if (request.ImageUrl != null)
-            {
-                await _cloudinaryService.DeleteImage(menu.ImageUrl);
-                var url = await _cloudinaryService.UploadImage(request.ImageUrl, folder);
-                menu.ImageUrl = url.Data;
-            }
-
             menu.Name = request.Name;
+            menu.ImageUrl = request.ImageUrl;
             menu.CategoriesId = request.CategoriesId;
             menu.Description = request.Description;
             menu.Price = request.Price;
