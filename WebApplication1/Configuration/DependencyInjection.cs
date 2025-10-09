@@ -37,6 +37,7 @@ namespace Food_Ordering.Extensions
             services.AddScoped<IVoucherRepo, VoucherRepo>();
             services.AddScoped<IVoucherService, VoucherService>();
             services.AddScoped<IVoucherRedemptionRepo, VoucherRedemptionRepo>();
+            services.AddScoped<IBackgroundJobScheduler, BackgroundJobScheduler>();
 
             services.AddTransient<ICloudinaryService, CLoudinaryService>();
             services.AddTransient<IPaymentGateway, PaymentGateway>();

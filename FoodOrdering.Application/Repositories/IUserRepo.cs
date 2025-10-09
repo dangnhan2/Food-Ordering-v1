@@ -9,7 +9,8 @@ namespace FoodOrdering.Application.Repositories
 {
     public interface IUserRepo : IGenericRepo<User>
     {
-        public Task<User?> GetUserByEmail(string email);
+        public Task<User?> GetUserByEmailAsync(string email);
+        public Task<User?> GetUserContainsOtpAsync(Guid id);
 
     }
 }

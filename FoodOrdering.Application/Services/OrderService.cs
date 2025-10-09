@@ -5,8 +5,10 @@ using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Extension;
 using FoodOrdering.Application.Payment;
+using FoodOrdering.Application.Repositories;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Domain.Models;
+using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Net.payOS.Types;
@@ -103,6 +105,12 @@ namespace FoodOrdering.Application.Services
             await _unitOfWork.Order.AddAsync(order);
             await _unitOfWork.SaveChangeAsync();
 
+            // schedule to delete cancelled order after 10 days
+            ScheduleCancelledOrder_10days(order.Id);
+
+            // schedule to update status after 10 minutes
+            ScheduleExpiredOrder_10mins(order.Id);
+
             var response = await _paymentGateway.CreatePaymentLink(request.TotalAmount, orderCode, items);
             
             return ApiResponse<dynamic>.Success("Tạo đơn thành công", response, StatusCodes.Status201Created);
@@ -160,6 +168,20 @@ namespace FoodOrdering.Application.Services
 
             voucher.UsedCount += 1;
             _unitOfWork.Voucher.Update(voucher);
+        }
+
+        private void ScheduleCancelledOrder_10days(Guid id)
+        {
+            BackgroundJob.Schedule<IBackgroundJobScheduler>(
+                j => j.DeleteCancelledOrder_10days(id),
+                TimeSpan.FromDays(10));
+        }
+
+        private void ScheduleExpiredOrder_10mins(Guid id)
+        {
+            BackgroundJob.Schedule<IBackgroundJobScheduler>(
+                j => j.UpdateExpiredOrder_10mins(id),
+                TimeSpan.FromMinutes(10));
         }
 
     }

@@ -5,9 +5,10 @@ using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Email;
 using FoodOrdering.Application.Extension;
+using FoodOrdering.Application.Repositories;
 using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
-using FoodOrdering.Infrastructure.Email;
+using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -129,14 +130,17 @@ namespace FoodOrdering.Infrastructure.Identity
                 $" <p class=\"otp\">{otp}</p> " +
                 $"<p>Mã sẽ hết hạn trong {5} phút. Không chia sẻ mã otp này cho bất kì ai</p>";
 
-            await _emailService.EmailSender(newUser.Email, "Mã xác nhận email", htmlBody);
+            // schedule to delete user if email did not confirmed after 5 minutes
+            ScheduleUnconfirmedUser_5mins(newUser.Id);
 
+            BackgroundJob.Enqueue(() => _emailService.EmailSender(newUser.Email, "Mã xác nhận email", htmlBody));
+           
             return ApiResponse<User>.Success("Đăng kí thành công. Email đã được gửi tới email của bạn.", newUser, StatusCodes.Status200OK);           
         }
 
         public async Task<ApiResponse<string>> VerifyEmail(EmailVerifyRequest request)
         {
-            var isExistUser = await _unitOfWork.User.GetUserByEmail(request.Email);
+            var isExistUser = await _unitOfWork.User.GetUserByEmailAsync(request.Email);
 
             if(isExistUser == null)
                 return ApiResponse<string>.Fail("Không tìm thấy email", StatusCodes.Status404NotFound);
@@ -172,6 +176,13 @@ namespace FoodOrdering.Infrastructure.Identity
 
             return otp;
 
+        }
+
+        private void ScheduleUnconfirmedUser_5mins(Guid id)
+        {
+            BackgroundJob.Schedule<IBackgroundJobScheduler>(
+                j => j.DeleteExpiredOtp_5mins(id),
+                TimeSpan.FromMinutes(5));
         }
     }
 }
