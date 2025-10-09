@@ -48,6 +48,11 @@ namespace FoodOrdering.Infrastructure.Repository
             _context.Set<T>().Remove(entity);
         }
 
+        public void RemoveRange(IEnumerable<T> entities)
+        {
+            _context.RemoveRange(entities);
+        }
+
         public void Update(T entity)
         {
             _context.Set<T>().Update(entity);

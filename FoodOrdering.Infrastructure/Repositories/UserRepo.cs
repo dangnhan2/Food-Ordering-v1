@@ -17,9 +17,14 @@ namespace FoodOrdering.Infrastructure.Repository
             _context = context;
         }
 
-        public async Task<User?> GetUserByEmail(string email)
+        public async Task<User?> GetUserByEmailAsync(string email)
         {
             return await _context.Users.Include(u => u.EmailOtp).FirstOrDefaultAsync(u => u.Email == email);
+        }
+
+        public async Task<User?> GetUserContainsOtpAsync(Guid id)
+        {
+            return await _context.Users.Include(u => u.EmailOtp).FirstOrDefaultAsync(u => u.Id == id);
         }
     }
 }

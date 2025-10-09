@@ -19,13 +19,6 @@ namespace Food_Ordering.Extensions
                 .AddEntityFrameworkStores<FoodOrderingDbContext>()
                 .AddDefaultTokenProviders();
 
-            //services.AddHangfire(config =>
-            //{
-            //    config.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
-            //          .UseSimpleAssemblyNameTypeSerializer()
-            //          .UseRecommendedSerializerSettings()
-            //          .UsePostgreSqlStorage(connection);
-            //});
             return services;
         }
     }
