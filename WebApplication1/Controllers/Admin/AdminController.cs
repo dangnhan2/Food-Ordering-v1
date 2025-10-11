@@ -16,13 +16,15 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         private readonly IOrderService _orderService;
         private readonly IUserService _userService;
         private readonly IVoucherService _voucherService;
-        public AdminController(ICategoryService categoryService, IMenuService menuService, IOrderService orderService, IUserService userService, IVoucherService voucherService)
+        private readonly IDashboardService _dashBoardService;
+        public AdminController(ICategoryService categoryService, IMenuService menuService, IOrderService orderService, IUserService userService, IVoucherService voucherService, IDashboardService dashboardService)
         {
             _categoryService = categoryService;
             _menuService = menuService;
             _orderService = orderService;
             _userService = userService;
             _voucherService = voucherService;
+            _dashBoardService = dashboardService;
         }
 
         [HttpPost("category")]
@@ -397,6 +399,19 @@ namespace FoodOrdering.Presentation.Controllers.Admin
                     StatusCode = StatusCodes.Status400BadRequest
                 });
             }
+        }
+
+        [HttpGet("dashboard")]
+        public async Task<IActionResult> DashBoard()
+        {
+            var result = await _dashBoardService.GetInfoAsync();
+
+            return Ok(new
+            {
+                result.Message,
+                result.StatusCode,
+                result.Data
+            });
         }
     }
 }
