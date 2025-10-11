@@ -66,7 +66,7 @@ namespace FoodOrdering.Application.Services
             return ApiResponse<Menus>.Success($"Xóa menu {menu.Name} thành công", menu, StatusCodes.Status200OK);
         }
 
-        public async Task<ApiResponse<PagingReponse<MenuDTO>>> GetAllAsync(MenuParams menuParams)
+        public async Task<ApiResponse<PagingReponse<MenuDto>>> GetAllAsync(MenuParams menuParams)
         {
             var menus = _unitOfWork.Menu.GetAll();
 
@@ -93,7 +93,7 @@ namespace FoodOrdering.Application.Services
                 };
             }
 
-            var menusToDTO = await menus.Select(m => new MenuDTO
+            var menusToDTO = await menus.Select(m => new MenuDto
             {
                 Id = m.Id,
                 Category = m.Categories.Name,
@@ -106,20 +106,20 @@ namespace FoodOrdering.Application.Services
                 StockQuantity = m.StockQuantity
             }).Paging(menuParams.Page, menuParams.PageSize).AsNoTracking().ToListAsync();
 
-            return ApiResponse<PagingReponse<MenuDTO>>.Success(
+            return ApiResponse<PagingReponse<MenuDto>>.Success(
                 "Lấy dữ liệu thành công",
-                new PagingReponse<MenuDTO>(menuParams.Page, menuParams.PageSize, menus.Count(), menusToDTO), 
+                new PagingReponse<MenuDto>(menuParams.Page, menuParams.PageSize, menus.Count(), menusToDTO), 
                 StatusCodes.Status200OK);
         }
 
-        public async Task<ApiResponse<MenuDTO>> GetByIdAsync(Guid id)
+        public async Task<ApiResponse<MenuDto>> GetByIdAsync(Guid id)
         {
             var menu = await _unitOfWork.Menu.GetMenuWithCategoryAsync(id);
   
             if (menu == null)
-               return ApiResponse<MenuDTO>.Fail("Không tìm thấy menu", StatusCodes.Status404NotFound);
+               return ApiResponse<MenuDto>.Fail("Không tìm thấy menu", StatusCodes.Status404NotFound);
            
-            var menuToDto = new MenuDTO
+            var menuToDto = new MenuDto
             {
                 Id = menu.Id,
                 Name = menu.Name,
@@ -132,7 +132,7 @@ namespace FoodOrdering.Application.Services
                 StockQuantity = menu.StockQuantity
             };
 
-            return ApiResponse<MenuDTO>.Success("Lấy dữ liệu thành công", menuToDto, StatusCodes.Status200OK);
+            return ApiResponse<MenuDto>.Success("Lấy dữ liệu thành công", menuToDto, StatusCodes.Status200OK);
         }
 
         public async Task<ApiResponse<Menus>> UpdateAsync(Guid id, MenuRequest request)
