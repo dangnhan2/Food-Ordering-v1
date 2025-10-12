@@ -170,7 +170,7 @@ namespace FoodOrdering.Application.Services
                 return ApiResponse<Voucher>.Fail("Bạn đã sử dụng voucher này hôm nay rồi", StatusCodes.Status400BadRequest);
 
             if (voucher.MinOrderAmount > request.TotalAmount)
-                return ApiResponse<Voucher>.Fail("Không thể sử dụng voucher vì đơn hàng chưa đạt mức thanh toán", StatusCodes.Status400BadRequest);
+                return ApiResponse<Voucher>.Fail($"Không thể sử dụng voucher vì đơn hàng chưa đạt mức thanh toán {voucher.MinOrderAmount}", StatusCodes.Status400BadRequest);
 
             return ApiResponse<Voucher>.Success("Voucher hợp lệ", voucher, StatusCodes.Status200OK);
         }

@@ -202,7 +202,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
             }
         }
 
-        [HttpGet("order")]
+        [HttpPost("order")]
         public async Task<IActionResult> CreateOrder([FromBody] OrderRequest request)
         {
             try
@@ -236,7 +236,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
             {
                 return BadRequest(new
                 {
-                    Message = ex.InnerException.Message ?? ex.Message,
+                    Message = ex.InnerException?.Message ?? ex.Message,
                     StatusCode = StatusCodes.Status400BadRequest
                 });
             }

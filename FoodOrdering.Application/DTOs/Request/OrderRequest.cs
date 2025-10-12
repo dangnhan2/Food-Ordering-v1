@@ -9,12 +9,9 @@ namespace FoodOrdering.Application.DTOs.Request
     public class OrderRequest
     {   
         public Guid UserId { get; set; }
-        public Guid VoucherId { get; set; }
+        public Guid? VoucherId { get; set; } 
         public string Address { get; set; }
         public string? Note { get; set; }
         public int TotalAmount { get; set; }
-        public string PaymentMethod { get; set; }
-        public int TransactionId { get; set; }
-        public ICollection<OrderMenuRequest> Menus { get; set; } = new List<OrderMenuRequest>();
     }
 }

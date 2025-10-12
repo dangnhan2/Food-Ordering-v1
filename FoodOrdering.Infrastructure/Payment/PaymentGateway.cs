@@ -87,6 +87,14 @@ namespace FoodOrdering.Infrastructure.Payment
 
             order.Status = Food_Ordering.Models.Enum.OrderStatus.Paid;
 
+            foreach(var menu in order.OrderMenus)
+            {
+                var item = await _unitOfWork.Menu.GetByIdAsync(menu.MenuId);
+
+                if (item != null)
+                item.SoldQuantity = item.SoldQuantity + menu.Quantity;
+            }
+            
             _unitOfWork.Order.Update(order);
             await _unitOfWork.SaveChangeAsync();
 
@@ -106,7 +114,7 @@ namespace FoodOrdering.Infrastructure.Payment
                  amount : amount,
                  description : "Thanh toán đơn hàng",
                  items : data,
-                 expiredAt: (int)DateTimeOffset.UtcNow.AddMinutes(10).ToUnixTimeMilliseconds(),
+                 expiredAt: (int) DateTimeOffset.UtcNow.AddMinutes(10).ToUnixTimeSeconds(),
                  returnUrl: returnUrl,
                  cancelUrl : cancelUrl
             );

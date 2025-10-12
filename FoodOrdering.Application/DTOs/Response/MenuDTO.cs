@@ -16,6 +16,7 @@ namespace FoodOrdering.Application.DTOs.Response
         public string ImageUrl { get; set; }
         public int SoldQuantity { get; set; }
         public int StockQuantity { get; set; }
+        public bool IsAvailable { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 }
