@@ -19,7 +19,7 @@ namespace FoodOrdering.Infrastructure.Repository
 
         public async Task<Orders?> GetOrderByOrderCode(int code)
         {
-            return await _context.Orders.FirstOrDefaultAsync(o => o.TransactionId == code);
+            return await _context.Orders.Include(o => o.OrderMenus).FirstOrDefaultAsync(o => o.TransactionId == code);
         }
     }
 }

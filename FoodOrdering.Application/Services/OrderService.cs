@@ -60,6 +60,7 @@ namespace FoodOrdering.Application.Services
         public async Task<ApiResponse<dynamic>> CreateOrderAsync(OrderRequest request)
         {
             var cart = await _unitOfWork.Cart.GetCartByCustomerAsync(request.UserId);
+
             if (cart == null)
                 return ApiResponse<dynamic>.Fail("Không tìm thấy giỏ hàng", StatusCodes.Status404NotFound);
 
@@ -96,23 +97,27 @@ namespace FoodOrdering.Application.Services
                 order.OrderMenus.Add(orderItem);
             }
 
-            //create voucher redemption
-            await CreateVouherRedemption(request.VoucherId, request.UserId, order.Id);
-            //update used count after create payment link
-            await UpdateVoucher(request.VoucherId);
-            
-            _unitOfWork.Cart.Remove(cart);
-            await _unitOfWork.Order.AddAsync(order);
-            await _unitOfWork.SaveChangeAsync();
 
+            if (request.VoucherId.HasValue)
+            {
+                //create voucher redemption
+                await CreateVouherRedemption(request.VoucherId.Value, request.UserId, order.Id);                
+               //update used count after create payment link
+                await UpdateVoucher(request.VoucherId.Value);
+            }
+
+            var response = await _paymentGateway.CreatePaymentLink(request.TotalAmount, orderCode, items);
+                      
             // schedule to delete cancelled order after 10 days
             ScheduleCancelledOrder_10days(order.Id);
 
             // schedule to update status after 10 minutes
             ScheduleExpiredOrder_10mins(order.Id);
 
-            var response = await _paymentGateway.CreatePaymentLink(request.TotalAmount, orderCode, items);
-            
+            _unitOfWork.Cart.Remove(cart);
+            await _unitOfWork.Order.AddAsync(order);
+            await _unitOfWork.SaveChangeAsync();
+           
             return ApiResponse<dynamic>.Success("Tạo đơn thành công", response, StatusCodes.Status201Created);
         }
 
@@ -167,6 +172,10 @@ namespace FoodOrdering.Application.Services
                 throw new KeyNotFoundException("Không tìm thấy voucher");
 
             voucher.UsedCount += 1;
+
+            if (voucher.UsedCount == voucher.UsageLimit)
+                voucher.IsActive = false;
+
             _unitOfWork.Voucher.Update(voucher);
         }
 

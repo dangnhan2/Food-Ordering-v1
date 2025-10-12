@@ -103,7 +103,8 @@ namespace FoodOrdering.Application.Services
                 Description = m.Description,
                 CreatedAt = m.CreatedAt,
                 SoldQuantity = m.SoldQuantity,
-                StockQuantity = m.StockQuantity
+                StockQuantity = m.StockQuantity,
+                IsAvailable = m.IsAvailable,
             }).Paging(menuParams.Page, menuParams.PageSize).AsNoTracking().ToListAsync();
 
             return ApiResponse<PagingReponse<MenuDto>>.Success(
@@ -129,7 +130,8 @@ namespace FoodOrdering.Application.Services
                 Price = menu.Price,
                 CreatedAt = menu.CreatedAt,
                 SoldQuantity = menu.SoldQuantity,
-                StockQuantity = menu.StockQuantity
+                StockQuantity = menu.StockQuantity,
+                IsAvailable = menu.IsAvailable,
             };
 
             return ApiResponse<MenuDto>.Success("Lấy dữ liệu thành công", menuToDto, StatusCodes.Status200OK);

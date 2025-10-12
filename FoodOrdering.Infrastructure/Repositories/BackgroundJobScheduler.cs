@@ -65,10 +65,22 @@ namespace FoodOrdering.Infrastructure.Repositories
         public async Task UpdateExpiredOrder_10mins(Guid id)
         {
             var order = await _unitOfWork.Order.GetByIdAsync(id);
+            var voucherRedemption = await _unitOfWork.VoucherRedemption.GetByIdAsync(v => v.OrderID == id);
+            var voucher = await _unitOfWork.Voucher.GetByIdAsync(voucherRedemption.VoucherID);
 
-            if (order != null && order.ExpiredAt < DateTime.UtcNow && order.Status == Food_Ordering.Models.Enum.OrderStatus.Pending)
-            {
+            if (order != null && order.ExpiredAt < DateTime.UtcNow && order.Status == Food_Ordering.Models.Enum.OrderStatus.Pending && voucherRedemption != null && voucher != null)
+            {   
+                // update order status if order not paid
                 order.Status = Food_Ordering.Models.Enum.OrderStatus.Cancelled;
+
+                // decrease used voucher if order not paid
+                voucher.UsedCount -= 1; ;
+
+                if (voucher.UsedCount < voucher.UsageLimit)
+                    voucher.IsActive = true;
+                // delete voucher redemption
+                _unitOfWork.VoucherRedemption.Remove(voucherRedemption);
+                _unitOfWork.Voucher.Update(voucher);
                 _unitOfWork.Order.Update(order);
                 await _unitOfWork.SaveChangeAsync();
             }
