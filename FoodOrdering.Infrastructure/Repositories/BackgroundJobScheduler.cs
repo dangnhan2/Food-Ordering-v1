@@ -86,5 +86,47 @@ namespace FoodOrdering.Infrastructure.Repositories
             }
 
         }
+
+        public async Task PublicVouchers_24hours()
+        {
+            var vouchers = _unitOfWork.Voucher.GetAll().Where(v => v.StartDate.Date == DateTime.UtcNow.Date && v.IsActive == false);
+
+            foreach(var voucher in vouchers)
+            {
+                voucher.IsActive = true;
+            }
+
+            if (vouchers.Count() > 0)
+            {
+                await _unitOfWork.SaveChangeAsync();
+            }
+        }
+
+        public async Task RetrieveVouchers_24hours()
+        {
+
+            var vouchers = _unitOfWork.Voucher.GetAll().Where(v => v.EndDate.Date == DateTime.UtcNow.Date && v.IsActive == true);
+
+            foreach (var voucher in vouchers)
+            {
+                voucher.IsActive = false;
+            }
+
+            if (vouchers.Count() > 0)
+            {
+                await _unitOfWork.SaveChangeAsync();
+            }
+        }
+
+        public async Task ResetVoucherRedemptions_24hours()
+        {
+            var voucherRedemptions = _unitOfWork.VoucherRedemption.GetAll();
+
+            if (voucherRedemptions.Count() > 0)
+            {
+                _unitOfWork.VoucherRedemption.RemoveRange(voucherRedemptions);
+                await _unitOfWork.SaveChangeAsync();
+            }
+        }
     }
 }

@@ -41,6 +41,21 @@ RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
     j => j.DeleteExpiredRefreshTokens_3months(),
     Cron.Daily());
 
+RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
+    "PublicVouchers_24hours",
+    j => j.PublicVouchers_24hours(),
+    "* 0 * * *");
+
+RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
+    "RetrieveVouchers_24hours",
+    j => j.RetrieveVouchers_24hours(),
+    "* 0 * * *");
+
+RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
+    "ResetVoucherRedemptions_24hours",
+    j => j.ResetVoucherRedemptions_24hours(),
+    "* 0 * * *");
+
 app.MapControllers();
 
 app.Run();
