@@ -3,6 +3,7 @@ using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Extension;
 using FoodOrdering.Application.Services.Interface;
+using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -23,7 +24,13 @@ namespace FoodOrdering.Application.Services
             _unitOfWork = unitOfWork;
         }
         public async Task<ApiResponse<Voucher>> AddAsync(VoucherRequest request)
-        {
+        {   
+            var result = await new VoucherValidator().ValidateAsync(request);
+
+            if (!result.IsValid)            
+                return ApiResponse<Voucher>.Fail(result.ToDictionary(), StatusCodes.Status400BadRequest);
+            
+
             var voucher = new Voucher
             {
                 Code = request.Code,
@@ -129,6 +136,12 @@ namespace FoodOrdering.Application.Services
 
         public async Task<ApiResponse<Voucher>> UpdateAsync(Guid id, VoucherRequest request)
         {
+            var result = await new VoucherValidator().ValidateAsync(request);
+
+            if (!result.IsValid)           
+                return ApiResponse<Voucher>.Fail(result.ToDictionary(), StatusCodes.Status400BadRequest);
+            
+
             var existVoucher = await _unitOfWork.Voucher.GetByIdAsync(id);
 
             if (existVoucher == null)
