@@ -1,5 +1,6 @@
 ﻿using FoodOrdering.Application.DTOs.QueryParams;
 using FoodOrdering.Application.DTOs.Request;
+using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Services;
 using FoodOrdering.Application.Services.Interface;
 using Microsoft.AspNetCore.Http;
@@ -16,13 +17,15 @@ namespace FoodOrdering.Presentation.Controllers.Common
         private readonly ICartService _cartService;
         private readonly IOrderService _orderService;
         private readonly IUserService _userService;
-        public CommonController(ICategoryService categoryService, IMenuService menuService, ICartService cartService, IOrderService orderService, IUserService userService)
+        public readonly IVoucherService _voucherService;
+        public CommonController(ICategoryService categoryService, IMenuService menuService, ICartService cartService, IOrderService orderService, IUserService userService, IVoucherService voucherService)
         {
             _categoryService = categoryService;
             _menuService = menuService;
             _cartService = cartService;
             _orderService = orderService;
             _userService = userService;
+            _voucherService = voucherService;
         }
 
         [HttpGet("category")]
@@ -242,6 +245,30 @@ namespace FoodOrdering.Presentation.Controllers.Common
             }
         }
 
+        [HttpGet("order/{id}")]
+        public async Task<IActionResult> GetAllOrderByCustomer(Guid id, [FromQuery] OrderParams orderParams)
+        {
+            try
+            {
+                var result = await _orderService.GetAllAsyncByCustomer(id, orderParams);
+
+                return Ok(new
+                {
+                    result.Message,
+                    result.StatusCode,
+                    result.Data
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    Message = ex.InnerException.Message ?? ex.Message,
+                    StatusCode = StatusCodes.Status400BadRequest
+                });
+            }
+        }
+
         [HttpPut("user/avatar/{id}")]
         public async Task<IActionResult> UploadAvatar(Guid id, IFormFile file)
         {
@@ -309,6 +336,40 @@ namespace FoodOrdering.Presentation.Controllers.Common
                     StatusCode = StatusCodes.Status400BadRequest
                 });
             }
+        }
+
+        [HttpGet("voucher-of-customer")]
+        public async Task<IActionResult> GetAllVoucherByCustomer()
+        {
+            var result = await _voucherService.GetAllByCustomerAsync();
+
+            return Ok(new
+            {
+                result.Message,
+                result.StatusCode,
+                result.Data
+            });
+        }
+
+        [HttpPost("validate-voucher")]
+        public async Task<IActionResult> ValidateVoucher(ValidateVoucherRequest request)
+        {
+            var result = await _voucherService.ValidateVoucherAsync(request);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(new
+                {
+                    result.Message,
+                    result.StatusCode,
+                });
+            }
+
+            return Ok(new
+            {
+                result.Message,
+                result.StatusCode,
+            });
         }
 
     }
