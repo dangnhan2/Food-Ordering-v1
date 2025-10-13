@@ -89,7 +89,7 @@ namespace FoodOrdering.Infrastructure.Repositories
 
         public async Task PublicVouchers_24hours()
         {
-            var vouchers = _unitOfWork.Voucher.GetAll().Where(v => v.StartDate == DateTime.UtcNow && v.IsActive == false);
+            var vouchers = _unitOfWork.Voucher.GetAll().Where(v => v.StartDate.Date == DateTime.UtcNow.Date && v.IsActive == false);
 
             foreach(var voucher in vouchers)
             {
@@ -105,7 +105,7 @@ namespace FoodOrdering.Infrastructure.Repositories
         public async Task RetrieveVouchers_24hours()
         {
 
-            var vouchers = _unitOfWork.Voucher.GetAll().Where(v => v.EndDate == DateTime.UtcNow && v.IsActive == true);
+            var vouchers = _unitOfWork.Voucher.GetAll().Where(v => v.EndDate.Date == DateTime.UtcNow.Date && v.IsActive == true);
 
             foreach (var voucher in vouchers)
             {
