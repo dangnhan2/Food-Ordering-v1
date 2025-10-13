@@ -13,5 +13,8 @@ namespace FoodOrdering.Application.Repositories
         public Task DeleteExpiredRefreshTokens_3months();
         public Task DeleteExpiredCarts_3hours();
         public Task UpdateExpiredOrder_10mins(Guid id);
+        public Task PublicVouchers_24hours();
+        public Task RetrieveVouchers_24hours();
+        public Task ResetVoucherRedemptions_24hours();
     }
 }
