@@ -4,6 +4,7 @@ using FoodOrdering.Application.Repositories;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -40,18 +41,24 @@ namespace FoodOrdering.Application.Services
         public async Task<ApiResponse<Categories>> AddAsync(CategoryRequest request)
         {
             var result = await new CategoryValidator().ValidateAsync(request);
+
             if (!result.IsValid)          
                return ApiResponse<Categories>.Fail(result.ToDictionary(), 400);
 
-            Categories categories = new Categories
+            var categories = _unitOfWork.Category.GetAll().Where(c => c.Name.Trim().ToLower() == request.Name.Trim().ToLower());
+
+            if (categories.Any())
+                return ApiResponse<Categories>.Fail($"{request.Name} đã tồn tại", StatusCodes.Status400BadRequest);
+
+            Categories category= new Categories
             {
                 Name = request.Name,
             };
 
-            await _unitOfWork.Category.AddAsync(categories);
+            await _unitOfWork.Category.AddAsync(category);
             await _unitOfWork.SaveChangeAsync();
 
-            return ApiResponse<Categories>.Success($"Thêm menu {request.Name} thành công", categories, 201);
+            return ApiResponse<Categories>.Success($"Thêm menu {request.Name} thành công", category, StatusCodes.Status201Created);
         }
 
         public async Task<ApiResponse<Categories>> UpdateAsync(Guid id, CategoryRequest request)
@@ -67,7 +74,7 @@ namespace FoodOrdering.Application.Services
                 }
             }
             
-            var categories = _unitOfWork.Category.GetAll();
+            var categories = _unitOfWork.Category.GetAll().Where(c => c.Name.Trim().ToLower() ==  request.Name.Trim().ToLower() && c.Id != id);
             var category = await _unitOfWork.Category.GetByIdAsync(id);
 
             if (category == null)
@@ -75,9 +82,9 @@ namespace FoodOrdering.Application.Services
                 return ApiResponse<Categories>.Fail("Không tìm thấy menu", 404);
             }
 
-            if (categories.Any(c => c.Name.Equals(request.Name) && c.Id != id))
+            if (categories.Any())
             {
-                return ApiResponse<Categories>.Fail("Menu đã tồn tại", 400);
+                return ApiResponse<Categories>.Fail($"Menu {request.Name} đã tồn tại", 400);
             }
 
             category.Name = request.Name;

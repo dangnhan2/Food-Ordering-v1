@@ -17,6 +17,6 @@ namespace FoodOrdering.Application.Services.Interface
         public Task<ApiResponse<Voucher>> AddAsync(VoucherRequest request);
         public Task<ApiResponse<Voucher>> UpdateAsync(Guid id, VoucherRequest request);
         public Task<ApiResponse<Voucher>> DeleteAsync(Guid id);
-        public Task<ApiResponse<Voucher>> ValidateVoucherAsync(ValidateVoucherRequest request);
+        public Task<ApiResponse<VoucherDTO>> ValidateVoucherAsync(ValidateVoucherRequest request);
     }
 }

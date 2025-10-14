@@ -31,311 +31,129 @@ namespace FoodOrdering.Presentation.Controllers.Common
         [HttpGet("category")]
         public async Task<IActionResult> GetAllCategories()
         {
-            try
-            {
-                var result = await _categoryService.GetAllAsync();
+            var result = await _categoryService.GetAllAsync();
 
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                    result.Data
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCodes = StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode,
+                result.Data
+            });
         }
 
         [HttpGet("menu")]
         public async Task<IActionResult> GetMenus([FromQuery] MenuParams menuParams)
         {
-            try
-            {
-                var result = await _menuService.GetAllAsync(menuParams);
+            var result = await _menuService.GetAllAsync(menuParams);
 
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                    result.Data
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode,
+                result.Data
+            });
         }
 
         [HttpGet("menu/{id}")]
         public async Task<IActionResult> GetMenuById(Guid id)
         {
-            try
-            {
-                var result = await _menuService.GetByIdAsync(id);
+            var result = await _menuService.GetByIdAsync(id);
 
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode
-                    });
-                }
-
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                    result.Data
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode,
+                result.Data
+            });
         }
 
         [HttpGet("cart")]
         public async Task<IActionResult> GetCartByCustomer(Guid id)
-        {
-            try
-            {
-                var result = await _cartService.GetCartByCustomer(id);
+        {          
+            var result = await _cartService.GetCartByCustomer(id);
 
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode
-                    });
-                }
-
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                    result.Data
-                });
-            }catch(Exception ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode,
+                result.Data
+            });           
         }
 
         [HttpPost("cart")]
         public async Task<IActionResult> AddToCart([FromBody] CartRequest request)
         {
-            try
-            {
-                var result = await _cartService.AddToCartAsync(request);
+            var result = await _cartService.AddToCartAsync(request);
 
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode,
-                    });
-                }
-
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode,
+            });
+
         }
 
         [HttpPut("cart/{id}")]
         public async Task<IActionResult> UpdateToCart(Guid id, [FromBody] CartRequest request)
         {
-            try
-            {
-                var result = await _cartService.UpdateToCartAsync(id, request);
+            var result = await _cartService.UpdateToCartAsync(id, request);
 
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode,
-                    });
-                }
-
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode,
+            });
         }
 
         [HttpPost("order")]
         public async Task<IActionResult> CreateOrder([FromBody] OrderRequest request)
         {
-            try
-            {
-                var result = await _orderService.CreateOrderAsync(request);
+            var result = await _orderService.CreateOrderAsync(request);
 
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode,
-                    });
-                }
-
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                    result.Data
-                });
-            }catch(KeyNotFoundException ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    ex.Message,
-                    StatusCode = StatusCodes.Status404NotFound
-                });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException?.Message ?? ex.Message,
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode,
+                result.Data
+            });
         }
 
         [HttpGet("order/{id}")]
         public async Task<IActionResult> GetAllOrderByCustomer(Guid id, [FromQuery] OrderParams orderParams)
         {
-            try
-            {
-                var result = await _orderService.GetAllAsyncByCustomer(id, orderParams);
+            var result = await _orderService.GetAllAsyncByCustomer(id, orderParams);
 
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                    result.Data
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode,
+                result.Data
+            });
         }
 
         [HttpPut("user/avatar/{id}")]
         public async Task<IActionResult> UploadAvatar(Guid id, IFormFile file)
         {
-            try
-            {
-                var result = await _userService.UploadAvatarAsync(id, file);
+            var result = await _userService.UploadAvatarAsync(id, file);
 
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode,
-                    });
-                }
-
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                });
-            }
-            catch (FileNotFoundException ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    ex.Message,
-                    StatusCodes.Status400BadRequest
-                });
-            }
-            catch (Exception ex) {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode,
+            });
         }
 
         [HttpPut("user/{id}")]
         public async Task<IActionResult> UpdateUser(Guid id, UserRequest request)
         {
-            try
-            {
-                var result = await _userService.UploadProfileAsync(id, request);
+            var result = await _userService.UploadProfileAsync(id, request);
 
-                if (!result.IsSuccess) {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode,
-                    });
-                }
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode
+            });
+
         }
 
         [HttpGet("voucher-of-customer")]
@@ -355,20 +173,12 @@ namespace FoodOrdering.Presentation.Controllers.Common
         public async Task<IActionResult> ValidateVoucher(ValidateVoucherRequest request)
         {
             var result = await _voucherService.ValidateVoucherAsync(request);
-
-            if (!result.IsSuccess)
-            {
-                return BadRequest(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                });
-            }
-
+           
             return Ok(new
             {
                 result.Message,
                 result.StatusCode,
+                result.Data
             });
         }
 

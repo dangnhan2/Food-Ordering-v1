@@ -12,7 +12,7 @@ namespace FoodOrdering.Infrastructure.Repositories
     public class BackgroundJobScheduler : IBackgroundJobScheduler
     {
         private readonly IUnitOfWork _unitOfWork;
-
+         
         public BackgroundJobScheduler(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
@@ -89,31 +89,35 @@ namespace FoodOrdering.Infrastructure.Repositories
 
         public async Task PublicVouchers_24hours()
         {
-            var vouchers = _unitOfWork.Voucher.GetAll().Where(v => v.StartDate.Date == DateTime.UtcNow.Date && v.IsActive == false);
+            DateTime todayUtc = DateTime.UtcNow.Date;
+            DateTime tomorrowUtc = todayUtc.AddDays(1);
 
-            foreach(var voucher in vouchers)
-            {
-                voucher.IsActive = true;
-            }
+            var vouchers = _unitOfWork.Voucher.GetAll().Where(v => v.StartDate.Date >= todayUtc && v.StartDate < tomorrowUtc && !v.IsActive);
 
-            if (vouchers.Count() > 0)
-            {
+            if (vouchers.Any()) {
+                foreach (var voucher in vouchers)
+                {
+                    voucher.IsActive = true;
+                }
+
                 await _unitOfWork.SaveChangeAsync();
             }
         }
 
         public async Task RetrieveVouchers_24hours()
         {
+            DateTime todayUtc = DateTime.UtcNow.Date;
+            DateTime tomorrowUtc = todayUtc.AddDays(1);
 
-            var vouchers = _unitOfWork.Voucher.GetAll().Where(v => v.EndDate.Date == DateTime.UtcNow.Date && v.IsActive == true);
+            var vouchers = _unitOfWork.Voucher.GetAll().Where(v => v.EndDate.Date > todayUtc && v.EndDate.Date <= tomorrowUtc && v.IsActive == true);
 
-            foreach (var voucher in vouchers)
+            if (vouchers.Any())
             {
-                voucher.IsActive = false;
-            }
+                foreach (var voucher in vouchers)
+                {
+                    voucher.IsActive = true;
+                }
 
-            if (vouchers.Count() > 0)
-            {
                 await _unitOfWork.SaveChangeAsync();
             }
         }

@@ -1,7 +1,9 @@
 using Food_Ordering.Extensions;
 using FoodOrdering.Application.Repositories;
 using FoodOrdering.Infrastructure.Configuration;
+using FoodOrdering.Presentation.Middleware;
 using Hangfire;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,10 +27,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseHangfireDashboard("/dashboard");
 
 RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
@@ -44,17 +49,20 @@ RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
 RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
     "PublicVouchers_24hours",
     j => j.PublicVouchers_24hours(),
-    "* 0 * * *");
+    Cron.Daily(),
+    TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
 
 RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
     "RetrieveVouchers_24hours",
     j => j.RetrieveVouchers_24hours(),
-    "* 0 * * *");
+    Cron.Daily(),
+    TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
 
 RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
     "ResetVoucherRedemptions_24hours",
     j => j.ResetVoucherRedemptions_24hours(),
-    "* 0 * * *");
+    Cron.Daily(),
+    TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
 
 app.MapControllers();
 

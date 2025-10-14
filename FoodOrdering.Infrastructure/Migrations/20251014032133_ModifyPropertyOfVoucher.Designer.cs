@@ -3,6 +3,7 @@ using System;
 using FoodOrdering.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FoodOrdering.Infrastructure.Migrations
 {
     [DbContext(typeof(FoodOrderingDbContext))]
-    partial class FoodOrderingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251014032133_ModifyPropertyOfVoucher")]
+    partial class ModifyPropertyOfVoucher
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -53,7 +56,7 @@ namespace FoodOrdering.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -88,7 +91,7 @@ namespace FoodOrdering.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("ExpiredAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Otp")
                         .IsRequired()
@@ -115,7 +118,7 @@ namespace FoodOrdering.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
@@ -185,13 +188,13 @@ namespace FoodOrdering.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("ExpiredAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Note")
                         .HasColumnType("text");
 
                     b.Property<DateTime>("OrderDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("PaymentMethod")
                         .IsRequired()
@@ -223,10 +226,10 @@ namespace FoodOrdering.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("ExpriedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Token")
                         .IsRequired()
@@ -257,7 +260,7 @@ namespace FoodOrdering.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -390,7 +393,7 @@ namespace FoodOrdering.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("RedeemedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("UserID", "VoucherID");
 
@@ -430,13 +433,13 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("188bee43-a4d9-4ced-8813-fbecad6e3e19"),
+                            Id = new Guid("50331dfb-e998-4119-9ec5-e86f843ff0d2"),
                             Name = "Customer",
                             NormalizedName = "CUSTOMER"
                         },
                         new
                         {
-                            Id = new Guid("2220a4da-a4c2-4f37-a982-a4e6e216f655"),
+                            Id = new Guid("282c0a4a-557a-473e-9166-b068a0034b3e"),
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         });
