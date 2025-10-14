@@ -22,24 +22,21 @@ namespace FoodOrdering.Presentation.Controllers.Upload
             {
                 var result = await _cloudinaryService.DeleteImage(url);
 
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode
-                    });
-                }
-
                 return Ok(new
                 {
                     result.Message,
                     result.StatusCode
                 });
-            }catch(Exception ex)
-            {
-                return BadRequest(ex.Message);
             }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new
+                {
+                    ex.Message,
+                    StatusCode = StatusCodes.Status404NotFound
+                });
+            }
+            
         }
 
         [HttpPost("upload-image")]
@@ -49,25 +46,21 @@ namespace FoodOrdering.Presentation.Controllers.Upload
             {
                 var result = await _cloudinaryService.UploadImage(file, "Thumbnail");
 
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode
-                    });
-                }
-
                 return Ok(new
                 {
                     result.Message,
                     result.StatusCode,
                     result.Data
                 });
-            }catch(Exception ex)
+            }catch(FileNotFoundException ex)
             {
-                return BadRequest(ex.Message);
+                return NotFound(new
+                {
+                    ex.Message,
+                    StatusCode = StatusCodes.Status404NotFound
+                });
             }
+            
         }
     }
 }

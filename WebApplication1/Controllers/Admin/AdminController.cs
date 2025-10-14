@@ -30,375 +30,148 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         [HttpPost("category")]
         public async Task<IActionResult> CreateCategory(CategoryRequest request)
         {
-            try
-            {
-                var result = await _categoryService.AddAsync(request);
+            var result = await _categoryService.AddAsync(request);
 
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode
-                    });
-                }
-
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode,
+            });
         }
-
+        
         [HttpPut("category/{id}")]
         public async Task<IActionResult> UpdateCatetogy(Guid id, CategoryRequest request)
         {
-            try
-            {
-                var result = await _categoryService.UpdateAsync(id, request);
+            var result = await _categoryService.UpdateAsync(id, request);
 
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode
-                    });
-                }
-
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode,
+            });
+
         }
 
         [HttpDelete("category/{id}")]
         public async Task<IActionResult> DeleteCategory(Guid id)
         {
-            try
+            var result = await _categoryService.DeleteAsync(id);
+  
+            return Ok(new
             {
-                var result = await _categoryService.DeleteAsync(id);
-
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode
-                    });
-                }
-
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode,
+            });
         }
 
         [HttpPost("menu")]
         public async Task<IActionResult> AddMenu([FromBody] MenuRequest request)
         {
-            try
-            {
-                var result = await _menuService.AddAsync(request);
+            var result = await _menuService.AddAsync(request);
 
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode
-                    });
-                }
-
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode
-                });
-            }
-            catch (FileNotFoundException ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    ex.Message,
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode
+            });
         }
 
         [HttpPut("menu/{id}")]
         public async Task<IActionResult> UpdateMenu(Guid id, [FromBody] MenuRequest request)
         {
-            try
-            {
-                var result = await _menuService.UpdateAsync(id, request);
+            var result = await _menuService.UpdateAsync(id, request);
 
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode
-                    });
-                }
-
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode
+            });
         }
 
         [HttpDelete("menu/{id}")]
         public async Task<IActionResult> DeleteMenu(Guid id)
         {
-            try
-            {
-                var result = await _menuService.DeleteAsync(id);
+            var result = await _menuService.DeleteAsync(id);
 
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode
-                    });
-                }
-
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode
+            });
         }
 
         [HttpGet("order")]
         public async Task<IActionResult> GetOrders([FromQuery] OrderParams orderParams)
         {
-            try
-            {
-                var result = await _orderService.GetAllAsync(orderParams);
+            var result = await _orderService.GetAllAsync(orderParams);
 
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                    result.Data
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode,
+                result.Data
+            });
         }
 
         [HttpGet("user")]
         public async Task<IActionResult> GetUsers([FromQuery] UserParams userParams)
         {
-            try
-            {
-                var result = await _userService.GetAllAsync(userParams);
+            var result = await _userService.GetAllAsync(userParams);
 
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                    result.Data
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode,
+                result.Data
+            });
         }
 
         [HttpGet("voucher")]
         public async Task<IActionResult> GetVoucher([FromQuery] VoucherParams voucherParams)
-        {
-            try
+        {        
+            var result = await _voucherService.GetAllByAdminAsync(voucherParams);
+            return Ok(new
             {
-                var result = await _voucherService.GetAllByAdminAsync(voucherParams);
-
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode,
-                    });
-                }
-
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                    result.Data
-                });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException?.Message ?? ex.Message,
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode,
+                result.Data
+            });
         }
 
         [HttpPost("voucher")]
         public async Task<IActionResult> CreateVoucher([FromBody] VoucherRequest request)
         {
-            try
-            {
-                var result = await _voucherService.AddAsync(request);
+            var result = await _voucherService.AddAsync(request);
 
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode,
-                    });
-                }
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException?.Message ?? ex.Message,
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode,
+            });
         }
 
         [HttpPut("voucher/{id}")]
         public async Task<IActionResult> UpdateVoucher(Guid id, [FromBody] VoucherRequest request)
         {
-            try
-            {
-                var result = await _voucherService.UpdateAsync(id, request);
+            var result = await _voucherService.UpdateAsync(id, request);
 
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode,
-                    });
-                }
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException?.Message ?? ex.Message,
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode,
+            });
         }
 
         [HttpDelete("voucher/{id}")]
         public async Task<IActionResult> DeleteVoucher(Guid id)
         {
-            try
-            {
-                var result = await _voucherService.DeleteAsync(id);
+            var result = await _voucherService.DeleteAsync(id);
 
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode,
-                    });
-                }
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException?.Message ?? ex.Message,
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode,
+            });
         }
 
         [HttpGet("dashboard")]

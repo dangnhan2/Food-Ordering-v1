@@ -15,8 +15,8 @@ namespace FoodOrdering.Application.DTOs.Response
         public decimal DiscountValue { get; set; }
         public decimal? MaxDiscount { get; set; }
         public decimal? MinOrderAmount { get; set; }
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
+        public DateTimeOffset StartDate { get; set; }
+        public DateTimeOffset EndDate { get; set; }
         public int? UsageLimit { get; set; }
         public int UsedCount { get; set; }
         public int? PerUserLimit { get; set; }

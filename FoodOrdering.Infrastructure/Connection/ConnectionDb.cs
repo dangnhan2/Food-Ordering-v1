@@ -17,7 +17,7 @@ namespace FoodOrdering.Infrastructure.Configuration
         public static void AddConnection(this IServiceCollection services)
         {
             Env.Load();
-
+            
             // Connect to Db
             services.AddEntityFrameworkNpgsql().AddDbContext<FoodOrderingDbContext>(otps =>
             {
@@ -30,7 +30,7 @@ namespace FoodOrdering.Infrastructure.Configuration
             .UseSimpleAssemblyNameTypeSerializer()
             .UseRecommendedSerializerSettings()
             .UsePostgreSqlStorage(Env.GetString("CONNECTION_STRING"))
-            );
+            );          
         }
     }
 }

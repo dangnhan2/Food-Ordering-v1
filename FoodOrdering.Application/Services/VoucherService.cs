@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,12 +25,12 @@ namespace FoodOrdering.Application.Services
             _unitOfWork = unitOfWork;
         }
         public async Task<ApiResponse<Voucher>> AddAsync(VoucherRequest request)
-        {   
+        {           
             var result = await new VoucherValidator().ValidateAsync(request);
 
             if (!result.IsValid)            
                 return ApiResponse<Voucher>.Fail(result.ToDictionary(), StatusCodes.Status400BadRequest);
-            
+
 
             var voucher = new Voucher
             {
@@ -38,7 +39,7 @@ namespace FoodOrdering.Application.Services
                 DiscountType = request.DiscountType,
                 DiscountValue = request.DiscountValue,
                 StartDate = request.StartDate,
-                EndDate = request.EndDate,
+                EndDate = request.StartDate,
                 MaxDiscount = request.MaxDiscount,
                 MinOrderAmount = request.MinOrderAmount,
                 PerUserLimit = request.PerUserLimit,
@@ -46,7 +47,7 @@ namespace FoodOrdering.Application.Services
                 UsedCount = 0,
                 IsActive = request.IsActive,
             };
-
+          
             await _unitOfWork.Voucher.AddAsync(voucher);
             await _unitOfWork.SaveChangeAsync();
 
@@ -166,7 +167,7 @@ namespace FoodOrdering.Application.Services
             return ApiResponse<Voucher>.Success("Cập nhật voucher thành công", existVoucher, StatusCodes.Status200OK);
         }
 
-        public async Task<ApiResponse<Voucher>> ValidateVoucherAsync(ValidateVoucherRequest request)
+        public async Task<ApiResponse<VoucherDTO>> ValidateVoucherAsync(ValidateVoucherRequest request)
         {
             var voucher = await _unitOfWork.Voucher.GetByIdAsync(
                 v => v.Id == request.VoucherId
@@ -175,17 +176,34 @@ namespace FoodOrdering.Application.Services
                 && v.UsedCount < v.UsageLimit);
 
             if (voucher == null)
-                return ApiResponse<Voucher>.Fail("Voucher không tồn tại hoặc đã hết hạn", StatusCodes.Status404NotFound);
+                return ApiResponse<VoucherDTO>.Fail("Voucher không tồn tại hoặc đã hết hạn", StatusCodes.Status404NotFound);
 
             var todayCount = await _unitOfWork.VoucherRedemption.TodayCountAsync(request.UserId, voucher.Id);
             // check if user already used this voucher in the same day
             if (todayCount > 1)
-                return ApiResponse<Voucher>.Fail("Bạn đã sử dụng voucher này hôm nay rồi", StatusCodes.Status400BadRequest);
+                return ApiResponse<VoucherDTO>.Fail("Bạn đã sử dụng voucher này hôm nay rồi", StatusCodes.Status400BadRequest);
 
             if (voucher.MinOrderAmount > request.TotalAmount)
-                return ApiResponse<Voucher>.Fail($"Không thể sử dụng voucher vì đơn hàng chưa đạt mức thanh toán {voucher.MinOrderAmount}", StatusCodes.Status400BadRequest);
+                return ApiResponse<VoucherDTO>.Fail($"Không thể sử dụng voucher vì đơn hàng chưa đạt mức thanh toán {voucher.MinOrderAmount}", StatusCodes.Status400BadRequest);
 
-            return ApiResponse<Voucher>.Success("Voucher hợp lệ", voucher, StatusCodes.Status200OK);
+            var voucherToDto = new VoucherDTO
+            {   
+                Id = voucher.Id,
+                Code = voucher.Code,
+                Description = voucher.Description,
+                DiscountType = voucher.DiscountType,
+                DiscountValue = voucher.DiscountValue, 
+                MaxDiscount = voucher.MaxDiscount,
+                MinOrderAmount = voucher.MinOrderAmount,
+                StartDate = voucher.StartDate,
+                EndDate = voucher.EndDate,
+                PerUserLimit = voucher.PerUserLimit,
+                UsageLimit = voucher.UsageLimit,
+                UsedCount = voucher.UsedCount,
+                IsActive = voucher.IsActive
+            };
+
+            return ApiResponse<VoucherDTO>.Success("Voucher hợp lệ", voucherToDto, StatusCodes.Status200OK);
         }
     }
 }
