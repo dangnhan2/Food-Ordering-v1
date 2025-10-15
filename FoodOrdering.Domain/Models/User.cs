@@ -19,5 +19,7 @@ namespace FoodOrdering.Domain.Models
         public EmailOtp EmailOtp { get; set; }
         public ICollection<VoucherRedemptions> VoucherRedemptions { get; set; } = new List<VoucherRedemptions>();
         public ICollection<Orders> Orders { get; set; } = new List<Orders>();
+        public ICollection<Addresses> Addresss { get; set; } = new List<Addresses>();
+        public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     }
 }
