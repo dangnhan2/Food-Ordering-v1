@@ -22,6 +22,8 @@ namespace FoodOrdering.Infrastructure.Data
         public DbSet<Carts> Carts { get; set; }
         public DbSet<CartItems> CartItems { get; set; }
         public DbSet<EmailOtp> EmailOtps { get; set; }
+        public DbSet<Addresses> Addresses { get; set; }
+        public DbSet<Notification> Notification { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

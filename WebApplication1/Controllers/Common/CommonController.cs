@@ -17,8 +17,9 @@ namespace FoodOrdering.Presentation.Controllers.Common
         private readonly ICartService _cartService;
         private readonly IOrderService _orderService;
         private readonly IUserService _userService;
-        public readonly IVoucherService _voucherService;
-        public CommonController(ICategoryService categoryService, IMenuService menuService, ICartService cartService, IOrderService orderService, IUserService userService, IVoucherService voucherService)
+        private readonly IVoucherService _voucherService;
+        private readonly IAddressService _addressService; 
+        public CommonController(ICategoryService categoryService, IMenuService menuService, ICartService cartService, IOrderService orderService, IUserService userService, IVoucherService voucherService, IAddressService addressService)
         {
             _categoryService = categoryService;
             _menuService = menuService;
@@ -26,6 +27,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
             _orderService = orderService;
             _userService = userService;
             _voucherService = voucherService;
+            _addressService = addressService;
         }
 
         [HttpGet("category")]
@@ -179,6 +181,55 @@ namespace FoodOrdering.Presentation.Controllers.Common
                 result.Message,
                 result.StatusCode,
                 result.Data
+            });
+        }
+
+        [HttpGet("address")]
+        public async Task<IActionResult> GetAddresses(Guid id)
+        {
+            var result = await _addressService.GetAllByUserAsync(id);
+
+            return Ok(new
+            {
+                result.Message,
+                result.StatusCode,
+                result.Data
+            });
+        }
+
+        [HttpPost("address")]
+        public async Task<IActionResult> AddAddress([FromBody] AddressRequest request)
+        {
+            var result = await _addressService.AddAsync(request);
+
+            return Ok(new
+            {
+                result.Message,
+                result.StatusCode,
+            });
+        }
+
+        [HttpPut("address/{id}")]
+        public async Task<IActionResult> UpdateAddress(Guid id, [FromBody] AddressRequest request)
+        {
+            var result = await _addressService.UpdateAsync(id, request);
+
+            return Ok(new
+            {
+                result.Message,
+                result.StatusCode,
+            });
+        }
+
+        [HttpDelete("address/{id}")]
+        public async Task<IActionResult> DeleteAddress(Guid id)
+        {
+            var result = await _addressService.DeleteAsync(id);
+
+            return Ok(new
+            {
+                result.Message,
+                result.StatusCode,
             });
         }
 
