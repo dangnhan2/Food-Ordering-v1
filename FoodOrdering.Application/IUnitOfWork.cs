@@ -19,6 +19,7 @@ namespace FoodOrdering.Application
        IEmailOtpRepo EmailOtp { get; }
        IVoucherRedemptionRepo VoucherRedemption { get; }
        IAddressRepo Address { get; }
+       INotificationRepo Notification { get; }
        Task SaveChangeAsync();
     }
 }

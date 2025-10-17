@@ -12,6 +12,7 @@ using FoodOrdering.Infrastructure.Identity;
 using FoodOrdering.Infrastructure.Payment;
 using FoodOrdering.Infrastructure.Repositories;
 using FoodOrdering.Infrastructure.Repository;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Food_Ordering.Extensions
@@ -41,10 +42,13 @@ namespace Food_Ordering.Extensions
             services.AddScoped<IDashboardService, DashboardService>();
             services.AddScoped<IAddressRepo, AddressRepo>();
             services.AddScoped<IAddressService, AddressService>();
+            services.AddScoped<INotificationRepo, NotificationRepo>();
+            services.AddScoped<INotificationService, NotificationService>();
 
             services.AddTransient<ICloudinaryService, CLoudinaryService>();
             services.AddTransient<IPaymentGateway, PaymentGateway>();
             services.AddTransient<IEmailService, EmailService>();
+           
 
             return services;
         }

@@ -2,7 +2,11 @@
 using FoodOrdering.Application;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Payment;
+using FoodOrdering.Domain.Models;
+using FoodOrdering.Infrastructure.SignalR_Hub;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Net.payOS;
 using Net.payOS.Types;
 using Newtonsoft.Json.Linq;
@@ -22,7 +26,9 @@ namespace FoodOrdering.Infrastructure.Payment
         private readonly string returnUrl;
         private readonly string cancelUrl;
         private readonly string _checksumKey;
-        public PaymentGateway(IUnitOfWork unitOfWork) {
+        private readonly IHubContext<NotificationHub> _hubContext;
+        private readonly UserManager<User> _userManager;
+        public PaymentGateway(IUnitOfWork unitOfWork, IHubContext<NotificationHub> hubContext, UserManager<User> userManager) {
             Env.Load();
             _unitOfWork = unitOfWork;
             _payOS = new PayOS(
@@ -34,6 +40,8 @@ namespace FoodOrdering.Infrastructure.Payment
             returnUrl = Env.GetString("RETURN_URL");
             cancelUrl = Env.GetString("CANCEL_URL");
             _checksumKey = Env.GetString("PAYOS_CHECKSUM_KEY");
+            _hubContext = hubContext;
+            _userManager = userManager;
         }
 
         public async Task<ApiResponse<string>> CallBack(HttpRequest request)
@@ -56,7 +64,9 @@ namespace FoodOrdering.Infrastructure.Payment
 
             // Build transactionStr = key=value&key2=value2...
             var sorted = data.Properties().OrderBy(p => p.Name, StringComparer.Ordinal).ToList();
+
             var sb = new StringBuilder();
+
             for (int i = 0; i < sorted.Count; i++)
             {
                 var prop = sorted[i];
@@ -96,6 +106,7 @@ namespace FoodOrdering.Infrastructure.Payment
             }
             
             _unitOfWork.Order.Update(order);
+            await SendNotificationToAdminAsync(order.TransactionId);
             await _unitOfWork.SaveChangeAsync();
 
             return ApiResponse<string>.Success("Webhook processed successfully", "", StatusCodes.Status200OK);
@@ -122,6 +133,40 @@ namespace FoodOrdering.Infrastructure.Payment
             var response = await _payOS.createPaymentLink(paymentLinkRequest);
 
             return response;
+        }
+
+        private async Task SendNotificationToAdminAsync(int orderCode)
+        {
+            var users = await _userManager.GetUsersInRoleAsync("Admin");
+
+            foreach(var user in users)
+            {
+                var notification = new Notification
+                {  
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    Tiltle = "Bạn có đơn hàng mới",
+                    Message = $"Đơn hàng #{orderCode} vừa đặt thành công",
+                    Type = "Order",
+                    Data = "",
+                    IsRead = false
+                };
+
+                // add notification to db
+                await _unitOfWork.Notification.AddAsync(notification);
+
+                // send notification to group admins
+                await _hubContext.Clients.Group("Admins")
+                    .SendAsync("ReceiveNotification", new NotificationDto
+                    {   
+                        Id = notification.Id,
+                        Tiltle = "Bạn có đơn hàng mới",
+                        Message = $"Đơn hàng #{orderCode} vừa được tạo",
+                        Type = "Order",
+                        Data = "",
+                        IsRead = false
+                    });
+            }
         }
     }
 }

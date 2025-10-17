@@ -19,7 +19,16 @@ namespace FoodOrdering.Presentation.Controllers.Common
         private readonly IUserService _userService;
         private readonly IVoucherService _voucherService;
         private readonly IAddressService _addressService; 
-        public CommonController(ICategoryService categoryService, IMenuService menuService, ICartService cartService, IOrderService orderService, IUserService userService, IVoucherService voucherService, IAddressService addressService)
+        private readonly INotificationService _notificationService;
+        public CommonController(
+            ICategoryService categoryService, 
+            IMenuService menuService, 
+            ICartService cartService, 
+            IOrderService orderService, 
+            IUserService userService, 
+            IVoucherService voucherService, 
+            IAddressService addressService, 
+            INotificationService notificationService)
         {
             _categoryService = categoryService;
             _menuService = menuService;
@@ -28,6 +37,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
             _userService = userService;
             _voucherService = voucherService;
             _addressService = addressService;
+            _notificationService = notificationService;
         }
 
         [HttpGet("category")]
@@ -230,6 +240,18 @@ namespace FoodOrdering.Presentation.Controllers.Common
             {
                 result.Message,
                 result.StatusCode,
+            });
+        }
+
+        [HttpPut("notification/{id}")]
+        public async Task<IActionResult> UpdateNotification(Guid id)
+        {
+            var result = await _notificationService.MarkAsReadAsync(id);
+
+            return Ok(new
+            {
+                result.Message,
+                result.StatusCode
             });
         }
 
