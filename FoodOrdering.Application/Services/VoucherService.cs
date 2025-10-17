@@ -35,7 +35,7 @@ namespace FoodOrdering.Application.Services
             var voucher = new Voucher
             {
                 Code = request.Code,
-                Description = request.Description,
+                Description = $"Hạn sử dụng {request.StartDate} đến ngày {request.EndDate}",
                 DiscountType = request.DiscountType,
                 DiscountValue = request.DiscountValue,
                 StartDate = request.StartDate,
@@ -149,7 +149,7 @@ namespace FoodOrdering.Application.Services
                 return ApiResponse<Voucher>.Fail("Không tìm thấy voucher", StatusCodes.Status404NotFound);
 
             existVoucher.Code = request.Code;
-            existVoucher.Description = request.Description;
+            existVoucher.Description = $"Hạn sử dụng {request.StartDate} đến ngày {request.EndDate}";
             existVoucher.DiscountType = request.DiscountType;
             existVoucher.DiscountValue = request.DiscountValue;
             existVoucher.StartDate = request.StartDate;

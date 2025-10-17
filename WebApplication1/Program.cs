@@ -64,6 +64,12 @@ RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
     Cron.Daily(),
     TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
 
+RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
+    "DeleteNotifications_1month",
+    j => j.DeleteNotifications_1month(),
+    Cron.Monthly(),
+    TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+
 app.MapControllers();
 
 app.Run();

@@ -29,6 +29,7 @@ namespace FoodOrdering.Infrastructure
             EmailOtp = new EmailOtpRepo(_context);
             VoucherRedemption = new VoucherRedemptionRepo(_context);
             Address = new AddressRepo(_context);
+            Notification = new NotificationRepo(_context);
         }
 
         public IOrderRepo Order { get; }
@@ -50,6 +51,8 @@ namespace FoodOrdering.Infrastructure
         public IVoucherRedemptionRepo VoucherRedemption { get; }
 
         public IAddressRepo Address { get; }
+
+        public INotificationRepo Notification { get; }
 
         public void Dispose()
         {

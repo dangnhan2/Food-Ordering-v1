@@ -10,6 +10,8 @@ namespace Food_Ordering.Extensions
             services.AddJwtConfig();
             services.AddDI();
             services.AddSwaggerConfigure();
+            services.AddSignalR();
+
             return services;
         }
     }

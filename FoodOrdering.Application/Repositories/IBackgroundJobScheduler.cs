@@ -16,5 +16,6 @@ namespace FoodOrdering.Application.Repositories
         public Task PublicVouchers_24hours();
         public Task RetrieveVouchers_24hours();
         public Task ResetVoucherRedemptions_24hours();
+        public Task DeleteNotifications_1month();
     }
 }

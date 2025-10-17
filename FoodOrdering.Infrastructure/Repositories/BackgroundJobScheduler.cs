@@ -132,5 +132,20 @@ namespace FoodOrdering.Infrastructure.Repositories
                 await _unitOfWork.SaveChangeAsync();
             }
         }
+
+        public async Task DeleteNotifications_1month()
+        {
+            DateTime todayUtc = DateTime.UtcNow.Date;
+            DateTime tomorrowUtc = todayUtc.AddDays(1);
+
+            var notifications = _unitOfWork.Notification.GetAll().Where(x => x.CreatedAt.Date.AddDays(30) >= todayUtc && x.CreatedAt.Date.AddDays(30) < tomorrowUtc);
+
+            if (notifications.Count() > 0)
+            {
+                _unitOfWork.Notification.RemoveRange(notifications);
+                await _unitOfWork.SaveChangeAsync();
+
+            }
+        }
     }
 }
