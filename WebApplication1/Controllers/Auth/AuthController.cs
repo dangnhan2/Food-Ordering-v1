@@ -18,162 +18,101 @@ namespace FoodOrdering.Presentation.Controllers.Auth
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            try
-            {
-                var result = await _authService.LoginAsync(request, HttpContext);
+            var result = await _authService.LoginAsync(request, HttpContext);
 
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode
-                    });
-                }
-
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                    result.Data
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode,
+                result.Data
+            });
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            try
-            {
-                var result = await _authService.RegisterAsync(request);
+            var result = await _authService.RegisterAsync(request);
 
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode
-                    });
-                }
-
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode
+            });
         }
 
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshToken()
         {
-            try
-            {
-                var result = await _authService.RefreshTokenAsync(HttpContext);
+            var result = await _authService.RefreshTokenAsync(HttpContext);
 
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode
-                    });
-                }
-
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                    result.Data
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCode = StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode,
+                result.Data
+            });
         }
 
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
-            try
-            {
-                var result = await _authService.LogoutAsync(HttpContext);
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode,
-                    });
-                }
+            var result = await _authService.LogoutAsync(HttpContext);
 
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCode =  StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode,
+            });
         }
 
         [HttpPost("verify-email")]
         public async Task<IActionResult> VerifyEmail([FromBody] EmailVerifyRequest request)
         {
-            try
-            {
-                var result = await _authService.VerifyEmail(request);
+            var result = await _authService.VerifyEmail(request);
 
-                if (!result.IsSuccess)
-                {
-                    return BadRequest(new
-                    {
-                        result.Message,
-                        result.StatusCode,
-                    });
-                }
-
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                });
-            }catch(Exception ex)
+            return Ok(new
             {
-                return BadRequest(new
-                {
-                    Message = ex.InnerException.Message ?? ex.Message,
-                    StatusCodes.Status400BadRequest
-                });
-            }
+                result.Message,
+                result.StatusCode,
+            });
+
         }
-     
+
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] PasswordRequest request)
+        {
+            var result = await _authService.ChangePasswordAsync(request);
+
+            return Ok(new
+            {
+                result.Message,
+                result.StatusCode
+            });
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            var result = await _authService.ForgotPasswordAsync(request);
+
+            return Ok(new
+            {
+                result.Message,
+                result.StatusCode
+            });
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            var result = await _authService.ResetPasswordAsync(request);
+
+            return Ok(new
+            {
+                result.Message,
+                result.StatusCode
+            });
+        }
+
     }
 }

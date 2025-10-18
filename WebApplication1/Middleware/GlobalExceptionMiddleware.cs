@@ -30,7 +30,7 @@ namespace FoodOrdering.Presentation.Middleware
             catch (UnauthorizedAccessException ex) // lỗi xác thực/ủy quyền
             {
                 await HandleExceptionAsync(context, ex, HttpStatusCode.Unauthorized);
-            }           
+            }
             catch (Exception ex) // các lỗi còn lại
             {
                 await HandleExceptionAsync(context, ex, HttpStatusCode.InternalServerError);

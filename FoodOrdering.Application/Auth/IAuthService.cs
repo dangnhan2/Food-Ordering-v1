@@ -18,5 +18,8 @@ namespace FoodOrdering.Application.Auth
         public Task<ApiResponse<AuthResponse>> RefreshTokenAsync(HttpContext context);
         public Task<ApiResponse<RefreshTokens>> LogoutAsync(HttpContext context);
         public Task<ApiResponse<string>> VerifyEmail(EmailVerifyRequest request);
+        public Task<ApiResponse<User>> ChangePasswordAsync(PasswordRequest request);
+        public Task<ApiResponse<User>> ForgotPasswordAsync(ForgotPasswordRequest request);
+        public Task<ApiResponse<User>> ResetPasswordAsync(ResetPasswordRequest request);
     }
 }
