@@ -39,9 +39,41 @@ namespace FoodOrdering.Infrastructure.Identity
             _emailService = emailService;        
         }
 
+        public async Task<ApiResponse<User>> ChangePasswordAsync(PasswordRequest request)
+        {   
+            var result = await new PasswordValidator().ValidateAsync(request);
+            if (!result.IsValid)
+                return ApiResponse<User>.Fail(result.ToDictionary(), StatusCodes.Status400BadRequest);
+
+            var user = await _userManager.FindByIdAsync(request.Id.ToString());
+
+            if (user == null)
+                return ApiResponse<User>.Fail("Không tìm thấy người dùng", StatusCodes.Status404NotFound);
+
+            await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+
+            return ApiResponse<User>.Success("Đổi mật khẩu thành công", user, StatusCodes.Status200OK);
+        }
+
+        public async Task<ApiResponse<User>> ForgotPasswordAsync(ForgotPasswordRequest request)
+        {
+            var user = await _userManager.FindByEmailAsync(request.Email);
+
+            if (user == null)
+                return ApiResponse<User>.Fail("Không tìm thấy email/email chưa được đăng kí", StatusCodes.Status404NotFound);
+
+            //generate opt
+            var otp = await GenerateOtp(user.Id);
+
+            SendEmail(user.Id, user.Email, otp);
+
+            return ApiResponse<User>.Success("Một email đã được gửi tới email của bạn.", user, StatusCodes.Status200OK);
+        }
+
         public async Task<ApiResponse<AuthResponse>> LoginAsync(LoginRequest request, HttpContext context)
         {
             var result = await new LoginValidator().ValidateAsync(request);
+
             if (!result.IsValid)
                 return ApiResponse<AuthResponse>.Fail(result.ToDictionary(), StatusCodes.Status400BadRequest);           
 
@@ -126,16 +158,25 @@ namespace FoodOrdering.Infrastructure.Identity
             // Add user to role
             await _userManager.AddToRoleAsync(newUser, "Customer");
 
-            var htmlBody = $"<p>Mã xác nhận email của bạn là:</p> " +
-                $" <p class=\"otp\">{otp}</p> " +
-                $"<p>Mã sẽ hết hạn trong {5} phút. Không chia sẻ mã otp này cho bất kì ai</p>";
-
-            // schedule to delete user if email did not confirmed after 5 minutes
-            ScheduleUnconfirmedUser_5mins(newUser.Id);
-
-            BackgroundJob.Enqueue(() => _emailService.EmailSender(newUser.Email, "Mã xác nhận email", htmlBody));
+            SendEmail(newUser.Id, newUser.Email, otp);
            
-            return ApiResponse<User>.Success("Đăng kí thành công. Email đã được gửi tới email của bạn.", newUser, StatusCodes.Status200OK);           
+            return ApiResponse<User>.Success("Đăng kí thành công. Một email đã được gửi tới email của bạn.", newUser, StatusCodes.Status200OK);           
+        }
+
+        public async Task<ApiResponse<User>> ResetPasswordAsync(ResetPasswordRequest request)
+        {   
+            var result = await new ResetPasswordValidator().ValidateAsync(request);
+
+            if (!result.IsValid)
+                return ApiResponse<User>.Fail(result.ToDictionary(), StatusCodes.Status400BadRequest); 
+
+            var user = await _userManager.FindByEmailAsync(request.Email);
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            await _userManager.ResetPasswordAsync(user,token, request.NewPassword);
+
+            return ApiResponse<User>.Success("Đặt lại mật khẩu thành công", user, StatusCodes.Status200OK);
+
         }
 
         public async Task<ApiResponse<string>> VerifyEmail(EmailVerifyRequest request)
@@ -144,9 +185,6 @@ namespace FoodOrdering.Infrastructure.Identity
 
             if(isExistUser == null)
                 return ApiResponse<string>.Fail("Không tìm thấy email", StatusCodes.Status404NotFound);
-
-            if (isExistUser.EmailConfirmed)
-                return ApiResponse<string>.Fail("Email đã được xác thực", StatusCodes.Status400BadRequest);
 
             if (isExistUser.EmailOtp.Otp != request.Otp)
                 return ApiResponse<string>.Fail("Mã otp không hợp lệ hoặc hết hạn", StatusCodes.Status400BadRequest);
@@ -178,11 +216,18 @@ namespace FoodOrdering.Infrastructure.Identity
 
         }
 
-        private void ScheduleUnconfirmedUser_5mins(Guid id)
+        private void SendEmail(Guid userId,string email, string otp)
         {
+            var htmlBody = $"<p>Mã xác nhận email của bạn là:</p> " +
+                $" <p class=\"otp\">{otp}</p> " +
+                $"<p>Mã sẽ hết hạn trong {5} phút. Không chia sẻ mã otp này cho bất kì ai</p>";
+
+            // schedule to delete expired otp after 5 minutes
             BackgroundJob.Schedule<IBackgroundJobScheduler>(
-                j => j.DeleteExpiredOtp_5mins(id),
-                TimeSpan.FromMinutes(5));
+                 j => j.DeleteExpiredOtp_5mins(userId),
+                 TimeSpan.FromMinutes(5));
+
+            BackgroundJob.Enqueue(() => _emailService.EmailSender(email, "Một email đã gửi đến email của bạn . Hãy nhập mã xác nhận", htmlBody));
         }
     }
 }

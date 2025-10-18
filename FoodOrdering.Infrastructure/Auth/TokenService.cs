@@ -60,24 +60,14 @@ namespace FoodOrdering.Infrastructure.Identity
             var tokenHandler = new JwtSecurityTokenHandler();
             var jwt = tokenHandler.CreateToken(tokenDescriptor);
             var token = tokenHandler.WriteToken(jwt);
-
-            // refreshToken
-            string refresh = Guid.NewGuid().ToString() + "-" + Guid.NewGuid().ToString();
-
-            var refreshToken = new RefreshTokens
-            {
-                UserId = user.Id,
-                Token = refresh.HashToken(),
-                CreatedAt = DateTime.UtcNow,
-                ExpriedAt = DateTime.UtcNow.AddMonths(3)
-            };
-
+           
             var authResponse = new AuthResponse
             {
                 Data = new UserDTO
                 {
                     Id = user.Id,
                     Email = user.Email,
+                    PhoneNumber = user.PhoneNumber,
                     FullName = user.FullName,
                     ImageUrl = user.ImageUrl,
                     Role = userRole.First()
@@ -85,8 +75,7 @@ namespace FoodOrdering.Infrastructure.Identity
                 AccessToken = token
             };
 
-            await _unitOfWork.RefreshToken.AddAsync(refreshToken);
-            await _unitOfWork.SaveChangeAsync();
+            string refresh = await RefreshTokenAsync(user.Id);
 
             context.Response.Cookies.Append(
                 "refresh_token",
@@ -117,6 +106,27 @@ namespace FoodOrdering.Infrastructure.Identity
             _unitOfWork.RefreshToken.Remove(existRefreshToken);          
             var authResponse = await GenerateToken(user, context);
             return ApiResponse<AuthResponse>.Success("Refresh token successfull", authResponse, StatusCodes.Status200OK);
+        }
+
+        // save refresh token to db
+        private async Task<string> RefreshTokenAsync(Guid userId)
+        {
+            // refreshToken
+            string refresh = Guid.NewGuid().ToString() + "-" + Guid.NewGuid().ToString();
+
+            var refreshToken = new RefreshTokens
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Token = refresh.HashToken(),
+                CreatedAt = DateTime.UtcNow,
+                ExpriedAt = DateTime.UtcNow.AddMonths(3)
+            };
+            
+            await _unitOfWork.RefreshToken.AddAsync(refreshToken);
+            await _unitOfWork.SaveChangeAsync();
+
+            return refresh;
         }
     }
 }
