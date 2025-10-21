@@ -1,4 +1,5 @@
-﻿using FoodOrdering.Application.DTOs.Request;
+﻿using FoodOrdering.Application.Caching;
+using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Repositories;
 using FoodOrdering.Application.Services.Interface;
@@ -19,23 +20,31 @@ namespace FoodOrdering.Application.Services
     public class CategoryService : ICategoryService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ICacheService _cacheService;
 
-        public CategoryService(IUnitOfWork unitOfWork)
+        public CategoryService(IUnitOfWork unitOfWork, ICacheService cacheService)
         {
             _unitOfWork = unitOfWork;
+            _cacheService = cacheService;
         }
 
         public async Task<ApiResponse<IEnumerable<CategoryDTO>>> GetAllAsync()
-        {
+        {   
+            // check cache
+            string cacheKey = "categories:all";
+            var cachedCategories = await _cacheService.GetAsync<IEnumerable<CategoryDTO>>(cacheKey);
+
+            if (cachedCategories != null) 
+                return ApiResponse<IEnumerable<CategoryDTO>>.Success("Lấy dữ liệu thành công", cachedCategories, StatusCodes.Status200OK);
+
+            // if not, get from db
             var categories = _unitOfWork.Category.GetAll();
 
-            var categoriesToDTO = await categories.Select(c => new CategoryDTO
-            {
-                Id = c.Id,
-                Name = c.Name,
-            }).ToListAsync();
+            var categoriesToDTO = await categories.Select(c => new CategoryDTO(c)).AsNoTracking().ToListAsync();
 
-            return ApiResponse<IEnumerable<CategoryDTO>>.Success("Lấy dữ liệu thành công", categoriesToDTO, 200);
+            await _cacheService.SetAsync(cacheKey, categoriesToDTO, TimeSpan.FromMinutes(30));
+
+            return ApiResponse<IEnumerable<CategoryDTO>>.Success("Lấy dữ liệu thành công", categoriesToDTO, StatusCodes.Status200OK);
         }
 
         public async Task<ApiResponse<Categories>> AddAsync(CategoryRequest request)
@@ -58,6 +67,9 @@ namespace FoodOrdering.Application.Services
             await _unitOfWork.Category.AddAsync(category);
             await _unitOfWork.SaveChangeAsync();
 
+            // delete old cache
+            await _cacheService.RemoveAsync("categories:all");
+
             return ApiResponse<Categories>.Success($"Thêm menu {request.Name} thành công", category, StatusCodes.Status201Created);
         }
 
@@ -66,31 +78,24 @@ namespace FoodOrdering.Application.Services
             var validator = new CategoryValidator();
             var result = await validator.ValidateAsync(request);
 
-            if (!result.IsValid)
-            {
-                foreach (var error in result.Errors)
-                {
-                    return ApiResponse<Categories>.Fail($"{error.ErrorMessage}", 400);
-                }
-            }
-            
+            if (!result.IsValid)           
+              return ApiResponse<Categories>.Fail(result.ToDictionary(), 400);
+                         
             var categories = _unitOfWork.Category.GetAll().Where(c => c.Name.Trim().ToLower() ==  request.Name.Trim().ToLower() && c.Id != id);
             var category = await _unitOfWork.Category.GetByIdAsync(id);
 
             if (category == null)
-            {
                 return ApiResponse<Categories>.Fail("Không tìm thấy menu", 404);
-            }
 
             if (categories.Any())
-            {
                 return ApiResponse<Categories>.Fail($"Menu {request.Name} đã tồn tại", 400);
-            }
 
             category.Name = request.Name;
 
             _unitOfWork.Category.Update(category);
             await _unitOfWork.SaveChangeAsync();
+
+            await _cacheService.RemoveAsync("categories:all");
 
             return ApiResponse<Categories>.Success($"Cập nhật menu {request.Name} thành công", category, 200);
         }
@@ -99,14 +104,13 @@ namespace FoodOrdering.Application.Services
         {
             var category = await _unitOfWork.Category.GetByIdAsync(id);
 
-            if (category == null)
-            {
-                return ApiResponse<Categories>.Fail("Không tìm thấy menu", 404);
-            }
-
+            if (category == null)           
+              return ApiResponse<Categories>.Fail("Không tìm thấy menu", 404);
+            
             _unitOfWork.Category.Remove(category);
             await _unitOfWork.SaveChangeAsync();
 
+            await _cacheService.RemoveAsync("categories:all");
             return ApiResponse<Categories>.Success($"Xóa menu {category.Name} thành công", category, 200);
         }
     }

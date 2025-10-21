@@ -30,6 +30,7 @@ namespace FoodOrdering.Infrastructure
             VoucherRedemption = new VoucherRedemptionRepo(_context);
             Address = new AddressRepo(_context);
             Notification = new NotificationRepo(_context);
+            OrderMenu = new OrderMenuRepo(_context);
         }
 
         public IOrderRepo Order { get; }
@@ -53,6 +54,8 @@ namespace FoodOrdering.Infrastructure
         public IAddressRepo Address { get; }
 
         public INotificationRepo Notification { get; }
+
+        public IOrderMenuRepo OrderMenu { get; }
 
         public void Dispose()
         {

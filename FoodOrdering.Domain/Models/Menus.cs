@@ -10,8 +10,8 @@ namespace FoodOrdering.Domain.Models
     public class Menus
     {
         public Guid Id { get; set; }
-        public string Name { get; set; } = null!;
-        public Categories Categories { get; set; } = null!;
+        public string Name { get; set; }
+        public Categories Categories { get; set; } 
         public Guid CategoriesId { get; set; }
         public string? Description { get; set; }
         public int Price { get; set; }

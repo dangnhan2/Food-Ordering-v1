@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FoodOrdering.Domain.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,5 +16,22 @@ namespace FoodOrdering.Application.DTOs.Response
         public string Email { get; set; }
         public string Role { get; set; }
 
+        public UserDTO(User user, string role) { 
+            Id = user.Id;
+            FullName = user.FullName;
+            PhoneNumber = user.PhoneNumber;
+            ImageUrl = user.ImageUrl;
+            Email = user.Email;
+            Role = role;
+        }
+
+        public UserDTO(User user)
+        {
+            Id = user.Id;
+            FullName = user.FullName;
+            PhoneNumber = user.PhoneNumber;
+            ImageUrl = user.ImageUrl;
+            Email = user.Email;
+        }
     }
 }

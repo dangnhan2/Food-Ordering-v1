@@ -11,7 +11,6 @@ namespace Food_Ordering.Extensions
             services.AddDI();
             services.AddSwaggerConfigure();
             services.AddSignalR();
-
             return services;
         }
     }

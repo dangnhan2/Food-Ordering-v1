@@ -20,6 +20,7 @@ namespace FoodOrdering.Application
        IVoucherRedemptionRepo VoucherRedemption { get; }
        IAddressRepo Address { get; }
        INotificationRepo Notification { get; }
+       IOrderMenuRepo OrderMenu { get; }
        Task SaveChangeAsync();
     }
 }

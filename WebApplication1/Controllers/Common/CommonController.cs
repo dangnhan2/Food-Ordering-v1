@@ -1,6 +1,5 @@
 ﻿using FoodOrdering.Application.DTOs.QueryParams;
 using FoodOrdering.Application.DTOs.Request;
-using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Services;
 using FoodOrdering.Application.Services.Interface;
 using Microsoft.AspNetCore.Http;

@@ -36,22 +36,10 @@ namespace FoodOrdering.Application.Services
         {
             var orders = _unitOfWork.Order.GetAll();
 
-            var ordersToDTO = await orders.Select(o => new OrderDTO
-            {
-                Id = o.Id,
-                OrderDate = o.OrderDate,
-                OrderStatus = o.Status,
-                TotalAmount = o.ToTalAmount,
-                Menus = o.OrderMenus.Select(m => new OrderMenuDTO
-                {
-                    Id = m.Id,
-                    MenuId = m.MenuId,
-                    MenuName = m.Menus.Name,
-                    MenuImage = m.Menus.ImageUrl,
-                    Quantity = m.Quantity,
-                    UnitPrice = m.UnitPrice
-                }).ToList()
-            }).Paging(orderParams.Page, orderParams.PageSize).ToListAsync();
+            var ordersToDTO = await orders
+                .Select(o => new OrderDTO(o, o.OrderMenus.Select(m => new OrderMenuDTO(m)).ToList()))
+                .Paging(orderParams.Page, orderParams.PageSize).AsNoTracking()
+                .ToListAsync();
 
             return ApiResponse<PagingReponse<OrderDTO>>.Success("Lấy dữ liệu thành công",
                 new PagingReponse<OrderDTO>(orderParams.Page, orderParams.PageSize, orders.Count(), ordersToDTO),
@@ -129,22 +117,10 @@ namespace FoodOrdering.Application.Services
             var ordersToDTO = await orders
                 .Where(o => o.UserId == id && (o.Status == OrderStatus.Paid || o.Status == OrderStatus.Pending))
                 .OrderByDescending(o => o.OrderDate)
-                .Select(o => new OrderDTO
-            {
-                Id = o.Id,
-                OrderDate = o.OrderDate,
-                OrderStatus = o.Status,
-                TotalAmount = o.ToTalAmount,
-                Menus = o.OrderMenus.Select(m => new OrderMenuDTO
-                {
-                    Id = m.Id,
-                    MenuId = m.MenuId,
-                    MenuName = m.Menus.Name,
-                    MenuImage = m.Menus.ImageUrl,
-                    Quantity = m.Quantity,
-                    UnitPrice = m.UnitPrice
-                }).ToList()
-            }).Paging(orderParams.Page, orderParams.PageSize).ToListAsync();
+                .Select(o => new OrderDTO(o, o.OrderMenus
+                .Select(m => new OrderMenuDTO(m)).ToList()))
+                .Paging(orderParams.Page, orderParams.PageSize)
+                .ToListAsync();
 
             return ApiResponse<PagingReponse<OrderDTO>>.Success("Lấy dữ liệu thành công",
                 new PagingReponse<OrderDTO>(orderParams.Page, orderParams.PageSize, orders.Count(), ordersToDTO),

@@ -3,7 +3,6 @@ using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Twilio.Http;
 
 namespace FoodOrdering.Presentation.Controllers.Admin
 {

@@ -11,11 +11,16 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Infrastructure.Repositories
 {
-    public class VoucherRedemptionRepo : GenericRepo<VoucherRedemptions> , IVoucherRedemptionRepo
+    public class VoucherRedemptionRepo : GenericRepo<VoucherRedemptions>, IVoucherRedemptionRepo
     {   
         private readonly FoodOrderingDbContext _context;
         public VoucherRedemptionRepo(FoodOrderingDbContext context) : base(context) {
            _context = context;
+        }
+
+        public async Task<int> CountAsync(Guid id)
+        {
+            return await _context.VoucherRedemptions.CountAsync(v => v.VoucherID == id);
         }
 
         public async Task<int> TodayCountAsync(Guid userId, Guid voucherId)

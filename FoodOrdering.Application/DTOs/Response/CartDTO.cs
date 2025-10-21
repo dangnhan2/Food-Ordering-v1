@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FoodOrdering.Domain.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,5 +12,13 @@ namespace FoodOrdering.Application.DTOs.Response
         public Guid Id { set; get; }
         public Guid UserId { get; set; }
         public ICollection<CartItemDTO> Items { get; set; }  = new List<CartItemDTO>();
+
+        public CartDTO() { }
+        public CartDTO(Carts cart, List<CartItemDTO> items)
+        {
+            Id = cart.Id;
+            UserId = cart.UserId;
+            Items = items;
+        }
     }
 }

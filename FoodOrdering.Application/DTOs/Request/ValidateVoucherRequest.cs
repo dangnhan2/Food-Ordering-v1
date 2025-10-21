@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FoodOrdering.Application.DTOs.Response
+namespace FoodOrdering.Application.DTOs.Request
 {
     public class ValidateVoucherRequest
     {

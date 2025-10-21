@@ -63,15 +63,8 @@ namespace FoodOrdering.Infrastructure.Identity
            
             var authResponse = new AuthResponse
             {
-                Data = new UserDTO
-                {
-                    Id = user.Id,
-                    Email = user.Email,
-                    PhoneNumber = user.PhoneNumber,
-                    FullName = user.FullName,
-                    ImageUrl = user.ImageUrl,
-                    Role = userRole.First()
-                },
+                Data = new UserDTO(user, userRole.First()),
+                
                 AccessToken = token
             };
 
