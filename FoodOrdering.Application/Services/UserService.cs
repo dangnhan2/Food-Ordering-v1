@@ -44,14 +44,7 @@ namespace FoodOrdering.Application.Services
             if (!string.IsNullOrEmpty(userParams.Email))
                 users = users.Where(u => u.Email == userParams.Email);
 
-            var usersToDTO = await users.Select(u => new UserDTO
-            {
-                Id = u.Id,
-                FullName = u.FullName,
-                Email = u.Email,
-                PhoneNumber = u.PhoneNumber,
-                ImageUrl = u.ImageUrl,
-            }).Paging(userParams.Page, userParams.PageSize).AsNoTracking().ToListAsync();
+            var usersToDTO = await users.Select(u => new UserDTO(u)).Paging(userParams.Page, userParams.PageSize).AsNoTracking().ToListAsync();
 
             return ApiResponse<PagingReponse<UserDTO>>.Success("Lấy dữ liệu thành công",
                 new PagingReponse<UserDTO>(userParams.Page, userParams.PageSize, users.Count(), usersToDTO),

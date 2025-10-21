@@ -1,4 +1,5 @@
-﻿using FoodOrdering.Application.DTOs.QueryParams;
+﻿using FoodOrdering.Application.Caching;
+using FoodOrdering.Application.DTOs.QueryParams;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Extension;
@@ -18,10 +19,12 @@ namespace FoodOrdering.Application.Services
     public class MenuService : IMenuService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ICacheService _cacheService;
 
-        public MenuService(IUnitOfWork unitOfWork)
+        public MenuService(IUnitOfWork unitOfWork, ICacheService cacheService)
         {
             _unitOfWork = unitOfWork;
+            _cacheService = cacheService;
         }
 
         public async Task<ApiResponse<Menus>> AddAsync(MenuRequest request)
@@ -93,19 +96,12 @@ namespace FoodOrdering.Application.Services
                 };
             }
 
-            var menusToDTO = await menus.Select(m => new MenuDto
-            {
-                Id = m.Id,
-                Category = m.Categories.Name,
-                Name = m.Name,
-                ImageUrl = m.ImageUrl,
-                Price = m.Price,
-                Description = m.Description,
-                CreatedAt = m.CreatedAt,
-                SoldQuantity = m.SoldQuantity,
-                StockQuantity = m.StockQuantity,
-                IsAvailable = m.IsAvailable,
-            }).Paging(menuParams.Page, menuParams.PageSize).AsNoTracking().ToListAsync();
+            var menusToDTO = await menus
+                .Include(m => m.Categories)
+                .Select(m => new MenuDto(m))
+                .Paging(menuParams.Page, menuParams.PageSize)     
+                .AsNoTrackingWithIdentityResolution()
+                .ToListAsync();
 
             return ApiResponse<PagingReponse<MenuDto>>.Success(
                 "Lấy dữ liệu thành công",
@@ -115,30 +111,25 @@ namespace FoodOrdering.Application.Services
 
         public async Task<ApiResponse<MenuDto>> GetByIdAsync(Guid id)
         {
+            string cacheKey = $"menu:{id}";
+            var cacheMenu = await _cacheService.GetAsync<MenuDto>(cacheKey);
+
+            if (cacheMenu != null)          
+              return ApiResponse<MenuDto>.Success("Lấy dữ liệu thành công", cacheMenu, StatusCodes.Status200OK);
+            
             var menu = await _unitOfWork.Menu.GetMenuWithCategoryAsync(id);
   
             if (menu == null)
                return ApiResponse<MenuDto>.Fail("Không tìm thấy menu", StatusCodes.Status404NotFound);
-           
-            var menuToDto = new MenuDto
-            {
-                Id = menu.Id,
-                Name = menu.Name,
-                Category = menu.Categories.Name,
-                Description = menu.Description,
-                ImageUrl = menu.ImageUrl,
-                Price = menu.Price,
-                CreatedAt = menu.CreatedAt,
-                SoldQuantity = menu.SoldQuantity,
-                StockQuantity = menu.StockQuantity,
-                IsAvailable = menu.IsAvailable,
-            };
 
-            return ApiResponse<MenuDto>.Success("Lấy dữ liệu thành công", menuToDto, StatusCodes.Status200OK);
+            await _cacheService.SetAsync(cacheKey, new MenuDto(menu), TimeSpan.FromMinutes(10));
+
+            return ApiResponse<MenuDto>.Success("Lấy dữ liệu thành công", new MenuDto(menu), StatusCodes.Status200OK);
         }
 
         public async Task<ApiResponse<Menus>> UpdateAsync(Guid id, MenuRequest request)
         {
+            string cacheKey = $"menu:{id}";
             var result = await new MenuValidatior().ValidateAsync(request);
             if (!result.IsValid)
                 return ApiResponse<Menus>.Fail(result.ToDictionary(), 400);
@@ -159,6 +150,8 @@ namespace FoodOrdering.Application.Services
             menu.Price = request.Price;
             menu.IsAvailable = request.IsAvailble;
             menu.StockQuantity = request.StockQuantity;
+
+            await _cacheService.RemoveAsync(cacheKey);
 
             return ApiResponse<Menus>.Success($"Cập nhật {menu.Name} thành công", menu, StatusCodes.Status200OK);
         }

@@ -56,21 +56,8 @@ namespace FoodOrdering.Application.Services
             if (cart == null)
                 return ApiResponse<CartDTO>.Fail("Không tìm thấy giỏ hàng", StatusCodes.Status404NotFound);
 
-            var cartToDTO = new CartDTO
-            {
-                Id = cart.Id,
-                UserId = id,
-                Items = cart.CartItems.Select(ct => new CartItemDTO
-                {
-                    Id = ct.Id,
-                    MenuId = ct.MenuId,
-                    MenuName = ct.Menu.Name,
-                    ImageUrl = ct.Menu.ImageUrl,
-                    Quantity = ct.Quantity,
-                    UnitPrice = ct.UnitPrice
-                }).ToList()
-            };
-
+            var cartToDTO = new CartDTO(cart, cart.CartItems.Select(ct => new CartItemDTO(ct)).ToList());
+            
             return ApiResponse<CartDTO>.Success("Lấy dữ liệu thành công", cartToDTO, StatusCodes.Status200OK);
         }
 

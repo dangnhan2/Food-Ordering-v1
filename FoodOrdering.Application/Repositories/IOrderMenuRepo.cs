@@ -7,9 +7,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Repositories
 {
-    public interface IVoucherRedemptionRepo : IGenericRepo<VoucherRedemptions>
+    public interface IOrderMenuRepo : IGenericRepo<OrderMenus>
     {
-        public Task<int> TodayCountAsync(Guid userId, Guid voucherId);
-        public Task<int> CountAsync(Guid id);
     }
 }

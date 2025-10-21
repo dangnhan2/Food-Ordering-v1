@@ -1,12 +1,14 @@
 ﻿using CloudinaryDotNet;
 using FoodOrdering.Application;
 using FoodOrdering.Application.Auth;
+using FoodOrdering.Application.Caching;
 using FoodOrdering.Application.Email;
 using FoodOrdering.Application.Payment;
 using FoodOrdering.Application.Repositories;
 using FoodOrdering.Application.Services;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Infrastructure;
+using FoodOrdering.Infrastructure.Cache;
 using FoodOrdering.Infrastructure.Email;
 using FoodOrdering.Infrastructure.Identity;
 using FoodOrdering.Infrastructure.Payment;
@@ -14,6 +16,7 @@ using FoodOrdering.Infrastructure.Repositories;
 using FoodOrdering.Infrastructure.Repository;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 
 namespace Food_Ordering.Extensions
 {
@@ -44,11 +47,13 @@ namespace Food_Ordering.Extensions
             services.AddScoped<IAddressService, AddressService>();
             services.AddScoped<INotificationRepo, NotificationRepo>();
             services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<ICacheService, CacheService>();  
 
             services.AddTransient<ICloudinaryService, CLoudinaryService>();
             services.AddTransient<IPaymentGateway, PaymentGateway>();
             services.AddTransient<IEmailService, EmailService>();
-           
+
+            services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect("localhost:6379,abortConnect=false"));
 
             return services;
         }

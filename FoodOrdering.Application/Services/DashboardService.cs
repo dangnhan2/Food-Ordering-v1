@@ -1,6 +1,7 @@
 ﻿using Food_Ordering.Models.Enum;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Services.Interface;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,16 +32,13 @@ namespace FoodOrdering.Application.Services
 
             var totalAmount = paidOrders.Sum(o => o.ToTalAmount);
 
-            var topSellingDishes = _unitOfWork.Menu
+            var topSellingDishes = await _unitOfWork.Menu
                 .GetAll()
                 .OrderByDescending(m => m.SoldQuantity)
                 .Take(3)
-                .Select(d => new TopDishDto
-                {
-                    Name = d.Name,
-                    ImageUrl = d.ImageUrl,
-                    SoldQuantity = d.SoldQuantity
-                }).ToList();
+                .Select(d => new TopDishDto(d))
+                .AsNoTracking()
+                .ToListAsync();
 
             var dashboardToDTO = new DashboardOverviewDTO
             {

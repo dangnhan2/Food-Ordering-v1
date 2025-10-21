@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FoodOrdering.Domain.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,5 +15,15 @@ namespace FoodOrdering.Application.DTOs.Response
         public string ImageUrl { get; set; }
         public int Quantity { get; set; }
         public int UnitPrice { get; set; }
+
+        public CartItemDTO() { }
+        public CartItemDTO(CartItems item) {
+            Id = item.Id;
+            MenuId = item.MenuId;
+            MenuName = item.Menu.Name;
+            ImageUrl = item.Menu.ImageUrl;
+            Quantity = item.Quantity;
+            UnitPrice = item.UnitPrice;
+        }
     }
 }

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using FoodOrdering.Domain.Models;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,5 +20,20 @@ namespace FoodOrdering.Application.DTOs.Response
         public int StockQuantity { get; set; }
         public bool IsAvailable { get; set; }
         public DateTime CreatedAt { get; set; }
+
+        public MenuDto() { }
+        public MenuDto(Menus menu)
+        {
+            Id = menu.Id;
+            Name = menu.Name;
+            Category = menu.Categories.Name;
+            Description = menu.Description;
+            Price = menu.Price;
+            ImageUrl = menu.ImageUrl;
+            SoldQuantity = menu.StockQuantity;
+            StockQuantity = menu.StockQuantity;
+            IsAvailable = menu.IsAvailable;
+            CreatedAt = menu.CreatedAt;
+        }
     }
 }

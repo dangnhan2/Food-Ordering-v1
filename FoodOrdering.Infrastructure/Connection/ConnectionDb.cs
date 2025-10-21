@@ -30,7 +30,13 @@ namespace FoodOrdering.Infrastructure.Configuration
             .UseSimpleAssemblyNameTypeSerializer()
             .UseRecommendedSerializerSettings()
             .UsePostgreSqlStorage(Env.GetString("CONNECTION_STRING"))
-            );          
+            );
+
+            // Connect to Redis
+            services.AddStackExchangeRedisCache(opt =>
+            {
+                opt.Configuration = Env.GetString("REDIS");
+            });
         }
     }
 }
