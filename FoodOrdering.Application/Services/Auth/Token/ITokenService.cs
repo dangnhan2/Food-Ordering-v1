@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FoodOrdering.Application.Auth
+namespace FoodOrdering.Application.Services.Auth.Token
 {
     public interface ITokenService
     {

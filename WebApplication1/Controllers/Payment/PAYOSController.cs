@@ -15,7 +15,7 @@ namespace FoodOrdering.Presentation.Controllers.Payment
             _paymentGateway = paymentGateway;
         }
 
-        [HttpPost("confirm-webhook")]
+        [HttpPost("webhook")]
         public async Task<IActionResult> ConfirmWebHook(string url)
         {
             var result = await _paymentGateway.ConfirmWebHook(url);

@@ -15,7 +15,7 @@ namespace FoodOrdering.Presentation.Controllers.Upload
             _cloudinaryService = cloudinaryService;
         }
 
-        [HttpDelete("delete-image")]
+        [HttpDelete("image")]
         public async Task<IActionResult> DeleteImage(string url)
         {
             try
@@ -39,7 +39,7 @@ namespace FoodOrdering.Presentation.Controllers.Upload
             
         }
 
-        [HttpPost("upload-image")]
+        [HttpPost("image")]
         public async Task<IActionResult> UploadThumbnail(IFormFile file)
         {
             try

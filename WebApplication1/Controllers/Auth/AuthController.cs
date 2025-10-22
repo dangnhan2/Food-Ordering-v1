@@ -1,5 +1,5 @@
-﻿using FoodOrdering.Application.Auth;
-using FoodOrdering.Application.DTOs.Request;
+﻿using FoodOrdering.Application.DTOs.Request;
+using FoodOrdering.Application.Services.Auth;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -40,7 +40,7 @@ namespace FoodOrdering.Presentation.Controllers.Auth
             });
         }
 
-        [HttpPost("refresh-token")]
+        [HttpPost("refresh")]
         public async Task<IActionResult> RefreshToken()
         {
             var result = await _authService.RefreshTokenAsync(HttpContext);

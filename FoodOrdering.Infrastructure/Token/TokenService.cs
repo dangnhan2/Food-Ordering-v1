@@ -1,8 +1,8 @@
 ﻿using DotNetEnv;
 using FoodOrdering.Application;
-using FoodOrdering.Application.Auth;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Extension;
+using FoodOrdering.Application.Services.Auth.Token;
 using FoodOrdering.Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
