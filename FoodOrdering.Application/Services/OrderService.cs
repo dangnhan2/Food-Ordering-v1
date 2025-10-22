@@ -13,6 +13,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Net.payOS.Types;
+using RedLockNet.SERedis;
+using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,36 +27,49 @@ namespace FoodOrdering.Application.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IPaymentGateway _paymentGateway;
-
-        public OrderService(IUnitOfWork unitOfWork, IPaymentGateway paymentGateway)
+        private readonly RedLockFactory _redLockFactory;
+        private readonly int orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
+        public OrderService(IUnitOfWork unitOfWork, IPaymentGateway paymentGateway, RedLockFactory redLockFactory)
         {
             _unitOfWork = unitOfWork;
             _paymentGateway = paymentGateway;
+            _redLockFactory = redLockFactory;
         }
 
         public async Task<ApiResponse<PagingReponse<OrderDTO>>> GetAllAsync(OrderParams orderParams)
         {
             var orders = _unitOfWork.Order.GetAll();
 
-            var ordersToDTO = await orders
+            IEnumerable<OrderDTO> ordersToDTO;
+
+            if (orderParams.Page == 0 || orderParams.PageSize == 0)
+            {
+                ordersToDTO = await orders
                 .Select(o => new OrderDTO(o, o.OrderMenus.Select(m => new OrderMenuDTO(m)).ToList()))
-                .Paging(orderParams.Page, orderParams.PageSize).AsNoTracking()
+                .AsNoTracking()
                 .ToListAsync();
+            }
+            else
+            {
+                ordersToDTO = await orders
+                .Select(o => new OrderDTO(o, o.OrderMenus.Select(m => new OrderMenuDTO(m)).ToList()))
+                .Paging(orderParams.Page, orderParams.PageSize) 
+                .AsNoTracking()
+                .ToListAsync();
+            }
+                
 
             return ApiResponse<PagingReponse<OrderDTO>>.Success("Lấy dữ liệu thành công",
                 new PagingReponse<OrderDTO>(orderParams.Page, orderParams.PageSize, orders.Count(), ordersToDTO),
                 StatusCodes.Status200OK);
         }
 
-        public async Task<ApiResponse<dynamic>> CreateOrderAsync(OrderRequest request)
-        {
+        public async Task<ApiResponse<dynamic>> CreateOrderByQRAsync(OrderRequest request)
+        {   
             var cart = await _unitOfWork.Cart.GetCartByCustomerAsync(request.UserId);
 
             if (cart == null)
                 return ApiResponse<dynamic>.Fail("Không tìm thấy giỏ hàng", StatusCodes.Status404NotFound);
-
-            int orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
-
 
             List<ItemData> items = new List<ItemData>();
 
@@ -64,9 +79,10 @@ namespace FoodOrdering.Application.Services
                 UserId = request.UserId,
                 Address = request.Address,
                 Note = request.Note,
+                ExpiredAt = DateTime.UtcNow.AddMinutes(10),
                 Status = OrderStatus.Pending,
                 ToTalAmount = request.TotalAmount,
-                PaymentMethod = "QRCODE",
+                PaymentMethod = request.PaymentMethod,
                 TransactionId = orderCode
             };
 
@@ -89,10 +105,27 @@ namespace FoodOrdering.Application.Services
 
             if (request.VoucherId.HasValue)
             {
-                //create voucher redemption
-                await CreateVouherRedemption(request.VoucherId.Value, request.UserId, order.Id);                
-               //update used count after create payment link
-                await UpdateVoucher(request.VoucherId.Value);
+                var resource = $"lock:voucher:{request.VoucherId.Value}";
+                var expiry = TimeSpan.FromSeconds(5);
+
+                using (var redLock = await _redLockFactory.CreateLockAsync(resource, expiry)) {
+                    if (!redLock.IsAcquired)
+                    {
+                        return ApiResponse<dynamic>.Fail("Hệ thống đang xử lý voucher này, vui lòng thử lại sau.", StatusCodes.Status429TooManyRequests);
+                    }
+
+                    try
+                    {
+                        //create voucher redemption
+                        await CreateVouherRedemption(request.VoucherId.Value, request.UserId, order.Id);
+                        //update used count after create payment link
+                        await UpdateVoucher(request.VoucherId.Value);
+                    }
+                    catch (Exception ex) {
+                        throw;
+                    }
+                    
+                }
             }
 
             var response = await _paymentGateway.CreatePaymentLink(request.TotalAmount, orderCode, items);
@@ -120,6 +153,7 @@ namespace FoodOrdering.Application.Services
                 .Select(o => new OrderDTO(o, o.OrderMenus
                 .Select(m => new OrderMenuDTO(m)).ToList()))
                 .Paging(orderParams.Page, orderParams.PageSize)
+                .AsNoTracking()
                 .ToListAsync();
 
             return ApiResponse<PagingReponse<OrderDTO>>.Success("Lấy dữ liệu thành công",
@@ -170,5 +204,74 @@ namespace FoodOrdering.Application.Services
                 TimeSpan.FromMinutes(10));
         }
 
+        public async Task<ApiResponse<Orders>> CreateOrderByCODAsync(OrderRequest request)
+        {
+            var cart = await _unitOfWork.Cart.GetCartByCustomerAsync(request.UserId);
+
+            if (cart == null)
+                return ApiResponse<Orders>.Fail("Không tìm thấy giỏ hàng", StatusCodes.Status404NotFound);
+
+            var order = new Orders
+            {
+                Id = Guid.NewGuid(),
+                UserId = Guid.NewGuid(),
+                Address = request.Address,
+                Note = request.Note,
+                ExpiredAt = null,
+                ToTalAmount = request.TotalAmount,
+                PaymentMethod = request.PaymentMethod,
+                TransactionId = orderCode,
+                Status = OrderStatus.Paid
+            };
+
+            // add menu to order
+            foreach (var item in cart.CartItems)
+            {
+                var orderItem = new OrderMenus
+                {
+                    OrderId = order.Id,
+                    MenuId = item.MenuId,
+                    Quantity = item.Quantity,
+                    UnitPrice = item.UnitPrice,
+                    SubTotal = item.Quantity * item.UnitPrice
+                };
+                order.OrderMenus.Add(orderItem);
+            }
+
+            if (request.VoucherId.HasValue)
+            {
+                var resource = $"lock:voucher:{request.VoucherId.Value}";
+                var expiry = TimeSpan.FromSeconds(5);
+
+                using (var redLock = await _redLockFactory.CreateLockAsync(resource, expiry))
+                {
+                    if (!redLock.IsAcquired)
+                    {
+                        return ApiResponse<Orders>.Fail("Hệ thống đang xử lý voucher này, vui lòng thử lại sau.", StatusCodes.Status429TooManyRequests);
+                    }
+
+                    try
+                    {
+                        //create voucher redemption
+                        await CreateVouherRedemption(request.VoucherId.Value, request.UserId, order.Id);
+                        //update used count after create payment link
+                        await UpdateVoucher(request.VoucherId.Value);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw;
+                    }
+
+                }
+            }
+
+            ScheduleCancelledOrder_10days(order.Id);
+
+            _unitOfWork.Cart.Remove(cart);
+            await _unitOfWork.Order.AddAsync(order);
+            await _unitOfWork.SaveChangeAsync();
+
+            return ApiResponse<Orders>.Success("Đặt hàng thành công", order, StatusCodes.Status201Created);
+        }
     }
 }

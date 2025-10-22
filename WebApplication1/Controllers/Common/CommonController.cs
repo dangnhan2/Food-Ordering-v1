@@ -39,7 +39,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
             _notificationService = notificationService;
         }
 
-        [HttpGet("category")]
+        [HttpGet("categories")]
         public async Task<IActionResult> GetAllCategories()
         {
             var result = await _categoryService.GetAllAsync();
@@ -52,7 +52,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
             });
         }
 
-        [HttpGet("menu")]
+        [HttpGet("menus")]
         public async Task<IActionResult> GetMenus([FromQuery] MenuParams menuParams)
         {
             var result = await _menuService.GetAllAsync(menuParams);
@@ -117,19 +117,34 @@ namespace FoodOrdering.Presentation.Controllers.Common
         }
 
         [HttpPost("order")]
-        public async Task<IActionResult> CreateOrder([FromBody] OrderRequest request)
-        {
-            var result = await _orderService.CreateOrderAsync(request);
-
-            return Ok(new
+        public async Task<IActionResult> CreateOrderWithQR([FromBody] OrderRequest request)
+        {   
+            if (request.PaymentMethod == "QR")
             {
-                result.Message,
-                result.StatusCode,
-                result.Data
-            });
+                var result = await _orderService.CreateOrderByQRAsync(request);
+
+                return Ok(new
+                {
+                    result.Message,
+                    result.StatusCode,
+                    result.Data
+                });
+            }
+            else
+            {
+                var result = await _orderService.CreateOrderByCODAsync(request);
+
+                return Ok(new
+                {
+                    result.Message,
+                    result.StatusCode,
+                    result.Data
+                });
+            }
+
         }
 
-        [HttpGet("order/{id}")]
+        [HttpGet("user/{id}/orders")]
         public async Task<IActionResult> GetAllOrderByCustomer(Guid id, [FromQuery] OrderParams orderParams)
         {
             var result = await _orderService.GetAllAsyncByCustomer(id, orderParams);
@@ -142,7 +157,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
             });
         }
 
-        [HttpPut("user/avatar/{id}")]
+        [HttpPut("user/{id}/avatar")]
         public async Task<IActionResult> UploadAvatar(Guid id, IFormFile file)
         {
             var result = await _userService.UploadAvatarAsync(id, file);
@@ -167,7 +182,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
 
         }
 
-        [HttpGet("voucher-of-customer")]
+        [HttpGet("user/voucher")]
         public async Task<IActionResult> GetAllVoucherByCustomer()
         {
             var result = await _voucherService.GetAllByCustomerAsync();
@@ -180,7 +195,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
             });
         }
 
-        [HttpPost("validate-voucher")]
+        [HttpPost("user/voucher/{id}")]
         public async Task<IActionResult> ValidateVoucher(ValidateVoucherRequest request)
         {
             var result = await _voucherService.ValidateVoucherAsync(request);
@@ -193,7 +208,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
             });
         }
 
-        [HttpGet("address")]
+        [HttpGet("user/{id}/addresses")]
         public async Task<IActionResult> GetAddresses(Guid id)
         {
             var result = await _addressService.GetAllByUserAsync(id);

@@ -44,8 +44,21 @@ namespace FoodOrdering.Application.Services
             if (!string.IsNullOrEmpty(userParams.Email))
                 users = users.Where(u => u.Email == userParams.Email);
 
-            var usersToDTO = await users.Select(u => new UserDTO(u)).Paging(userParams.Page, userParams.PageSize).AsNoTracking().ToListAsync();
-
+            IEnumerable<UserDTO> usersToDTO;
+            if (userParams.Page == 0 || userParams.PageSize == 0)
+            {
+                usersToDTO = await users.Select(u => new UserDTO(u))                  
+                    .AsNoTracking()
+                    .ToListAsync();
+            }
+            else
+            {
+                usersToDTO = await users.Select(u => new UserDTO(u))
+                    .Paging(userParams.Page, userParams.PageSize)
+                    .AsNoTracking()
+                    .ToListAsync();
+            }
+             
             return ApiResponse<PagingReponse<UserDTO>>.Success("Lấy dữ liệu thành công",
                 new PagingReponse<UserDTO>(userParams.Page, userParams.PageSize, users.Count(), usersToDTO),
                 StatusCodes.Status200OK);

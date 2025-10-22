@@ -8,6 +8,7 @@ using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using RedLockNet.SERedis;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
@@ -21,13 +22,11 @@ namespace FoodOrdering.Application.Services
     public class VoucherService : IVoucherService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IConnectionMultiplexer _redis;
         private readonly ICacheService _cacheService;
-        public VoucherService(IUnitOfWork unitOfWork, IConnectionMultiplexer redis, ICacheService cacheService)
+        public VoucherService(IUnitOfWork unitOfWork, ICacheService cacheService)
         {
-            _unitOfWork = unitOfWork;
-            _redis = redis;
-            _cacheService = cacheService;
+            _unitOfWork = unitOfWork;           
+            _cacheService = cacheService;            
         }
         public async Task<ApiResponse<Voucher>> AddAsync(VoucherRequest request)
         {
@@ -105,11 +104,27 @@ namespace FoodOrdering.Application.Services
                 };
             }
 
-            var voucherToDTO = await vouchers.Select(v => new VoucherDTO(v)).Paging(voucherParams.Page, voucherParams.PageSize).AsNoTracking().ToListAsync();
+            IEnumerable<VoucherDTO> voucherToDTO;
+
+            if (voucherParams.Page == 0 || voucherParams.PageSize == 0)
+            {
+               voucherToDTO = await vouchers
+                    .Select(v => new VoucherDTO(v))
+                    .AsNoTracking()
+                    .ToListAsync();
+            }
+            else
+            {
+                voucherToDTO = await vouchers
+                    .Select(v => new VoucherDTO(v))
+                    .Paging(voucherParams.Page, voucherParams.PageSize)
+                    .AsNoTracking()
+                    .ToListAsync();
+            }
 
             return ApiResponse<PagingReponse<VoucherDTO>>.Success("Lấy dữ liệu thành công",
-                new PagingReponse<VoucherDTO>(voucherParams.Page, voucherParams.PageSize, vouchers.Count(), voucherToDTO),
-                StatusCodes.Status200OK);
+                   new PagingReponse<VoucherDTO>(voucherParams.Page, voucherParams.PageSize, vouchers.Count(), voucherToDTO),
+                   StatusCodes.Status200OK);
         }
 
         public async Task<ApiResponse<IEnumerable<VoucherDTO>>> GetAllByCustomerAsync()
@@ -126,54 +141,7 @@ namespace FoodOrdering.Application.Services
             await _cacheService.SetAsync(cacheKey, vouchersToDTO, TimeSpan.FromMinutes(30));
 
             return ApiResponse<IEnumerable<VoucherDTO>>.Success("Lấy dữ liệu thành công", vouchersToDTO, StatusCodes.Status200OK);
-        }
-
-        public async Task<ApiResponse<VoucherDTO>> TryUseVoucherAsync(ValidateVoucherRequest request)
-        {
-            var dbRedis = _redis.GetDatabase();
-            var lockKey = $"lock:voucher:{request.VoucherId}";
-
-            var gotLock = await dbRedis.StringSetAsync(lockKey, "1", TimeSpan.FromSeconds(3), When.NotExists);
-
-            if (!gotLock)
-                return ApiResponse<VoucherDTO>.Fail("Voucher đang được sử dụng, vui lòng thử lại sau", StatusCodes.Status400BadRequest);
-
-            try
-            {
-                var voucher = await _unitOfWork.Voucher.GetByIdAsync(
-                                     v => v.Id == request.VoucherId
-                                     && v.StartDate <= DateTime.UtcNow
-                                     && v.EndDate >= DateTime.UtcNow
-                                     && v.UsedCount < v.UsageLimit
-                                     && v.IsActive);
-
-                if (voucher == null)
-                    return ApiResponse<VoucherDTO>.Fail("Không tìm thấy voucher", StatusCodes.Status404NotFound);
-
-                if (request.TotalAmount < voucher.MinOrderAmount)
-                    return ApiResponse<VoucherDTO>.Fail($"Đơn hàng phải đạt giá trị tối thiểu {voucher.MinOrderAmount}", StatusCodes.Status400BadRequest);
-
-                var todayCount = await _unitOfWork.VoucherRedemption.TodayCountAsync(request.UserId, voucher.Id);
-                // check if user already used this voucher in the same day
-                if (todayCount > 1)
-                    return ApiResponse<VoucherDTO>.Fail("Bạn đã sử dụng voucher này hôm nay rồi", StatusCodes.Status400BadRequest);
-
-                voucher.UsedCount++;
-                await _unitOfWork.VoucherRedemption.AddAsync(new VoucherRedemptions
-                {
-                    VoucherID = voucher.Id,
-                    UserID = request.UserId,
-                    RedeemedAt = DateTime.UtcNow,
-                });
-                await _unitOfWork.SaveChangeAsync();
-
-                return ApiResponse<VoucherDTO>.Success("", new VoucherDTO(voucher), StatusCodes.Status200OK);
-            }
-            finally
-            {
-                await dbRedis.KeyDeleteAsync(lockKey);
-            }
-        }
+        }      
 
         public async Task<ApiResponse<Voucher>> UpdateAsync(Guid id, VoucherRequest request)
         {

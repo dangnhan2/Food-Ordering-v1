@@ -1,34 +1,31 @@
 ﻿using DotNetEnv;
-using FoodOrdering.Application;
-using FoodOrdering.Application.Auth;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Email;
 using FoodOrdering.Application.Extension;
 using FoodOrdering.Application.Repositories;
+using FoodOrdering.Application.Services.Auth.Token;
 using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static System.Net.WebRequestMethods;
 
-namespace FoodOrdering.Infrastructure.Identity
+namespace FoodOrdering.Application.Services.Auth
 {
     public class AuthService : IAuthService
-    {  
+    {
         private readonly UserManager<User> _userManager;
         private readonly ITokenService _tokenService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly string _avatar;
         private readonly IEmailService _emailService;
-      
+
         public AuthService(UserManager<User> userManager, ITokenService tokenService, IUnitOfWork unitOfWork, IEmailService emailService)
         {
             Env.Load();
@@ -36,11 +33,11 @@ namespace FoodOrdering.Infrastructure.Identity
             _tokenService = tokenService;
             _unitOfWork = unitOfWork;
             _avatar = Env.GetString("DEFAULT_AVATAR");
-            _emailService = emailService;        
+            _emailService = emailService;
         }
 
         public async Task<ApiResponse<User>> ChangePasswordAsync(PasswordRequest request)
-        {   
+        {
             var result = await new PasswordValidator().ValidateAsync(request);
             if (!result.IsValid)
                 return ApiResponse<User>.Fail(result.ToDictionary(), StatusCodes.Status400BadRequest);
@@ -75,24 +72,24 @@ namespace FoodOrdering.Infrastructure.Identity
             var result = await new LoginValidator().ValidateAsync(request);
 
             if (!result.IsValid)
-                return ApiResponse<AuthResponse>.Fail(result.ToDictionary(), StatusCodes.Status400BadRequest);           
+                return ApiResponse<AuthResponse>.Fail(result.ToDictionary(), StatusCodes.Status400BadRequest);
 
             var user = await _userManager.FindByEmailAsync(request.Email);
             var isPasswordValid = await _userManager.CheckPasswordAsync(user, request.Password);
 
-            if(user == null || !isPasswordValid)          
+            if (user == null || !isPasswordValid)
                 return ApiResponse<AuthResponse>.Fail("Thông tin đăng nhập không đúng", StatusCodes.Status400BadRequest);
-            
+
             var authResponse = await _tokenService.GenerateToken(user, context);
 
             return ApiResponse<AuthResponse>.Success("Đăng nhập thành công", authResponse, StatusCodes.Status200OK);
         }
 
         public async Task<ApiResponse<RefreshTokens>> LogoutAsync(HttpContext context)
-        {   
-            var refreshToken =  context.Request.Cookies["refresh_token"];
-            
-            if(refreshToken == null) 
+        {
+            var refreshToken = context.Request.Cookies["refresh_token"];
+
+            if (refreshToken == null)
                 return ApiResponse<RefreshTokens>.Fail("Token is invalid", StatusCodes.Status401Unauthorized);
 
             var isExistToken = await _unitOfWork.RefreshToken.GetTokenByRefreshToken(refreshToken);
@@ -118,7 +115,7 @@ namespace FoodOrdering.Infrastructure.Identity
         }
 
         public async Task<ApiResponse<AuthResponse>> RefreshTokenAsync(HttpContext context)
-        {              
+        {
             var response = await _tokenService.GenerateRefreshToken(context);
             return ApiResponse<AuthResponse>.Success(response.Message, response.Data, response.StatusCode);
         }
@@ -127,8 +124,8 @@ namespace FoodOrdering.Infrastructure.Identity
         {
             var result = await new RegisterValidator().ValidateAsync(request);
 
-            if (!result.IsValid)               
-               return ApiResponse<User>.Fail(result.ToDictionary(), StatusCodes.Status400BadRequest);
+            if (!result.IsValid)
+                return ApiResponse<User>.Fail(result.ToDictionary(), StatusCodes.Status400BadRequest);
 
             var isExistUser = await _userManager.FindByEmailAsync(request.Email);
 
@@ -153,27 +150,27 @@ namespace FoodOrdering.Infrastructure.Identity
                 return ApiResponse<User>.Fail($"Đăng kí không thành công : ${response.ToString()}", StatusCodes.Status400BadRequest);
 
             //Create an EmailOtp object
-            var otp =  await GenerateOtp(newUser.Id);          
-          
+            var otp = await GenerateOtp(newUser.Id);
+
             // Add user to role
             await _userManager.AddToRoleAsync(newUser, "Customer");
 
             SendEmail(newUser.Id, newUser.Email, otp);
-           
-            return ApiResponse<User>.Success("Đăng kí thành công. Một email đã được gửi tới email của bạn.", newUser, StatusCodes.Status200OK);           
+
+            return ApiResponse<User>.Success("Đăng kí thành công. Một email đã được gửi tới email của bạn.", newUser, StatusCodes.Status200OK);
         }
 
         public async Task<ApiResponse<User>> ResetPasswordAsync(ResetPasswordRequest request)
-        {   
+        {
             var result = await new ResetPasswordValidator().ValidateAsync(request);
 
             if (!result.IsValid)
-                return ApiResponse<User>.Fail(result.ToDictionary(), StatusCodes.Status400BadRequest); 
+                return ApiResponse<User>.Fail(result.ToDictionary(), StatusCodes.Status400BadRequest);
 
             var user = await _userManager.FindByEmailAsync(request.Email);
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            await _userManager.ResetPasswordAsync(user,token, request.NewPassword);
+            await _userManager.ResetPasswordAsync(user, token, request.NewPassword);
 
             return ApiResponse<User>.Success("Đặt lại mật khẩu thành công", user, StatusCodes.Status200OK);
 
@@ -183,7 +180,7 @@ namespace FoodOrdering.Infrastructure.Identity
         {
             var isExistUser = await _unitOfWork.User.GetUserByEmailAsync(request.Email);
 
-            if(isExistUser == null)
+            if (isExistUser == null)
                 return ApiResponse<string>.Fail("Không tìm thấy email", StatusCodes.Status404NotFound);
 
             if (isExistUser.EmailOtp.Otp != request.Otp)
@@ -216,7 +213,7 @@ namespace FoodOrdering.Infrastructure.Identity
 
         }
 
-        private void SendEmail(Guid userId,string email, string otp)
+        private void SendEmail(Guid userId, string email, string otp)
         {
             var htmlBody = $"<p>Mã xác nhận email của bạn là:</p> " +
                 $" <p class=\"otp\">{otp}</p> " +
@@ -231,5 +228,3 @@ namespace FoodOrdering.Infrastructure.Identity
         }
     }
 }
-
-//"userId": "fc548332-1f60-4194-923d-9eb424523f3c"

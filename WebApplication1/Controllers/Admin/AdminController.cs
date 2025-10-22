@@ -99,7 +99,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             });
         }
 
-        [HttpGet("order")]
+        [HttpGet("orders")]
         public async Task<IActionResult> GetOrders([FromQuery] OrderParams orderParams)
         {
             var result = await _orderService.GetAllAsync(orderParams);
@@ -112,7 +112,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             });
         }
 
-        [HttpGet("user")]
+        [HttpGet("users")]
         public async Task<IActionResult> GetUsers([FromQuery] UserParams userParams)
         {
             var result = await _userService.GetAllAsync(userParams);
@@ -125,7 +125,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             });
         }
 
-        [HttpGet("voucher")]
+        [HttpGet("vouchers")]
         public async Task<IActionResult> GetVoucher([FromQuery] VoucherParams voucherParams)
         {        
             var result = await _voucherService.GetAllByAdminAsync(voucherParams);

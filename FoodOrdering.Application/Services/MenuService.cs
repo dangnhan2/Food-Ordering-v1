@@ -71,6 +71,15 @@ namespace FoodOrdering.Application.Services
 
         public async Task<ApiResponse<PagingReponse<MenuDto>>> GetAllAsync(MenuParams menuParams)
         {
+            string cacheKey = $"menu_page_{menuParams.Page}_size_{menuParams.PageSize}";
+            var cached = await _cacheService.GetAsync<IEnumerable<MenuDto>>(cacheKey);
+
+            if (cached != null)
+                return ApiResponse<PagingReponse<MenuDto>>.Success(
+                    "Lấy dữ liệu thành công",
+                    new PagingReponse<MenuDto>(menuParams.Page, menuParams.PageSize, cached.Count(), cached),
+                    StatusCodes.Status200OK);
+            
             var menus = _unitOfWork.Menu.GetAll();
 
             if (!string.IsNullOrEmpty(menuParams.Name))
@@ -96,12 +105,25 @@ namespace FoodOrdering.Application.Services
                 };
             }
 
-            var menusToDTO = await menus
+            IEnumerable<MenuDto> menusToDTO;
+
+            if (menuParams.Page == 0 && menuParams.PageSize == 0)
+            {
+                menusToDTO = await menus
+                    .Include(m => m.Categories)
+                    .Select(m => new MenuDto(m))
+                    .AsNoTrackingWithIdentityResolution()
+                    .ToListAsync();
+            }
+            else
+            {
+                menusToDTO = await menus
                 .Include(m => m.Categories)
                 .Select(m => new MenuDto(m))
-                .Paging(menuParams.Page, menuParams.PageSize)     
+                .Paging(menuParams.Page, menuParams.PageSize)
                 .AsNoTrackingWithIdentityResolution()
                 .ToListAsync();
+            }
 
             return ApiResponse<PagingReponse<MenuDto>>.Success(
                 "Lấy dữ liệu thành công",
