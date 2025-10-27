@@ -1,7 +1,9 @@
 ﻿using FoodOrdering.Application.DTOs.Request;
+using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Services.Auth;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Sprache;
 
 namespace FoodOrdering.Presentation.Controllers.Auth
 {
@@ -19,99 +21,65 @@ namespace FoodOrdering.Presentation.Controllers.Auth
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var result = await _authService.LoginAsync(request, HttpContext);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-                result.Data
-            });
+            var response = ApiResponse<AuthResponse>.Success("Đăng nhập thành công", result, StatusCodes.Status200OK);
+            return Ok(response);
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             var result = await _authService.RegisterAsync(request);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode
-            });
+            var response = ApiResponse<string>.Success("Email đã được gửi. Hãy nhập mã để xác nhận", result, StatusCodes.Status201Created);
+            return Ok(response);
         }
 
         [HttpPost("refresh")]
         public async Task<IActionResult> RefreshToken()
         {
             var result = await _authService.RefreshTokenAsync(HttpContext);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-                result.Data
-            });
+            var response = ApiResponse<AuthResponse>.Success("Refresh token successfull", result, StatusCodes.Status200OK);
+            return Ok(response);
         }
 
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
-            var result = await _authService.LogoutAsync(HttpContext);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-            });
+            await _authService.LogoutAsync(HttpContext);
+            var response = ApiResponse<dynamic>.Success("Đăng xuất thành công", null, StatusCodes.Status200OK);
+            return Ok(response);
         }
 
         [HttpPost("verify-email")]
         public async Task<IActionResult> VerifyEmail([FromBody] EmailVerifyRequest request)
         {
             var result = await _authService.VerifyEmail(request);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-            });
+            var response = ApiResponse<string>.Success("Xác nhận email thành công", result, StatusCodes.Status200OK);
+            return Ok(request);
 
         }
 
         [HttpPost("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] PasswordRequest request)
         {
-            var result = await _authService.ChangePasswordAsync(request);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode
-            });
+            await _authService.ChangePasswordAsync(request);
+            var response = ApiResponse<dynamic>.Success("Đổi mật khẩu thành công", null, StatusCodes.Status200OK);
+            return Ok(response);
         }
 
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
         {
-            var result = await _authService.ForgotPasswordAsync(request);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode
-            });
+            await _authService.ForgotPasswordAsync(request);
+            var response = ApiResponse<dynamic>.Success("Email đã được gửi. Hãy nhập mã để xác nhận", null, StatusCodes.Status200OK);
+            return Ok(response);
         }
 
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {
-            var result = await _authService.ResetPasswordAsync(request);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode
-            });
+            await _authService.ResetPasswordAsync(request);
+            var response = ApiResponse<dynamic>.Success("Thiết lập mật khẩu mới thành công", null, StatusCodes.Status200OK);
+            return Ok(response);
         }
 
     }

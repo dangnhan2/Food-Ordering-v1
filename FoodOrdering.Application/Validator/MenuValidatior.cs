@@ -14,11 +14,7 @@ namespace FoodOrdering.Application.Validator
             // Kiểm tra trường Name
             RuleFor(x => x.Name)
                 .NotEmpty().WithMessage("Tên món ăn không được để trống.")
-                .Length(3, 100).WithMessage("Tên món ăn phải có độ dài từ 3 đến 100 ký tự.");
-
-            // Kiểm tra trường CategoriesId
-            RuleFor(x => x.CategoriesId)
-                .NotEmpty().WithMessage("ID danh mục không được để trống.");
+                .Length(3, 100).WithMessage("Tên món ăn phải có độ dài từ 3 đến 100 ký tự.");           
 
             // Kiểm tra trường Description
             // Vì là nullable, chỉ cần kiểm tra độ dài tối đa

@@ -11,7 +11,6 @@ namespace FoodOrdering.Domain.Models
         public User User { get; set; } = null!;
         public Guid OrderID { get; set; }
         public Orders Order { get; set; } = null!;
-        public DateTime RedeemedAt { get; set; }
-        public decimal AmountDiscount { get; set; }       
+        public DateTime RedeemedAt { get; set; }     
     }
 }

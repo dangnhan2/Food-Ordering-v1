@@ -8,19 +8,19 @@ namespace FoodOrdering.Application.DTOs.Response
 {
     public class ApiResponse<T>
     {
-        public dynamic Message { get; set; }
+        public string Message { get; set; }
         public bool IsSuccess { get; set; }
         public int StatusCode { get; set; }
         public T? Data { get; set; }
 
-        public ApiResponse(dynamic message, bool success, int code, T data) {
+        public ApiResponse(string message, bool success, int code, T data) {
             Message = message;
             IsSuccess = success;
             StatusCode = code;
             Data = data;
         }
 
-        public static ApiResponse<T> Success(dynamic message, T data, int code) {
+        public static ApiResponse<T> Success(string? message, T data, int code) {
             return new ApiResponse<T>(message, true, code, data);
         }
 

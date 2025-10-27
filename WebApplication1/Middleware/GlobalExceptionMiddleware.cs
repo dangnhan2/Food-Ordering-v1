@@ -1,5 +1,9 @@
 ﻿using CloudinaryDotNet;
 using FoodOrdering.Application.DTOs.Response;
+using FoodOrdering.Application.Extension;
+using FoodOrdering.Application.Validator;
+using Serilog;
+using System.Data;
 using System.Net;
 using System.Text.Json;
 
@@ -8,9 +12,9 @@ namespace FoodOrdering.Presentation.Middleware
     public class GlobalExceptionMiddleware
     {
         private readonly RequestDelegate _next;
-
-        public GlobalExceptionMiddleware(RequestDelegate next) {
-           _next = next;
+        public GlobalExceptionMiddleware(RequestDelegate next)
+        {
+            _next = next;
         }
 
         public async Task Invoke(HttpContext context)
@@ -21,18 +25,37 @@ namespace FoodOrdering.Presentation.Middleware
             }
             catch (ArgumentException ex) // lỗi đầu vào
             {
+                Extensions.LogWarning(ex);
                 await HandleExceptionAsync(context, ex, HttpStatusCode.BadRequest);
             }
             catch (KeyNotFoundException ex) // lỗi không tìm thấy dữ liệu
             {
+                Extensions.LogWarning(ex);
                 await HandleExceptionAsync(context, ex, HttpStatusCode.NotFound);
             }
             catch (UnauthorizedAccessException ex) // lỗi xác thực/ủy quyền
             {
+                Extensions.LogWarning(ex);
                 await HandleExceptionAsync(context, ex, HttpStatusCode.Unauthorized);
+            }           
+            catch (DuplicateNameException ex) // lỗi cùng giá trị 
+            {
+                Extensions.LogWarning(ex);
+                await HandleExceptionAsync(context, ex, HttpStatusCode.BadRequest);
+            }
+            catch(ValidationDictionaryException ex) // lỗi validation
+            {
+                Extensions.LogWarning(ex);
+                await HandleExceptionAsync(context, ex, HttpStatusCode.BadRequest);
+            }
+            catch(InvalidDataException ex) // lỗi dữ liệu ở db
+            {
+                Extensions.LogWarning(ex);
+                await HandleExceptionAsync(context,ex, HttpStatusCode.BadRequest);
             }
             catch (Exception ex) // các lỗi còn lại
             {
+                Extensions.LogError(ex);
                 await HandleExceptionAsync(context, ex, HttpStatusCode.InternalServerError);
             }
         }
@@ -42,16 +65,36 @@ namespace FoodOrdering.Presentation.Middleware
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = (int)statusCode;
 
-            string userMessage = statusCode switch
-            {
-                HttpStatusCode.BadRequest => "Yêu cầu không hợp lệ. Vui lòng kiểm tra lại thông tin.",
-                HttpStatusCode.NotFound => "Không tìm thấy dữ liệu yêu cầu.",
-                HttpStatusCode.Unauthorized => "Bạn không có quyền truy cập. Vui lòng đăng nhập lại.",
-                HttpStatusCode.InternalServerError => "Hệ thống đang gặp sự cố. Vui lòng thử lại sau.",
-                _ => "Đã có lỗi xảy ra. Vui lòng thử lại."
-            };
+            string message;
+            object? data = null;
 
-            var response = new ApiResponse<object>(userMessage, false, (int)statusCode, null);
+            switch (ex)
+            {   
+                case InvalidDataException invalidDataException:
+                    message = invalidDataException.Message;
+                    break;
+                case ValidationDictionaryException validationEx:
+                    message = "Dữ liệu không hợp lệ";
+                    data = validationEx.Errors; // Gửi dictionary lỗi
+                    break;
+                case ArgumentException argEx:
+                    message = argEx.Message;
+                    break;
+                case KeyNotFoundException:
+                    message = "Không tìm thấy dữ liệu yêu cầu.";
+                    break;
+                case UnauthorizedAccessException:
+                    message = "Bạn không có quyền truy cập. Vui lòng đăng nhập lại.";
+                    break;
+                case DuplicateNameException dupEx:
+                    message = dupEx.Message;
+                    break;
+                default:
+                    message = "Hệ thống đang gặp sự cố. Vui lòng thử lại sau.";
+                    break;
+            }
+
+            var response = new ApiResponse<object>(message, false, (int)statusCode, data);
 
             await context.Response.WriteAsync(JsonSerializer.Serialize(response));
            

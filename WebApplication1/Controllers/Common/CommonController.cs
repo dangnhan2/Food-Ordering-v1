@@ -1,9 +1,12 @@
 ﻿using FoodOrdering.Application.DTOs.QueryParams;
 using FoodOrdering.Application.DTOs.Request;
+using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Services;
 using FoodOrdering.Application.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Sprache;
+using System.Collections.Generic;
 
 namespace FoodOrdering.Presentation.Controllers.Common
 {
@@ -43,77 +46,48 @@ namespace FoodOrdering.Presentation.Controllers.Common
         public async Task<IActionResult> GetAllCategories()
         {
             var result = await _categoryService.GetAllAsync();
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-                result.Data
-            });
+            var response = ApiResponse<IEnumerable<CategoryDTO>>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
+            return Ok(response);
         }
 
         [HttpGet("menus")]
         public async Task<IActionResult> GetMenus([FromQuery] MenuParams menuParams)
         {
             var result = await _menuService.GetAllAsync(menuParams);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-                result.Data
-            });
+            var response = ApiResponse<PagingReponse<MenuDto>>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
+            return Ok(response);
         }
 
         [HttpGet("menu/{id}")]
         public async Task<IActionResult> GetMenuById(Guid id)
         {
             var result = await _menuService.GetByIdAsync(id);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-                result.Data
-            });
+            var response = ApiResponse<MenuDto>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
+            return Ok(response);
         }
 
         [HttpGet("cart")]
         public async Task<IActionResult> GetCartByCustomer(Guid id)
         {          
             var result = await _cartService.GetCartByCustomer(id);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-                result.Data
-            });           
+            var response = ApiResponse<CartDTO>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
+            return Ok(response);
         }
 
         [HttpPost("cart")]
         public async Task<IActionResult> AddToCart([FromBody] CartRequest request)
         {
-            var result = await _cartService.AddToCartAsync(request);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-            });
-
+            await _cartService.AddToCartAsync(request);
+            var response = ApiResponse<string>.Success("Thêm item thành công", "", StatusCodes.Status201Created);
+            return Ok(response);
         }
 
         [HttpPut("cart/{id}")]
         public async Task<IActionResult> UpdateToCart(Guid id, [FromBody] CartRequest request)
         {
-            var result = await _cartService.UpdateToCartAsync(id, request);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-            });
+            await _cartService.UpdateToCartAsync(id, request);
+            var response = ApiResponse<string>.Success("Thêm item thành công", "", StatusCodes.Status201Created);
+            return Ok(response);
         }
 
         [HttpPost("order")]
@@ -122,24 +96,14 @@ namespace FoodOrdering.Presentation.Controllers.Common
             if (request.PaymentMethod == "QR")
             {
                 var result = await _orderService.CreateOrderByQRAsync(request);
-
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                    result.Data
-                });
+                var response = ApiResponse<dynamic>.Success("Tạo đơn thành công", result, StatusCodes.Status201Created);
+                return Ok(response);
             }
             else
             {
-                var result = await _orderService.CreateOrderByCODAsync(request);
-
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                    result.Data
-                });
+                await _orderService.CreateOrderByCODAsync(request);
+                var response = ApiResponse<string>.Success("Tạo đơn thành công", "", StatusCodes.Status201Created);
+                return Ok(response);
             }
 
         }
@@ -148,113 +112,73 @@ namespace FoodOrdering.Presentation.Controllers.Common
         public async Task<IActionResult> GetAllOrderByCustomer(Guid id, [FromQuery] OrderParams orderParams)
         {
             var result = await _orderService.GetAllAsyncByCustomer(id, orderParams);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-                result.Data
-            });
+            var response = ApiResponse<PagingReponse<OrderDTO>>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
+            return Ok(response);
         }
 
         [HttpPut("user/{id}/avatar")]
         public async Task<IActionResult> UploadAvatar(Guid id, IFormFile file)
         {
-            var result = await _userService.UploadAvatarAsync(id, file);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-            });
+            await _userService.UploadAvatarAsync(id, file);
+            var response = ApiResponse<string>.Success("Tải ảnh thành công", "", StatusCodes.Status200OK);
+            return Ok(response);
         }
 
         [HttpPut("user/{id}")]
         public async Task<IActionResult> UpdateUser(Guid id, UserRequest request)
         {
-            var result = await _userService.UploadProfileAsync(id, request);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode
-            });
-
+            await _userService.UploadProfileAsync(id, request);
+            var response = ApiResponse<string>.Success("Cập nhật thành công", "", StatusCodes.Status200OK);
+            return Ok(response);
         }
 
         [HttpGet("user/voucher")]
         public async Task<IActionResult> GetAllVoucherByCustomer()
         {
             var result = await _voucherService.GetAllByCustomerAsync();
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-                result.Data
-            });
+            var response = ApiResponse<IEnumerable<VoucherDTO>>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
+            return Ok(response);
         }
 
         [HttpPost("user/voucher/{id}")]
         public async Task<IActionResult> ValidateVoucher(ValidateVoucherRequest request)
         {
             var result = await _voucherService.ValidateVoucherAsync(request);
-           
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-                result.Data
-            });
+            var response = ApiResponse<VoucherDTO>.Success("", result, StatusCodes.Status201Created);
+            return Ok(response);
         }
 
         [HttpGet("user/{id}/addresses")]
         public async Task<IActionResult> GetAddresses(Guid id)
         {
             var result = await _addressService.GetAllByUserAsync(id);
+            var response = ApiResponse<IEnumerable<AddressDto>>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
 
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-                result.Data
-            });
+            return Ok(response);           
         }
 
         [HttpPost("address")]
         public async Task<IActionResult> AddAddress([FromBody] AddressRequest request)
         {
-            var result = await _addressService.AddAsync(request);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-            });
+            await _addressService.AddAsync(request);
+            var response = ApiResponse<string>.Success(null, "Thêm mới thành công", StatusCodes.Status201Created);
+            return Ok(response);
         }
 
         [HttpPut("address/{id}")]
         public async Task<IActionResult> UpdateAddress(Guid id, [FromBody] AddressRequest request)
         {
-            var result = await _addressService.UpdateAsync(id, request);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-            });
+            await _addressService.UpdateAsync(id, request);
+            var response = ApiResponse<string>.Success(null, "Cập nhật thành công", StatusCodes.Status200OK);
+            return Ok(response);
         }
 
         [HttpDelete("address/{id}")]
         public async Task<IActionResult> DeleteAddress(Guid id)
         {
-            var result = await _addressService.DeleteAsync(id);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-            });
+            await _addressService.DeleteAsync(id);
+            var response = ApiResponse<string>.Success(null, "Xóa thành công", StatusCodes.Status201Created);
+            return Ok(response);
         }
 
         [HttpPut("notification/{id}")]

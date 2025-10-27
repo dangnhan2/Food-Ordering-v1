@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+  seq:
+    image: datalust/seq:latest
+    container_name: seq
+    restart: unless-stopped
+    environment:
+      - ACCEPT_EULA=Y
+    ports:
+      - "5341:80"   # UI Seq
+      - "5342:5341" # API nh?n log
+    volumes:
+      - seq-data:/data
+  # redis:
+  #   image: redis:7
+  #   container_name: redis
+  #   restart: unless-stopped
+  #   command: ["redis-server", "--appendonly", "yes"]
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis-data:/data
+  foodordering.presentation:
+    image: ${DOCKER_REGISTRY-}foodorderingpresentation
+    build:
+      context: .
+      dockerfile: WebApplication1/Dockerfile
+
+volumes:
+  seq-data:

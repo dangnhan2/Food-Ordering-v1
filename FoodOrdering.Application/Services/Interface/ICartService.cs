@@ -12,8 +12,8 @@ namespace FoodOrdering.Application.Services.Interface
 {
     public interface ICartService
     {
-        public Task<ApiResponse<Carts>> AddToCartAsync(CartRequest request);
-        public Task<ApiResponse<Carts>> UpdateToCartAsync(Guid id, CartRequest request);
-        public Task<ApiResponse<CartDTO>> GetCartByCustomer(Guid id);
+        public Task AddToCartAsync(CartRequest request);
+        public Task UpdateToCartAsync(Guid id, CartRequest request);
+        public Task<CartDTO> GetCartByCustomer(Guid id);
     }
 }

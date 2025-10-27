@@ -1,6 +1,7 @@
 ﻿using FoodOrdering.Application;
 using FoodOrdering.Application.Repositories;
 using FoodOrdering.Domain.Models;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -89,37 +90,88 @@ namespace FoodOrdering.Infrastructure.Repositories
 
         public async Task PublicVouchers_24hours()
         {
-            DateTime todayUtc = DateTime.UtcNow.Date;
-            DateTime tomorrowUtc = todayUtc.AddDays(1);
+            Log.Information("Starting public voucher...");
 
-            var vouchers = _unitOfWork.Voucher.GetAll().Where(v => v.StartDate.Date >= todayUtc && v.StartDate < tomorrowUtc && !v.IsActive);
+            // Lấy timezone Việt Nam
+            var vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh");
 
-            if (vouchers.Any()) {
+            // Lấy thời điểm hiện tại theo giờ Việt Nam
+            var nowInVn = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
+
+            // Lấy 00:00 hôm nay theo giờ VN
+            var startOfTodayVn = nowInVn.Date;
+            var startOfTomorrowVn = startOfTodayVn.AddDays(1);
+
+            // Convert về UTC để so sánh trong DB (vì DB đang lưu UTC)
+            var startUtc = new DateTimeOffset(startOfTodayVn, TimeSpan.FromHours(7)).ToUniversalTime();
+            var endUtc = new DateTimeOffset(startOfTomorrowVn, TimeSpan.FromHours(7)).ToUniversalTime();
+
+            Log.Information($"VN Range: {startOfTodayVn} -> {startOfTomorrowVn}");
+            Log.Information($"UTC Range: {startUtc} -> {endUtc}");
+
+            var vouchers = await _unitOfWork.Voucher.FindAsync(
+                v => v.StartDate >= startUtc &&
+                     v.StartDate < endUtc &&
+                     !v.IsActive);
+
+            Log.Information($"Voucher cần active: {vouchers.Count()}");
+
+            if (vouchers.Count() > 0)
+            {
                 foreach (var voucher in vouchers)
-                {
                     voucher.IsActive = true;
-                }
 
                 await _unitOfWork.SaveChangeAsync();
+                Log.Information("✅ Đã publish voucher thành công.");
             }
+            else
+            {
+                Log.Information("Không có voucher nào cần publish hôm nay.");
+            }
+
+            Log.Information("Finish publishing voucher");
         }
 
         public async Task RetrieveVouchers_24hours()
         {
-            DateTime todayUtc = DateTime.UtcNow.Date;
-            DateTime tomorrowUtc = todayUtc.AddDays(1);
+            Log.Information("Starting retrieve voucher...");
 
-            var vouchers = _unitOfWork.Voucher.GetAll().Where(v => v.EndDate.Date > todayUtc && v.EndDate.Date <= tomorrowUtc && v.IsActive == true);
+            var vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh");
 
-            if (vouchers.Any())
+            // Giờ hiện tại VN
+            var nowInVn = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
+
+            // 00:00 hôm nay và hôm sau theo VN
+            var startOfTodayVn = nowInVn.Date;
+            var startOfTomorrowVn = startOfTodayVn.AddDays(1);
+
+            // Convert về UTC để query DB (StartDate & EndDate trong DB là UTC)
+            var todayUtc = new DateTimeOffset(startOfTodayVn, TimeSpan.FromHours(7)).ToUniversalTime();
+            var tomorrowUtc = new DateTimeOffset(startOfTomorrowVn, TimeSpan.FromHours(7)).ToUniversalTime();
+
+            Log.Information($"VN Range Ended: < {todayUtc} (UTC end cutoff)");
+
+            var vouchers = await _unitOfWork.Voucher.FindAsync(
+                v => v.EndDate < todayUtc &&
+                     v.IsActive
+            );
+
+            Log.Information($"Voucher cần thu hồi: {vouchers.Count()}");
+
+            if (vouchers.Count() > 0)
             {
                 foreach (var voucher in vouchers)
-                {
-                    voucher.IsActive = true;
-                }
+                    voucher.IsActive = false;
 
                 await _unitOfWork.SaveChangeAsync();
+                Log.Information("✅ Đã thu hồi voucher hết hạn.");
             }
+            else
+            {
+                Log.Information("Không có voucher nào hết hạn hôm nay.");
+            }
+
+            Log.Information("Finish retrieving voucher");
         }
 
         public async Task ResetVoucherRedemptions_24hours()

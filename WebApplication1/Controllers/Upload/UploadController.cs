@@ -1,6 +1,8 @@
-﻿using FoodOrdering.Application.Services.Interface;
+﻿using FoodOrdering.Application.DTOs.Response;
+using FoodOrdering.Application.Services.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Sprache;
 
 namespace FoodOrdering.Presentation.Controllers.Upload
 {
@@ -15,52 +17,21 @@ namespace FoodOrdering.Presentation.Controllers.Upload
             _cloudinaryService = cloudinaryService;
         }
 
-        [HttpDelete("image")]
+        [HttpDelete("menu/image")]
         public async Task<IActionResult> DeleteImage(string url)
         {
-            try
-            {
-                var result = await _cloudinaryService.DeleteImage(url);
+            await _cloudinaryService.DeleteImage(url);
+            var response = ApiResponse<dynamic>.Success("Xóa ảnh thành công", null, StatusCodes.Status200OK);
+            return Ok(response);
 
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode
-                });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new
-                {
-                    ex.Message,
-                    StatusCode = StatusCodes.Status404NotFound
-                });
-            }
-            
         }
 
-        [HttpPost("image")]
+        [HttpPost("menu/image")]
         public async Task<IActionResult> UploadThumbnail(IFormFile file)
         {
-            try
-            {
-                var result = await _cloudinaryService.UploadImage(file, "Thumbnail");
-
-                return Ok(new
-                {
-                    result.Message,
-                    result.StatusCode,
-                    result.Data
-                });
-            }catch(FileNotFoundException ex)
-            {
-                return NotFound(new
-                {
-                    ex.Message,
-                    StatusCode = StatusCodes.Status404NotFound
-                });
-            }
-            
+            var result = await _cloudinaryService.UploadImage(file, "Thumbnail");
+            var response = ApiResponse<string>.Success("Tải ảnh thành công", result, StatusCodes.Status200OK);
+            return Ok(response);
         }
     }
 }

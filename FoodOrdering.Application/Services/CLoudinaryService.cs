@@ -29,7 +29,7 @@ namespace FoodOrdering.Application.Services
             };
             _cloudinary = new Cloudinary(account);
         }
-        public async Task<ApiResponse<string>> DeleteImage(string url)
+        public async Task DeleteImage(string url)
         {
             var publicId = ExtractPublicIdFromUrl(url);
             if (publicId == null)
@@ -41,16 +41,14 @@ namespace FoodOrdering.Application.Services
                 var deleteParams = new DeletionParams(publicId);
                 await _cloudinary.DestroyAsync(deleteParams);
             }
-
-            return ApiResponse<string>.Success("Xóa ảnh thành công", "", StatusCodes.Status200OK);
         }
 
-        public async Task<ApiResponse<string>> UploadImage(IFormFile file, string folder)
+        public async Task<string> UploadImage(IFormFile file, string folder)
         {
             var fileExtension = Path.GetExtension(file.FileName);
             if (!allowedExtensions.Contains(fileExtension))
             {
-                return ApiResponse<string>.Fail($"Hãy upload các file có đuôi {string.Join(" ,", allowedExtensions)}", StatusCodes.Status400BadRequest);
+                throw new ArgumentException($"Hãy upload các file có đuôi {string.Join(" ,", allowedExtensions)}");
             }
 
             using var stream = file.OpenReadStream();
@@ -64,7 +62,7 @@ namespace FoodOrdering.Application.Services
             var result = await _cloudinary.UploadAsync(uploadParams);
 
             //Console.WriteLine(result);
-            return ApiResponse<string>.Success("Up ảnh thành công", result.SecureUrl.ToString(), StatusCodes.Status200OK);
+            return result.SecureUrl.ToString();
         }
 
         public string ExtractPublicIdFromUrl(string imageUrl)

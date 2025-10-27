@@ -4,8 +4,23 @@ using FoodOrdering.Infrastructure.Configuration;
 using FoodOrdering.Presentation.Middleware;
 using Hangfire;
 using Npgsql;
+using Serilog;
+using Serilog.Core;
 
 var builder = WebApplication.CreateBuilder(args);
+
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", false);
+Log.Logger = new LoggerConfiguration()
+    .Enrich.FromLogContext() // meta data into log (requestId, endpoint, path)
+    .Enrich.WithThreadId() // thread id into log
+    .Enrich.WithEnvironmentName() // eviroment 
+    .WriteTo.Console() // display log to console
+    .WriteTo.Seq("http://localhost:5341") // display log to seq
+    .MinimumLevel.Information()
+    .CreateLogger();
+
+builder.Host.UseSerilog((context, services, configuration) => 
+   configuration.ReadFrom.Configuration(context.Configuration));
 
 // Add extensions
 builder.Services.AddExtensions();

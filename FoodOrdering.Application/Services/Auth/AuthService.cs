@@ -36,66 +36,62 @@ namespace FoodOrdering.Application.Services.Auth
             _emailService = emailService;
         }
 
-        public async Task<ApiResponse<User>> ChangePasswordAsync(PasswordRequest request)
+        public async Task ChangePasswordAsync(PasswordRequest request)
         {
             var result = await new PasswordValidator().ValidateAsync(request);
             if (!result.IsValid)
-                return ApiResponse<User>.Fail(result.ToDictionary(), StatusCodes.Status400BadRequest);
+                throw new ValidationDictionaryException(result.ToDictionary());
 
             var user = await _userManager.FindByIdAsync(request.Id.ToString());
 
             if (user == null)
-                return ApiResponse<User>.Fail("Không tìm thấy người dùng", StatusCodes.Status404NotFound);
+                throw new KeyNotFoundException(nameof(user));   
 
-            await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
-
-            return ApiResponse<User>.Success("Đổi mật khẩu thành công", user, StatusCodes.Status200OK);
+            await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);           
         }
 
-        public async Task<ApiResponse<User>> ForgotPasswordAsync(ForgotPasswordRequest request)
+        public async Task ForgotPasswordAsync(ForgotPasswordRequest request)
         {
             var user = await _userManager.FindByEmailAsync(request.Email);
 
             if (user == null)
-                return ApiResponse<User>.Fail("Không tìm thấy email/email chưa được đăng kí", StatusCodes.Status404NotFound);
+                throw new KeyNotFoundException(nameof(user));
 
             //generate opt
             var otp = await GenerateOtp(user.Id);
 
             SendEmail(user.Id, user.Email, otp);
-
-            return ApiResponse<User>.Success("Một email đã được gửi tới email của bạn.", user, StatusCodes.Status200OK);
         }
 
-        public async Task<ApiResponse<AuthResponse>> LoginAsync(LoginRequest request, HttpContext context)
+        public async Task<AuthResponse> LoginAsync(LoginRequest request, HttpContext context)
         {
             var result = await new LoginValidator().ValidateAsync(request);
 
             if (!result.IsValid)
-                return ApiResponse<AuthResponse>.Fail(result.ToDictionary(), StatusCodes.Status400BadRequest);
+                throw new ValidationDictionaryException(result.ToDictionary());
 
             var user = await _userManager.FindByEmailAsync(request.Email);
             var isPasswordValid = await _userManager.CheckPasswordAsync(user, request.Password);
 
             if (user == null || !isPasswordValid)
-                return ApiResponse<AuthResponse>.Fail("Thông tin đăng nhập không đúng", StatusCodes.Status400BadRequest);
+                throw new ArgumentException("Thông tin đăng nhập không đúng");
 
             var authResponse = await _tokenService.GenerateToken(user, context);
 
-            return ApiResponse<AuthResponse>.Success("Đăng nhập thành công", authResponse, StatusCodes.Status200OK);
+            return authResponse;
         }
 
-        public async Task<ApiResponse<RefreshTokens>> LogoutAsync(HttpContext context)
+        public async Task LogoutAsync(HttpContext context)
         {
             var refreshToken = context.Request.Cookies["refresh_token"];
 
             if (refreshToken == null)
-                return ApiResponse<RefreshTokens>.Fail("Token is invalid", StatusCodes.Status401Unauthorized);
+                throw new UnauthorizedAccessException(nameof(refreshToken));
 
             var isExistToken = await _unitOfWork.RefreshToken.GetTokenByRefreshToken(refreshToken);
 
             if (isExistToken == null || isExistToken.ExpriedAt < DateTime.UtcNow)
-                return ApiResponse<RefreshTokens>.Fail("Token is invalid", StatusCodes.Status401Unauthorized);
+                throw new UnauthorizedAccessException(nameof(refreshToken));
 
             _unitOfWork.RefreshToken.Remove(isExistToken);
             await _unitOfWork.SaveChangeAsync();
@@ -110,27 +106,25 @@ namespace FoodOrdering.Application.Services.Auth
                     Secure = true,
                     Expires = DateTimeOffset.UnixEpoch
                 });
-
-            return ApiResponse<RefreshTokens>.Success("Đăng xuất thành công", isExistToken, StatusCodes.Status200OK);
         }
 
-        public async Task<ApiResponse<AuthResponse>> RefreshTokenAsync(HttpContext context)
+        public async Task<AuthResponse> RefreshTokenAsync(HttpContext context)
         {
             var response = await _tokenService.GenerateRefreshToken(context);
-            return ApiResponse<AuthResponse>.Success(response.Message, response.Data, response.StatusCode);
+            return response.Data;
         }
 
-        public async Task<ApiResponse<User>> RegisterAsync(RegisterRequest request)
+        public async Task<string> RegisterAsync(RegisterRequest request)
         {
             var result = await new RegisterValidator().ValidateAsync(request);
 
             if (!result.IsValid)
-                return ApiResponse<User>.Fail(result.ToDictionary(), StatusCodes.Status400BadRequest);
+                throw new ValidationDictionaryException(result.ToDictionary());
 
             var isExistUser = await _userManager.FindByEmailAsync(request.Email);
 
             if (isExistUser != null)
-                return ApiResponse<User>.Fail("Email đã được đăng kí", StatusCodes.Status400BadRequest);
+                throw new InvalidDataException("Email đã được đăng kí");
 
             var newUser = new User
             {
@@ -146,9 +140,6 @@ namespace FoodOrdering.Application.Services.Auth
 
             var response = await _userManager.CreateAsync(newUser, request.Password);
 
-            if (!response.Succeeded)
-                return ApiResponse<User>.Fail($"Đăng kí không thành công : ${response.ToString()}", StatusCodes.Status400BadRequest);
-
             //Create an EmailOtp object
             var otp = await GenerateOtp(newUser.Id);
 
@@ -157,42 +148,40 @@ namespace FoodOrdering.Application.Services.Auth
 
             SendEmail(newUser.Id, newUser.Email, otp);
 
-            return ApiResponse<User>.Success("Đăng kí thành công. Một email đã được gửi tới email của bạn.", newUser, StatusCodes.Status200OK);
+            return request.Email;
         }
 
-        public async Task<ApiResponse<User>> ResetPasswordAsync(ResetPasswordRequest request)
+        public async Task ResetPasswordAsync(ResetPasswordRequest request)
         {
             var result = await new ResetPasswordValidator().ValidateAsync(request);
 
             if (!result.IsValid)
-                return ApiResponse<User>.Fail(result.ToDictionary(), StatusCodes.Status400BadRequest);
+                throw new ValidationDictionaryException(result.ToDictionary());
 
             var user = await _userManager.FindByEmailAsync(request.Email);
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             await _userManager.ResetPasswordAsync(user, token, request.NewPassword);
 
-            return ApiResponse<User>.Success("Đặt lại mật khẩu thành công", user, StatusCodes.Status200OK);
-
         }
 
-        public async Task<ApiResponse<string>> VerifyEmail(EmailVerifyRequest request)
+        public async Task<string> VerifyEmail(EmailVerifyRequest request)
         {
-            var isExistUser = await _unitOfWork.User.GetUserByEmailAsync(request.Email);
+            var existUser = await _unitOfWork.User.GetUserByEmailAsync(request.Email);
 
-            if (isExistUser == null)
-                return ApiResponse<string>.Fail("Không tìm thấy email", StatusCodes.Status404NotFound);
+            if (existUser == null)
+                throw new KeyNotFoundException(nameof(existUser));
 
-            if (isExistUser.EmailOtp.Otp != request.Otp)
-                return ApiResponse<string>.Fail("Mã otp không hợp lệ hoặc hết hạn", StatusCodes.Status400BadRequest);
+            if (existUser.EmailOtp.Otp != request.Otp)
+                throw new ArgumentException("Mã otp không hợp lệ hoặc hết hạn");
 
-            isExistUser.EmailConfirmed = true;
+            existUser.EmailConfirmed = true;
 
-            _unitOfWork.EmailOtp.Remove(isExistUser.EmailOtp);
-            await _userManager.UpdateAsync(isExistUser);
+            _unitOfWork.EmailOtp.Remove(existUser.EmailOtp);
+            await _userManager.UpdateAsync(existUser);
             await _unitOfWork.SaveChangeAsync();
 
-            return ApiResponse<string>.Success("Xác nhận email thành công", "", StatusCodes.Status200OK);
+            return request.Email;
         }
 
         private async Task<string> GenerateOtp(Guid id)

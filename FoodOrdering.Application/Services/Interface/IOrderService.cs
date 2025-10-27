@@ -12,9 +12,9 @@ namespace FoodOrdering.Application.Services.Interface
 {
     public interface IOrderService
     {
-        public Task<ApiResponse<dynamic>> CreateOrderByQRAsync(OrderRequest request);
-        public Task<ApiResponse<Orders>> CreateOrderByCODAsync(OrderRequest request);
-        public Task<ApiResponse<PagingReponse<OrderDTO>>> GetAllAsync(OrderParams orderParams);
-        public Task<ApiResponse<PagingReponse<OrderDTO>>> GetAllAsyncByCustomer(Guid id, OrderParams orderParams);
+        public Task<dynamic> CreateOrderByQRAsync(OrderRequest request);
+        public Task CreateOrderByCODAsync(OrderRequest request);
+        public Task<PagingReponse<OrderDTO>> GetAllAsync(OrderParams orderParams);
+        public Task<PagingReponse<OrderDTO>> GetAllAsyncByCustomer(Guid id, OrderParams orderParams);
     }
 }

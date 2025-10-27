@@ -58,7 +58,7 @@ namespace Food_Ordering.Extensions
 
             services.AddSingleton<IConnectionMultiplexer>(sp =>
             {
-                var configuration = Env.GetString("REDIS");
+                var configuration = $"{Env.GetString("REDIS")},abortConnect=false";
                 return ConnectionMultiplexer.Connect(configuration);
             });
 
