@@ -17,7 +17,6 @@ namespace FoodOrdering.Domain.Models
         public int Price { get; set; }
         public string ImageUrl { get; set; }
         public bool IsAvailable { get; set; }
-        public int StockQuantity { get; set; }
         public int SoldQuantity { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public ICollection<OrderMenus> OrderMenus { get; set; } = new List<OrderMenus>();

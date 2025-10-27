@@ -8,8 +8,10 @@ using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,66 +22,60 @@ namespace FoodOrdering.Application.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICacheService _cacheService;
+        private readonly ILogger<MenuService> _logger;
 
-        public MenuService(IUnitOfWork unitOfWork, ICacheService cacheService)
+        public MenuService(IUnitOfWork unitOfWork, ICacheService cacheService, ILogger<MenuService> logger)
         {
             _unitOfWork = unitOfWork;
             _cacheService = cacheService;
+            _logger = logger;
         }
 
-        public async Task<ApiResponse<Menus>> AddAsync(MenuRequest request)
-        {
+        public async Task AddAsync(MenuRequest request)
+        {                    
             var result = await new MenuValidatior().ValidateAsync(request);
-            if (!result.IsValid)            
-                 return ApiResponse<Menus>.Fail(result.ToDictionary(), 400);
-                      
+            if (!result.IsValid)
+              throw new ValidationDictionaryException(result.ToDictionary());
+
             var menus = _unitOfWork.Menu.GetAll();
 
             if (menus.Any(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower()))
-                return ApiResponse<Menus>.Fail($"Menu {request.Name} đã tồn tại", StatusCodes.Status400BadRequest);
+                throw new DuplicateNameException($"Menu {request.Name} đã tồn tại");
+       
+                var menu = new Menus
+                {
+                    Name = request.Name,
+                    CategoriesId = request.CategoriesId,
+                    Description = request.Description,
+                    Price = request.Price,
+                    ImageUrl = request.ImageUrl,
+                    IsAvailable = request.IsAvailble,
+                    SoldQuantity = 0
+                };
 
-            var menu = new Menus
-            {
-                Name = request.Name,
-                CategoriesId = request.CategoriesId,
-                Description = request.Description,
-                Price = request.Price,
-                ImageUrl = request.ImageUrl,
-                IsAvailable = request.IsAvailble,
-                StockQuantity = request.StockQuantity,
-                SoldQuantity = 0
-            };
-
-            await _unitOfWork.Menu.AddAsync(menu);
-            await _unitOfWork.SaveChangeAsync();
-
-            return ApiResponse<Menus>.Success($"Thêm menu {menu.Name} thành công",menu, StatusCodes.Status201Created);
+                await _unitOfWork.Menu.AddAsync(menu);
+                await _unitOfWork.SaveChangeAsync();
         }
 
-        public async Task<ApiResponse<Menus>> DeleteAsync(Guid id)
+        public async Task DeleteAsync(Guid id)
         {
             var menu = await _unitOfWork.Menu.GetByIdAsync(id);
 
             if(menu == null)            
-                return ApiResponse<Menus>.Fail("Không tìm thấy menu", StatusCodes.Status404NotFound);
+              throw new KeyNotFoundException(nameof(menu));
             
             _unitOfWork.Menu.Remove(menu);
             await _unitOfWork.SaveChangeAsync();
-
-            return ApiResponse<Menus>.Success($"Xóa menu {menu.Name} thành công", menu, StatusCodes.Status200OK);
         }
 
-        public async Task<ApiResponse<PagingReponse<MenuDto>>> GetAllAsync(MenuParams menuParams)
+        public async Task<PagingReponse<MenuDto>> GetAllAsync(MenuParams menuParams)
         {
             string cacheKey = $"menu_page_{menuParams.Page}_size_{menuParams.PageSize}";
             var cached = await _cacheService.GetAsync<IEnumerable<MenuDto>>(cacheKey);
 
             if (cached != null)
-                return ApiResponse<PagingReponse<MenuDto>>.Success(
-                    "Lấy dữ liệu thành công",
-                    new PagingReponse<MenuDto>(menuParams.Page, menuParams.PageSize, cached.Count(), cached),
-                    StatusCodes.Status200OK);
-            
+                return new PagingReponse<MenuDto>(menuParams.Page, menuParams.PageSize, cached.Count(), cached);
+                                     
             var menus = _unitOfWork.Menu.GetAll();
 
             if (!string.IsNullOrEmpty(menuParams.Name))
@@ -111,6 +107,7 @@ namespace FoodOrdering.Application.Services
             {
                 menusToDTO = await menus
                     .Include(m => m.Categories)
+                    .OrderByDescending(m => m.CreatedAt)
                     .Select(m => new MenuDto(m))
                     .AsNoTrackingWithIdentityResolution()
                     .ToListAsync();
@@ -119,63 +116,62 @@ namespace FoodOrdering.Application.Services
             {
                 menusToDTO = await menus
                 .Include(m => m.Categories)
+                .OrderByDescending(m => m.CreatedAt)
                 .Select(m => new MenuDto(m))
                 .Paging(menuParams.Page, menuParams.PageSize)
                 .AsNoTrackingWithIdentityResolution()
                 .ToListAsync();
             }
 
-            return ApiResponse<PagingReponse<MenuDto>>.Success(
-                "Lấy dữ liệu thành công",
-                new PagingReponse<MenuDto>(menuParams.Page, menuParams.PageSize, menus.Count(), menusToDTO), 
-                StatusCodes.Status200OK);
+            await _cacheService.SetAsync(cacheKey, menusToDTO, TimeSpan.FromHours(12));
+
+            return new PagingReponse<MenuDto>(menuParams.Page, menuParams.PageSize, menusToDTO.Count(), menusToDTO);
         }
 
-        public async Task<ApiResponse<MenuDto>> GetByIdAsync(Guid id)
+        public async Task<MenuDto> GetByIdAsync(Guid id)
         {
             string cacheKey = $"menu:{id}";
             var cacheMenu = await _cacheService.GetAsync<MenuDto>(cacheKey);
 
-            if (cacheMenu != null)          
-              return ApiResponse<MenuDto>.Success("Lấy dữ liệu thành công", cacheMenu, StatusCodes.Status200OK);
-            
-            var menu = await _unitOfWork.Menu.GetMenuWithCategoryAsync(id);
-  
-            if (menu == null)
-               return ApiResponse<MenuDto>.Fail("Không tìm thấy menu", StatusCodes.Status404NotFound);
+            if (cacheMenu != null)
+                return cacheMenu;
 
+            var menu = await _unitOfWork.Menu.GetMenuWithCategoryAsync(id);
+
+            if (menu == null)
+                throw new KeyNotFoundException(nameof(menu));
+                
             await _cacheService.SetAsync(cacheKey, new MenuDto(menu), TimeSpan.FromMinutes(10));
 
-            return ApiResponse<MenuDto>.Success("Lấy dữ liệu thành công", new MenuDto(menu), StatusCodes.Status200OK);
+            return new MenuDto(menu);
         }
 
-        public async Task<ApiResponse<Menus>> UpdateAsync(Guid id, MenuRequest request)
-        {
+        public async Task UpdateAsync(Guid id, MenuRequest request)
+        {          
             string cacheKey = $"menu:{id}";
             var result = await new MenuValidatior().ValidateAsync(request);
             if (!result.IsValid)
-                return ApiResponse<Menus>.Fail(result.ToDictionary(), 400);
+                throw new ValidationDictionaryException(result.ToDictionary());
 
             var menu = await _unitOfWork.Menu.GetByIdAsync(id);
             var menus = _unitOfWork.Menu.GetAll();
 
             if (menu == null)
-                return ApiResponse<Menus>.Fail("Không tìm thấy menu", StatusCodes.Status404NotFound);
+               throw new KeyNotFoundException(nameof(menus));
 
             if (await menus.AnyAsync(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower() && m.Id != id))
-                return ApiResponse<Menus>.Fail($"Menu {request.Name} đã tồn tại", StatusCodes.Status400BadRequest);
-
+                throw new DuplicateNameException($"Menu {request.Name} đã tồn tại");
+                
             menu.Name = request.Name;
             menu.ImageUrl = request.ImageUrl;
             menu.CategoriesId = request.CategoriesId;
             menu.Description = request.Description;
             menu.Price = request.Price;
             menu.IsAvailable = request.IsAvailble;
-            menu.StockQuantity = request.StockQuantity;
 
+            _unitOfWork.Menu.Update(menu);
+            await _unitOfWork.SaveChangeAsync();
             await _cacheService.RemoveAsync(cacheKey);
-
-            return ApiResponse<Menus>.Success($"Cập nhật {menu.Name} thành công", menu, StatusCodes.Status200OK);
         }
 
     }

@@ -20,7 +20,7 @@ namespace FoodOrdering.Application.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<ApiResponse<Carts>> AddToCartAsync(CartRequest request)
+        public async Task AddToCartAsync(CartRequest request)
         {
             var cart = new Carts
             {
@@ -45,28 +45,26 @@ namespace FoodOrdering.Application.Services
 
             await _unitOfWork.Cart.AddAsync(cart);
             await _unitOfWork.SaveChangeAsync();
-
-            return ApiResponse<Carts>.Success("Thêm vào giỏ hàng thành công", cart, StatusCodes.Status201Created);
         }
 
-        public async Task<ApiResponse<CartDTO>> GetCartByCustomer(Guid id)
+        public async Task<CartDTO> GetCartByCustomer(Guid id)
         {
             var cart = await _unitOfWork.Cart.GetCartByCustomerAsync(id);
 
             if (cart == null)
-                return ApiResponse<CartDTO>.Fail("Không tìm thấy giỏ hàng", StatusCodes.Status404NotFound);
+                throw new KeyNotFoundException(nameof(cart));
 
             var cartToDTO = new CartDTO(cart, cart.CartItems.Select(ct => new CartItemDTO(ct)).ToList());
             
-            return ApiResponse<CartDTO>.Success("Lấy dữ liệu thành công", cartToDTO, StatusCodes.Status200OK);
+            return cartToDTO;
         }
 
-        public async Task<ApiResponse<Carts>> UpdateToCartAsync(Guid id, CartRequest request)
+        public async Task UpdateToCartAsync(Guid id, CartRequest request)
         {
             var cart = await _unitOfWork.Cart.GetCartWithCartItemAsync(id);
 
-            if(cart == null)            
-                return ApiResponse<Carts>.Fail("Không tìm thấy giỏ hàng", StatusCodes.Status404NotFound);
+            if(cart == null)
+                throw new KeyNotFoundException(nameof(cart));
 
             foreach(var dish in request.CartItems)
             {   
@@ -103,8 +101,6 @@ namespace FoodOrdering.Application.Services
 
             await _unitOfWork.SaveChangeAsync();
 
-            return ApiResponse<Carts>.Success("Cập nhật giỏ hàng thành công", cart, StatusCodes.Status200OK);
-            
         }
     }
 }

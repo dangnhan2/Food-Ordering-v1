@@ -18,7 +18,7 @@ namespace FoodOrdering.Application.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<ApiResponse<DashboardOverviewDTO>> GetInfoAsync()
+        public async Task<DashboardOverviewDTO> GetInfoAsync()
         {
             var today = DateTime.UtcNow.Date;
 
@@ -52,7 +52,7 @@ namespace FoodOrdering.Application.Services
                 TopSellingDishes = topSellingDishes
             };
 
-            return ApiResponse<DashboardOverviewDTO>.Success("Lấy dữ liệu thành công", dashboardToDTO, 200);
+            return dashboardToDTO;
         }
     }
 }

@@ -17,7 +17,6 @@ namespace FoodOrdering.Application.DTOs.Response
         public int Price { get; set; }
         public string ImageUrl { get; set; }
         public int SoldQuantity { get; set; }
-        public int StockQuantity { get; set; }
         public bool IsAvailable { get; set; }
         public DateTime CreatedAt { get; set; }
 
@@ -30,8 +29,7 @@ namespace FoodOrdering.Application.DTOs.Response
             Description = menu.Description;
             Price = menu.Price;
             ImageUrl = menu.ImageUrl;
-            SoldQuantity = menu.StockQuantity;
-            StockQuantity = menu.StockQuantity;
+            SoldQuantity = menu.SoldQuantity;
             IsAvailable = menu.IsAvailable;
             CreatedAt = menu.CreatedAt;
         }

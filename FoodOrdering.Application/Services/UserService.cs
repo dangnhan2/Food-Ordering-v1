@@ -31,7 +31,7 @@ namespace FoodOrdering.Application.Services
             _defaultAvatar = Env.GetString("DEFAULT_AVATAR");
         }
 
-        public async Task<ApiResponse<PagingReponse<UserDTO>>> GetAllAsync(UserParams userParams)
+        public async Task<PagingReponse<UserDTO>> GetAllAsync(UserParams userParams)
         {
             var users = _unitOfWork.User.GetAll();
 
@@ -47,73 +47,63 @@ namespace FoodOrdering.Application.Services
             IEnumerable<UserDTO> usersToDTO;
             if (userParams.Page == 0 || userParams.PageSize == 0)
             {
-                usersToDTO = await users.Select(u => new UserDTO(u))                  
+                usersToDTO = await users.OrderByDescending(u => u.CreatedAt).Select(u => new UserDTO(u))   
                     .AsNoTracking()
                     .ToListAsync();
             }
             else
             {
-                usersToDTO = await users.Select(u => new UserDTO(u))
+                usersToDTO = await users.OrderByDescending(u => u.CreatedAt).Select(u => new UserDTO(u))
                     .Paging(userParams.Page, userParams.PageSize)
                     .AsNoTracking()
                     .ToListAsync();
             }
-             
-            return ApiResponse<PagingReponse<UserDTO>>.Success("Lấy dữ liệu thành công",
-                new PagingReponse<UserDTO>(userParams.Page, userParams.PageSize, users.Count(), usersToDTO),
-                StatusCodes.Status200OK);
+
+            return new PagingReponse<UserDTO>(userParams.Page, userParams.PageSize, users.Count(), usersToDTO);                
         } 
 
-        public async Task<ApiResponse<User>> UploadAvatarAsync(Guid id, IFormFile file)
+        public async Task UploadAvatarAsync(Guid id, IFormFile file)
         {
             var user = await _unitOfWork.User.GetByIdAsync(id);
 
             if (user == null)
-                return ApiResponse<User>.Fail("Không tìm thấy user", StatusCodes.Status404NotFound);
+                throw new KeyNotFoundException(nameof(user));
 
             var url = await _cloudinaryService.UploadImage(file, folder);
             if (user.ImageUrl != _defaultAvatar)
             {
                 await _cloudinaryService.DeleteImage(user.ImageUrl);         
-                user.ImageUrl = url.Data;
+                user.ImageUrl = url;
             }
             else
             {
-                user.ImageUrl = url.Data;
+                user.ImageUrl = url;
             }
 
             _unitOfWork.User.Update(user);
             await _unitOfWork.SaveChangeAsync();
 
-            return ApiResponse<User>.Success("Upload thành công", user, StatusCodes.Status200OK);
-
         }
 
-        public async Task<ApiResponse<User>> UploadProfileAsync(Guid id, UserRequest request)
+        public async Task UploadProfileAsync(Guid id, UserRequest request)
         {
-            var validator = new UserValidation();
-            var result = await validator.ValidateAsync(request);
+            var result = await new UserValidation().ValidateAsync(request);
+  
             if (!result.IsValid)
             {
-                foreach(var error in result.Errors)
-                {
-                    return ApiResponse<User>.Fail(error.ErrorMessage, StatusCodes.Status400BadRequest);
-                }
+                throw new ValidationDictionaryException(result.ToDictionary());
             }
 
             var user = await _unitOfWork.User.GetByIdAsync(id);
 
             if (user == null)
-                return ApiResponse<User>.Fail("Không tìm thấy user", StatusCodes.Status404NotFound);
+                throw new KeyNotFoundException(nameof(user));
 
             user.FullName = request.FullName;
             user.Email = request.Email;
 
             _unitOfWork.User.Update(user);
             await _unitOfWork.SaveChangeAsync();
-
-            return ApiResponse<User>.Success("Cập nhật thông tin người dùng thành công", user, StatusCodes.Status200OK);
-
         }
     }
 }

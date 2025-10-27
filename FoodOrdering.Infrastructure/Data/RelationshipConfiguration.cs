@@ -63,18 +63,6 @@ namespace FoodOrdering.Infrastructure.Data
                 .HasForeignKey(c => c.CategoriesId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<Voucher>(v =>
-            {
-                v.Property(v => v.StartDate)
-                .HasColumnType("timestamp with time zone");
-            });
-
-            builder.Entity<Voucher>(v =>
-            {
-                v.Property(v => v.EndDate)
-                .HasColumnType("timestamp with time zone");
-            });
-
             return builder;
         }
     }

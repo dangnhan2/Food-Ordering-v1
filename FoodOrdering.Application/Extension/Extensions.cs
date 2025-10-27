@@ -1,6 +1,9 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using Serilog;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -35,6 +38,24 @@ namespace FoodOrdering.Application.Extension
             }
 
             return sb.ToString();
+        }
+
+        public static void LogError(Exception ex, object? data = null,
+            [CallerMemberName] string method = "",
+            [CallerLineNumber] int line = 0,
+            [CallerFilePath] string file = ""
+            )
+        {
+            Log.Error(ex, "Lỗi trong {File}:{Line} ({Method}) {Message}", Path.GetFileName(file), line, method, ex.InnerException.Message ?? ex.Message);
+        }
+
+        public static void LogWarning(Exception ex, object? data = null,
+            [CallerMemberName] string method = "",
+            [CallerLineNumber] int line = 0,
+            [CallerFilePath] string file = ""
+            )
+        {
+            Log.Warning(ex, "Lỗi trong {File}:{Line} ({Method}) {Message}", Path.GetFileName(file), line, method, ex.Message);
         }
     }
 }

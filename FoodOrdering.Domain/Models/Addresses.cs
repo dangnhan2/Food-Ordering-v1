@@ -10,6 +10,7 @@ namespace FoodOrdering.Domain.Models
     {
         public Guid Id { get; set; }
         public string Address { get; set; }
+        public DateTime CreatedAt { get; set; }
         public Guid UserId { get; set; }
         public User User { get; set; }
     }

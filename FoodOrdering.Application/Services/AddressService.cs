@@ -25,7 +25,7 @@ namespace FoodOrdering.Application.Services
         }
 
         // add new address by specific customer
-        public async Task<ApiResponse<Addresses>> AddAsync(AddressRequest request)
+        public async Task AddAsync(AddressRequest request)
         {
             string cacheKey = $"user:{request.UserId}:addresses";
 
@@ -39,32 +39,29 @@ namespace FoodOrdering.Application.Services
             await _unitOfWork.SaveChangeAsync();
 
             await _cacheService.RemoveAsync(cacheKey);
-
-            return ApiResponse<Addresses>.Success("Thêm địa chỉ thành công", address, StatusCodes.Status201Created);
         }
 
         // delete address by specific customer
-        public async Task<ApiResponse<Addresses>> DeleteAsync(Guid id)
+        public async Task DeleteAsync(Guid id)
         {
             var address = await _unitOfWork.Address.GetByIdAsync(id);
             if (address == null)
-                return ApiResponse<Addresses>.Fail("Không tìm thấy địa chỉ", StatusCodes.Status404NotFound);
+                throw new KeyNotFoundException(nameof(address));
 
             string cacheKey = $"user:{address.UserId}:addresses";
 
             _unitOfWork.Address.Remove(address);
             await _unitOfWork.SaveChangeAsync();
             await _cacheService.RemoveAsync(cacheKey);
-            return ApiResponse<Addresses>.Success("Xóa địa chỉ thành công", address, StatusCodes.Status200OK);
         }
 
         // get addresses by specific customer
-        public async Task<ApiResponse<IEnumerable<AddressDto>>> GetAllByUserAsync(Guid id)
+        public async Task<IEnumerable<AddressDto>> GetAllByUserAsync(Guid id)
         {
             string cacheKey = $"user:{id}:addresses";
             var cacheAddresses = await _cacheService.GetAsync<IEnumerable<AddressDto>>(cacheKey);
             if (cacheAddresses != null)
-                return ApiResponse<IEnumerable<AddressDto>>.Success("Lấy dữ liệu thành công", cacheAddresses, StatusCodes.Status200OK);
+                return cacheAddresses;
 
             var addresses = _unitOfWork.Address.GetAll().Where(a => a.UserId == id);
 
@@ -72,17 +69,17 @@ namespace FoodOrdering.Application.Services
 
             await _cacheService.SetAsync(cacheKey, addressesToDto, TimeSpan.FromHours(1));
 
-            return ApiResponse<IEnumerable<AddressDto>>.Success("Lấy dữ liệu thành công", addressesToDto, StatusCodes.Status200OK);
+            return addressesToDto;
         }
 
         // update address by specific customer
-        public async Task<ApiResponse<Addresses>> UpdateAsync(Guid id, AddressRequest request)
+        public async Task UpdateAsync(Guid id, AddressRequest request)
         {
             string cacheKey = $"user:{request.UserId}:addresses";
             var address = await _unitOfWork.Address.GetByIdAsync(id);
 
             if (address == null)
-                return ApiResponse<Addresses>.Fail("Không tìm thấy địa chỉ", StatusCodes.Status404NotFound);
+                throw new KeyNotFoundException(nameof(address));
 
             address.Address = request.Address;
             address.UserId = request.UserId;
@@ -91,8 +88,6 @@ namespace FoodOrdering.Application.Services
             await _unitOfWork.SaveChangeAsync();
 
             await _cacheService.RemoveAsync(cacheKey);
-
-            return ApiResponse<Addresses>.Success("Cập nhật địa chỉ thành công", address, StatusCodes.Status200OK);
         }
     }
 }

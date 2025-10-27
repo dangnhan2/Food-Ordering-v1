@@ -12,11 +12,11 @@ namespace FoodOrdering.Application.Services.Interface
 {
     public interface IVoucherService
     {
-        public Task<ApiResponse<PagingReponse<VoucherDTO>>> GetAllByAdminAsync(VoucherParams voucherParams);
-        public Task<ApiResponse<IEnumerable<VoucherDTO>>> GetAllByCustomerAsync();
-        public Task<ApiResponse<Voucher>> AddAsync(VoucherRequest request);
-        public Task<ApiResponse<Voucher>> UpdateAsync(Guid id, VoucherRequest request);
-        public Task<ApiResponse<Voucher>> DeleteAsync(Guid id);
-        public Task<ApiResponse<VoucherDTO>> ValidateVoucherAsync(ValidateVoucherRequest request);
+        public Task<PagingReponse<VoucherDTO>> GetAllByAdminAsync(VoucherParams voucherParams);
+        public Task<IEnumerable<VoucherDTO>> GetAllByCustomerAsync();
+        public Task AddAsync(VoucherRequest request);
+        public Task UpdateAsync(Guid id, VoucherRequest request);
+        public Task DeleteAsync(Guid id);
+        public Task<VoucherDTO> ValidateVoucherAsync(ValidateVoucherRequest request);
     }
 }

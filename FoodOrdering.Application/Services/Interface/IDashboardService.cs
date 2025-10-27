@@ -9,6 +9,6 @@ namespace FoodOrdering.Application.Services.Interface
 {
     public interface IDashboardService
     {
-        public Task<ApiResponse<DashboardOverviewDTO>> GetInfoAsync();
+        public Task<DashboardOverviewDTO> GetInfoAsync();
     }
 }

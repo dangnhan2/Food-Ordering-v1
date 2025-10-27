@@ -1,7 +1,10 @@
 ﻿using FoodOrdering.Application.DTOs.QueryParams;
 using FoodOrdering.Application.DTOs.Request;
+using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Services.Interface;
+using FoodOrdering.Application.Validator;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FoodOrdering.Presentation.Controllers.Admin
@@ -29,161 +32,106 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         [HttpPost("category")]
         public async Task<IActionResult> CreateCategory(CategoryRequest request)
         {
-            var result = await _categoryService.AddAsync(request);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-            });
+            await _categoryService.AddAsync(request);
+            var response = ApiResponse<dynamic>.Success("Thêm thành công", null, StatusCodes.Status201Created);
+            return Ok(response);
         }
         
         [HttpPut("category/{id}")]
         public async Task<IActionResult> UpdateCatetogy(Guid id, CategoryRequest request)
         {
-            var result = await _categoryService.UpdateAsync(id, request);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-            });
+            await _categoryService.UpdateAsync(id, request);
+            var response = ApiResponse<dynamic>.Success("Cập nhật thành công", null, StatusCodes.Status200OK);
+            return Ok(response);
 
         }
 
         [HttpDelete("category/{id}")]
         public async Task<IActionResult> DeleteCategory(Guid id)
         {
-            var result = await _categoryService.DeleteAsync(id);
-  
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-            });
+            await _categoryService.DeleteAsync(id);
+            var response = ApiResponse<dynamic>.Success("Xóa thành công", null, StatusCodes.Status200OK);
+            return Ok(response);
         }
 
         [HttpPost("menu")]
         public async Task<IActionResult> AddMenu([FromBody] MenuRequest request)
         {
-            var result = await _menuService.AddAsync(request);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode
-            });
+            await _menuService.AddAsync(request);
+            var response = ApiResponse<dynamic>.Success("Thêm mới thành công", "", StatusCodes.Status201Created);
+            return Ok(response);
         }
 
         [HttpPut("menu/{id}")]
         public async Task<IActionResult> UpdateMenu(Guid id, [FromBody] MenuRequest request)
         {
-            var result = await _menuService.UpdateAsync(id, request);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode
-            });
+            await _menuService.UpdateAsync(id, request);
+            var response = ApiResponse<dynamic>.Success("Cập nhật thành công", "", StatusCodes.Status200OK);
+            return Ok(response);
         }
 
         [HttpDelete("menu/{id}")]
         public async Task<IActionResult> DeleteMenu(Guid id)
         {
-            var result = await _menuService.DeleteAsync(id);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode
-            });
+            await _menuService.DeleteAsync(id);
+            var response = ApiResponse<dynamic>.Success("Xóa thành công", "", StatusCodes.Status200OK);
+            return Ok(response);
         }
 
         [HttpGet("orders")]
         public async Task<IActionResult> GetOrders([FromQuery] OrderParams orderParams)
         {
             var result = await _orderService.GetAllAsync(orderParams);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-                result.Data
-            });
+            var response = ApiResponse<PagingReponse<OrderDTO>>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
+            return Ok(response);
         }
 
         [HttpGet("users")]
         public async Task<IActionResult> GetUsers([FromQuery] UserParams userParams)
         {
             var result = await _userService.GetAllAsync(userParams);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-                result.Data
-            });
+            var response = ApiResponse<PagingReponse<UserDTO>>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
+            return Ok(response);
         }
 
         [HttpGet("vouchers")]
         public async Task<IActionResult> GetVoucher([FromQuery] VoucherParams voucherParams)
         {        
             var result = await _voucherService.GetAllByAdminAsync(voucherParams);
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-                result.Data
-            });
+            var response = ApiResponse<PagingReponse<VoucherDTO>>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
+            return Ok(response);
         }
 
         [HttpPost("voucher")]
         public async Task<IActionResult> CreateVoucher([FromBody] VoucherRequest request)
         {
-            var result = await _voucherService.AddAsync(request);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-            });
+            await _voucherService.AddAsync(request);
+            var response = ApiResponse<string>.Success("Thêm mới thành công", "", StatusCodes.Status201Created);
+            return Ok(response);
         }
 
         [HttpPut("voucher/{id}")]
         public async Task<IActionResult> UpdateVoucher(Guid id, [FromBody] VoucherRequest request)
         {
-            var result = await _voucherService.UpdateAsync(id, request);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-            });
+            await _voucherService.UpdateAsync(id, request);
+            var response = ApiResponse<string>.Success("Cập nhật thành công", "", StatusCodes.Status200OK);
+            return Ok(response);
         }
 
         [HttpDelete("voucher/{id}")]
         public async Task<IActionResult> DeleteVoucher(Guid id)
         {
-            var result = await _voucherService.DeleteAsync(id);
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-            });
+            await _voucherService.DeleteAsync(id);
+            var response = ApiResponse<string>.Success("Xóa thành công", "", StatusCodes.Status200OK);
+            return Ok(response);
         }
 
         [HttpGet("dashboard")]
         public async Task<IActionResult> DashBoard()
         {
             var result = await _dashBoardService.GetInfoAsync();
-
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode,
-                result.Data
-            });
+            var response = ApiResponse<DashboardOverviewDTO>.Success("Lấy dữ liệu thành công", result,StatusCodes.Status201Created);
+            return Ok(response);
         }
     }
 }

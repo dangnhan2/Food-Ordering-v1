@@ -28,15 +28,14 @@ namespace FoodOrdering.Application.Services
             _unitOfWork = unitOfWork;           
             _cacheService = cacheService;            
         }
-        public async Task<ApiResponse<Voucher>> AddAsync(VoucherRequest request)
+        public async Task AddAsync(VoucherRequest request)
         {
             var cacheKey = $"voucher:active";
 
             var result = await new VoucherValidator().ValidateAsync(request);
 
-            if (!result.IsValid)            
-                return ApiResponse<Voucher>.Fail(result.ToDictionary(), StatusCodes.Status400BadRequest);
-
+            if (!result.IsValid)
+                throw new ValidationDictionaryException(result.ToDictionary());
 
             var voucher = new Voucher
             {
@@ -59,30 +58,26 @@ namespace FoodOrdering.Application.Services
 
             if (voucher.IsActive)
                 await _cacheService.RemoveAsync(cacheKey);
-
-            return ApiResponse<Voucher>.Success("Tạo voucher mới thành công", voucher, StatusCodes.Status201Created);
         }
 
-        public async Task<ApiResponse<Voucher>> DeleteAsync(Guid id)
+        public async Task DeleteAsync(Guid id)
         {
             string cacheKey = $"voucher:active";
             var existVoucher = await _unitOfWork.Voucher.GetByIdAsync(id);
 
             if (existVoucher == null)
-                return ApiResponse<Voucher>.Fail("Không tìm thấy voucher", StatusCodes.Status404NotFound);
+                throw new KeyNotFoundException(nameof(existVoucher));               
 
-            if (existVoucher.IsActive)
-                return ApiResponse<Voucher>.Fail("Voucher đang được sử dụng, hãy cập nhật trạng thái để xóa", StatusCodes.Status400BadRequest);
-
+            //if (existVoucher.IsActive)
+            //    throw new 
+             
             _unitOfWork.Voucher.Remove(existVoucher);
             await _unitOfWork.SaveChangeAsync();
 
             await _cacheService.RemoveAsync(cacheKey);
-
-            return ApiResponse<Voucher>.Success("Xóa voucher thành công", existVoucher, StatusCodes.Status200OK);
         }
 
-        public async Task<ApiResponse<PagingReponse<VoucherDTO>>> GetAllByAdminAsync(VoucherParams voucherParams)
+        public async Task<PagingReponse<VoucherDTO>> GetAllByAdminAsync(VoucherParams voucherParams)
         {
             var vouchers = _unitOfWork.Voucher.GetAll();
 
@@ -122,40 +117,38 @@ namespace FoodOrdering.Application.Services
                     .ToListAsync();
             }
 
-            return ApiResponse<PagingReponse<VoucherDTO>>.Success("Lấy dữ liệu thành công",
-                   new PagingReponse<VoucherDTO>(voucherParams.Page, voucherParams.PageSize, vouchers.Count(), voucherToDTO),
-                   StatusCodes.Status200OK);
+            return new PagingReponse<VoucherDTO>(voucherParams.Page, voucherParams.PageSize, vouchers.Count(), voucherToDTO);                 
         }
 
-        public async Task<ApiResponse<IEnumerable<VoucherDTO>>> GetAllByCustomerAsync()
+        public async Task<IEnumerable<VoucherDTO>> GetAllByCustomerAsync()
         {
             string cacheKey = $"voucher:active";
             var cacheVouchers = await _cacheService.GetAsync<IEnumerable<VoucherDTO>>(cacheKey);
             if (cacheVouchers != null)
-                return ApiResponse<IEnumerable<VoucherDTO>>.Success("Lấy dữ liệu thành công", cacheVouchers, StatusCodes.Status200OK);
+                return cacheVouchers;
 
             var vouchers = await _unitOfWork.Voucher.FindAsync(v => v.IsActive);
 
-            var vouchersToDTO = vouchers.Select(v => new VoucherDTO(v));
+            var vouchersToDTO = vouchers.Select(v => new VoucherDTO(v)).ToList();
 
             await _cacheService.SetAsync(cacheKey, vouchersToDTO, TimeSpan.FromMinutes(30));
 
-            return ApiResponse<IEnumerable<VoucherDTO>>.Success("Lấy dữ liệu thành công", vouchersToDTO, StatusCodes.Status200OK);
+            return vouchersToDTO;
         }      
 
-        public async Task<ApiResponse<Voucher>> UpdateAsync(Guid id, VoucherRequest request)
+        public async Task UpdateAsync(Guid id, VoucherRequest request)
         {
             string cacheKey = $"voucher:active";
             var result = await new VoucherValidator().ValidateAsync(request);
 
             if (!result.IsValid)           
-                return ApiResponse<Voucher>.Fail(result.ToDictionary(), StatusCodes.Status400BadRequest);
+                throw new ValidationDictionaryException(result.ToDictionary());
             
 
             var existVoucher = await _unitOfWork.Voucher.GetByIdAsync(id);
 
             if (existVoucher == null)
-                return ApiResponse<Voucher>.Fail("Không tìm thấy voucher", StatusCodes.Status404NotFound);
+                throw new KeyNotFoundException(nameof(existVoucher));
 
             existVoucher.Code = request.Code;
             existVoucher.Description = $"Hạn sử dụng {request.StartDate} đến ngày {request.EndDate}";
@@ -175,11 +168,9 @@ namespace FoodOrdering.Application.Services
 
             if (existVoucher.IsActive)
                 await _cacheService.RemoveAsync(cacheKey);
-
-            return ApiResponse<Voucher>.Success("Cập nhật voucher thành công", existVoucher, StatusCodes.Status200OK);
         }
 
-        public async Task<ApiResponse<VoucherDTO>> ValidateVoucherAsync(ValidateVoucherRequest request)
+        public async Task<VoucherDTO> ValidateVoucherAsync(ValidateVoucherRequest request)
         {
             var voucher = await _unitOfWork.Voucher.GetByIdAsync(
                 v => v.Id == request.VoucherId
@@ -189,17 +180,17 @@ namespace FoodOrdering.Application.Services
                 && v.IsActive);
 
             if (voucher == null)
-                return ApiResponse<VoucherDTO>.Fail("Voucher không tồn tại hoặc đã hết hạn", StatusCodes.Status404NotFound);
-
+                throw new KeyNotFoundException(nameof(voucher));
+             
             var todayCount = await _unitOfWork.VoucherRedemption.TodayCountAsync(request.UserId, voucher.Id);
             // check if user already used this voucher in the same day
             if (todayCount > 1)
-                return ApiResponse<VoucherDTO>.Fail("Bạn đã sử dụng voucher này hôm nay rồi", StatusCodes.Status400BadRequest);
+                throw new InvalidDataException("Bạn đã sử dụng voucher này hôm nay rồi");
 
             if (voucher.MinOrderAmount > request.TotalAmount)
-                return ApiResponse<VoucherDTO>.Fail($"Đơn hàng phải đạt giá trị tối thiểu {voucher.MinOrderAmount}", StatusCodes.Status400BadRequest);
-
-            return ApiResponse<VoucherDTO>.Success("Voucher hợp lệ", new VoucherDTO(voucher), StatusCodes.Status200OK);
+                throw new InvalidDataException($"Đơn hàng phải đạt giá trị tối thiểu {voucher.MinOrderAmount}");
+               
+            return new VoucherDTO(voucher);
         }
     }
 }
