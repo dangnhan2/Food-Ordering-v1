@@ -133,7 +133,7 @@ namespace FoodOrdering.Application.Services
             return response;
         }
 
-        public async Task CreateOrderByCODAsync(OrderRequest request)
+        public async Task<int> CreateOrderByCODAsync(OrderRequest request)
         {
             Log.Information("Start to create an order with COD");
 
@@ -191,6 +191,7 @@ namespace FoodOrdering.Application.Services
             await _unitOfWork.SaveChangeAsync();
 
             Log.Information("Order created");
+            return newOrder.TransactionId;
         }
 
         public async Task<PagingReponse<OrderDTO>> GetAllAsyncByCustomer(Guid id, OrderParams orderParams)
