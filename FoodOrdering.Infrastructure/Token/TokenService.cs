@@ -60,45 +60,45 @@ namespace FoodOrdering.Infrastructure.Identity
             var tokenHandler = new JwtSecurityTokenHandler();
             var jwt = tokenHandler.CreateToken(tokenDescriptor);
             var token = tokenHandler.WriteToken(jwt);
-           
-            var authResponse = new AuthResponse
-            {
-                Data = new UserDTO(user, userRole.First()),
-                
-                AccessToken = token
-            };
 
             string refresh = await RefreshTokenAsync(user.Id);
 
+            var authResponse = new AuthResponse
+            {
+                Data = new UserDTO(user, userRole.First()),               
+                AccessToken = token
+            };
+
             context.Response.Cookies.Append(
-                "refresh_token",
+                "refreshToken",
                 refresh,
                 new CookieOptions
                 {
                     HttpOnly = true,
-                    SameSite = SameSiteMode.Lax,
+                    SameSite = SameSiteMode.None,
                     Secure = true,
-                    Expires = DateTime.UtcNow.AddMonths(3)
+                    Expires = DateTime.UtcNow.AddMonths(3),
+                    Path = "/"
                 });
             return authResponse;
         }
 
-        public async Task<ApiResponse<AuthResponse>> GenerateRefreshToken(HttpContext context)
+        public async Task<AuthResponse> GenerateRefreshToken(HttpContext context)
         {
-            var refreshToken = context.Request.Cookies["refresh_token"];
+            var refreshToken = context.Request.Cookies["refreshToken"];
             if (refreshToken == null)
-                return ApiResponse<AuthResponse>.Fail("Token is invalid", StatusCodes.Status401Unauthorized);
+                throw new UnauthorizedAccessException("Token is invalid");
 
             var existRefreshToken = await _unitOfWork.RefreshToken.GetTokenByRefreshToken(refreshToken);
 
             if (existRefreshToken == null || existRefreshToken.ExpriedAt < DateTime.UtcNow)
-                return ApiResponse<AuthResponse>.Fail("Token is invalid", StatusCodes.Status401Unauthorized);
+                throw new UnauthorizedAccessException("Token is invalid");
 
             var user = existRefreshToken.User;
 
             _unitOfWork.RefreshToken.Remove(existRefreshToken);          
             var authResponse = await GenerateToken(user, context);
-            return ApiResponse<AuthResponse>.Success("Refresh token successfull", authResponse, StatusCodes.Status200OK);
+            return authResponse;
         }
 
         // save refresh token to db

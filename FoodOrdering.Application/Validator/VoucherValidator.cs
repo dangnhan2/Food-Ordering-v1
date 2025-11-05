@@ -11,43 +11,40 @@ namespace FoodOrdering.Application.Validator
     public class VoucherValidator : AbstractValidator<VoucherRequest>
     {
         public VoucherValidator() {
-            // 1. Kiểm tra trường Code
             RuleFor(x => x.Code)
-                .NotEmpty().WithMessage("Mã giảm giá không được để trống.")
-                .Length(4, 20).WithMessage("Mã giảm giá phải dài từ 4 đến 20 ký tự.");
+             .NotEmpty().WithMessage("Mã giảm giá không được để trống.")
+             .Length(4, 20).WithMessage("Mã giảm giá phải dài từ 4 đến 20 ký tự.");
 
-            // 3. Kiểm tra trường DiscountType
+            // 2. Kiểm tra trường DiscountType
+            var validDiscountTypes = new[] { "percent", "fixed" };
             RuleFor(x => x.DiscountType)
                 .NotEmpty().WithMessage("Loại giảm giá không được để trống.")
-                .Must(type => type.ToLower() == "percent" || type.ToLower() == "fixed")
-                .WithMessage("Loại giảm giá không hợp lệ. Chỉ chấp nhận 'percent' hoặc 'fixed'.");
+                .Must(type => validDiscountTypes.Contains(type.ToLower()))
+                .WithMessage($"Loại giảm giá không hợp lệ. Chỉ chấp nhận '{validDiscountTypes[0]}' hoặc '{validDiscountTypes[1]}'.");
 
-            // 4. Kiểm tra trường DiscountValue
+            // 3. Kiểm tra trường DiscountValue
             RuleFor(x => x.DiscountValue)
                 .GreaterThan(0).WithMessage("Giá trị giảm giá phải lớn hơn 0.");
 
-            // 5. Logic cho DiscountType = "percent"
+            // 4. Kiểm tra MaxDiscount và MinOrderAmount
+            RuleFor(x => x.MaxDiscount)
+                .GreaterThanOrEqualTo(0).WithMessage("Giới hạn giảm tối đa không được là số âm.");
+
+            RuleFor(x => x.MinOrderAmount)
+                .GreaterThanOrEqualTo(0).WithMessage("Giá trị đơn hàng tối thiểu không được là số âm.");
+
+            // 5. Logic có điều kiện: Nếu là giảm theo PERCENT
             When(x => x.DiscountType.ToLower() == "percent", () =>
             {
                 RuleFor(x => x.DiscountValue)
-                    .LessThanOrEqualTo(100).WithMessage("Nếu là giảm theo phần trăm, giá trị phải nhỏ hơn hoặc bằng 100.");
+                    .InclusiveBetween(1, 100).WithMessage("Nếu là giảm theo phần trăm, giá trị phải nằm trong khoảng từ 1 đến 100.");
 
+                // Đảm bảo MaxDiscount không thể nhỏ hơn 0
                 RuleFor(x => x.MaxDiscount)
-                    .NotNull().WithMessage("Nếu là giảm theo phần trăm, cần chỉ rõ giới hạn giảm tối đa (MaxDiscount).")
-                    .GreaterThan(0).WithMessage("Giới hạn giảm tối đa phải lớn hơn 0.");
+                    .GreaterThan(0).WithMessage("Nếu là giảm theo phần trăm, giới hạn giảm tối đa (MaxDiscount) phải lớn hơn 0.");
             });
 
-            // 6. Kiểm tra trường MaxDiscount
-            RuleFor(x => x.MaxDiscount)
-                .GreaterThanOrEqualTo(0).When(x => x.MaxDiscount.HasValue)
-                .WithMessage("Giới hạn giảm tối đa không được là số âm.");
-
-            // 7. Kiểm tra trường MinOrderAmount
-            RuleFor(x => x.MinOrderAmount)
-                .GreaterThanOrEqualTo(0).When(x => x.MinOrderAmount.HasValue)
-                .WithMessage("Giá trị đơn hàng tối thiểu không được là số âm.");
-
-            // 8. Kiểm tra trường StartDate và EndDate
+            // 6. Kiểm tra ngày StartDate và EndDate
             RuleFor(x => x.StartDate)
                 .NotEmpty().WithMessage("Ngày bắt đầu không được để trống.");
 
@@ -55,7 +52,7 @@ namespace FoodOrdering.Application.Validator
                 .NotEmpty().WithMessage("Ngày kết thúc không được để trống.")
                 .GreaterThan(x => x.StartDate).WithMessage("Ngày kết thúc phải sau Ngày bắt đầu.");
 
-            // 9. Kiểm tra trường UsageLimit và PerUserLimit
+            // 7. Kiểm tra trường UsageLimit và PerUserLimit
             RuleFor(x => x.UsageLimit)
                 .GreaterThanOrEqualTo(0).When(x => x.UsageLimit.HasValue)
                 .WithMessage("Giới hạn sử dụng toàn bộ không được là số âm.");

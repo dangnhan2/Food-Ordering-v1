@@ -1,4 +1,5 @@
-﻿using FoodOrdering.Application.Caching;
+﻿using CloudinaryDotNet.Actions;
+using FoodOrdering.Application.Caching;
 using FoodOrdering.Application.DTOs.QueryParams;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
@@ -8,13 +9,8 @@ using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
+using Serilog;
 using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Services
 {
@@ -22,18 +18,20 @@ namespace FoodOrdering.Application.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICacheService _cacheService;
-        private readonly ILogger<MenuService> _logger;
+        private const string folder = "Thumbnail";
+        private readonly ICloudinaryService _cloudinaryService;
 
-        public MenuService(IUnitOfWork unitOfWork, ICacheService cacheService, ILogger<MenuService> logger)
+        public MenuService(IUnitOfWork unitOfWork, ICacheService cacheService, ICloudinaryService cloudinaryService)
         {
             _unitOfWork = unitOfWork;
             _cacheService = cacheService;
-            _logger = logger;
+            _cloudinaryService = cloudinaryService;
         }
 
         public async Task AddAsync(MenuRequest request)
         {                    
             var result = await new MenuValidatior().ValidateAsync(request);
+
             if (!result.IsValid)
               throw new ValidationDictionaryException(result.ToDictionary());
 
@@ -41,20 +39,25 @@ namespace FoodOrdering.Application.Services
 
             if (menus.Any(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower()))
                 throw new DuplicateNameException($"Menu {request.Name} đã tồn tại");
-       
-                var menu = new Menus
-                {
-                    Name = request.Name,
-                    CategoriesId = request.CategoriesId,
-                    Description = request.Description,
-                    Price = request.Price,
-                    ImageUrl = request.ImageUrl,
-                    IsAvailable = request.IsAvailble,
-                    SoldQuantity = 0
-                };
 
-                await _unitOfWork.Menu.AddAsync(menu);
-                await _unitOfWork.SaveChangeAsync();
+            var menu = new Menus
+            {
+                Name = request.Name,
+                CategoriesId = request.CategoriesId,
+                Description = request.Description,
+                Price = request.Price,
+                IsAvailable = request.IsAvailble,
+                SoldQuantity = 0
+            };
+
+            if (request.Thumbnail != null)
+            {
+                var url = await _cloudinaryService.UploadImage(request.Thumbnail, folder);
+                menu.ImageUrl = url;
+            }
+                
+            await _unitOfWork.Menu.AddAsync(menu);
+            await _unitOfWork.SaveChangeAsync();
         }
 
         public async Task DeleteAsync(Guid id)
@@ -70,11 +73,11 @@ namespace FoodOrdering.Application.Services
 
         public async Task<PagingReponse<MenuDto>> GetAllAsync(MenuParams menuParams)
         {
-            string cacheKey = $"menu_page_{menuParams.Page}_size_{menuParams.PageSize}";
-            var cached = await _cacheService.GetAsync<IEnumerable<MenuDto>>(cacheKey);
+            //string cacheKey = $"menu_page_{menuParams.Page}_size_{menuParams.PageSize}";
+            //var cached = await _cacheService.GetAsync<IEnumerable<MenuDto>>(cacheKey);
 
-            if (cached != null)
-                return new PagingReponse<MenuDto>(menuParams.Page, menuParams.PageSize, cached.Count(), cached);
+            //if (cached != null)
+            //    return new PagingReponse<MenuDto>(menuParams.Page, menuParams.PageSize, cached.Count(), cached);
                                      
             var menus = _unitOfWork.Menu.GetAll();
 
@@ -91,41 +94,39 @@ namespace FoodOrdering.Application.Services
             if (!string.IsNullOrEmpty(menuParams.SortBy))
             {
                 var sortBy = menuParams.SortBy.ToLower();
-                var sortOrder = menuParams.SortOrder?.ToLower() ?? "asc";
+                var sortOrder = menuParams.SortOrder?.ToLower();
 
                 menus = sortBy
                 switch
                 {
                     "price" => sortOrder == "desc" ? menus.OrderByDescending(m => m.Price) : menus.OrderBy(m => m.Price),
-                    "soldQuantity" => sortOrder == "desc" ? menus.OrderByDescending(m => m.SoldQuantity) : menus.OrderBy(m => m.SoldQuantity)
+                    "soldQuantity" => sortOrder == "desc" ? menus.OrderByDescending(m => m.SoldQuantity) : menus.OrderBy(m => m.SoldQuantity),
+                    _ => menus.OrderByDescending(m => m.CreatedAt)
                 };
             }
 
             IEnumerable<MenuDto> menusToDTO;
-
             if (menuParams.Page == 0 && menuParams.PageSize == 0)
             {
                 menusToDTO = await menus
-                    .Include(m => m.Categories)
-                    .OrderByDescending(m => m.CreatedAt)
-                    .Select(m => new MenuDto(m))
-                    .AsNoTrackingWithIdentityResolution()
-                    .ToListAsync();
+                .Include(m => m.Categories)
+                .Select(m => new MenuDto(m))
+                .AsNoTrackingWithIdentityResolution()
+                .ToListAsync();
             }
             else
             {
                 menusToDTO = await menus
-                .Include(m => m.Categories)
-                .OrderByDescending(m => m.CreatedAt)
-                .Select(m => new MenuDto(m))
-                .Paging(menuParams.Page, menuParams.PageSize)
-                .AsNoTrackingWithIdentityResolution()
-                .ToListAsync();
+                  .Include(m => m.Categories)
+                  .Select(m => new MenuDto(m))
+                  .Paging(menuParams.Page, menuParams.PageSize)
+                  .AsNoTrackingWithIdentityResolution()
+                  .ToListAsync();
             }
+           
+            //await _cacheService.SetAsync(cacheKey, menusToDTO, TimeSpan.FromHours(12));
 
-            await _cacheService.SetAsync(cacheKey, menusToDTO, TimeSpan.FromHours(12));
-
-            return new PagingReponse<MenuDto>(menuParams.Page, menuParams.PageSize, menusToDTO.Count(), menusToDTO);
+            return new PagingReponse<MenuDto>(menuParams.Page, menuParams.PageSize, menus.Count(), menusToDTO);
         }
 
         public async Task<MenuDto> GetByIdAsync(Guid id)
@@ -161,13 +162,19 @@ namespace FoodOrdering.Application.Services
 
             if (await menus.AnyAsync(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower() && m.Id != id))
                 throw new DuplicateNameException($"Menu {request.Name} đã tồn tại");
-                
+            
             menu.Name = request.Name;
-            menu.ImageUrl = request.ImageUrl;
             menu.CategoriesId = request.CategoriesId;
             menu.Description = request.Description;
             menu.Price = request.Price;
             menu.IsAvailable = request.IsAvailble;
+
+            if (request.Thumbnail != null)
+            {
+                var url = await _cloudinaryService.UploadImage(request.Thumbnail, folder);
+                await _cloudinaryService.DeleteImage(menu.ImageUrl);
+                menu.ImageUrl = url;
+            }          
 
             _unitOfWork.Menu.Update(menu);
             await _unitOfWork.SaveChangeAsync();

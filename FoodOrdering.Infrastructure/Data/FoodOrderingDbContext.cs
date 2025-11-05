@@ -34,7 +34,6 @@ namespace FoodOrdering.Infrastructure.Data
         {
             base.OnModelCreating(builder);
             builder.RelationshipConfigure();
-            builder.Seed();
         }
         
     }

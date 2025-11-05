@@ -11,12 +11,11 @@ namespace FoodOrdering.Application.DTOs.Request
 {
     public class MenuRequest
     {   
-        public string? ImageUrl { get; set; }
         public string Name { get; set; } = null!;
         public Guid CategoriesId { get; set; }
         public string? Description { get; set; }
         public int Price { get; set; }
         public bool IsAvailble { get; set; }
-        public int StockQuantity { get; set; }
+        public IFormFile? Thumbnail { get; set; }
     }
 }

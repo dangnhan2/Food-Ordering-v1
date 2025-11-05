@@ -13,12 +13,13 @@ namespace FoodOrdering.Domain.Models
         public Guid Id { get; set; }
         public Guid UserId { get; set; }
         public User User { get; set; }
-        public string Address { get; set; } = null!;
+        public Guid AddressId { get; set; }
+        public Addresses Address { get; set; } 
         public string? Note { get; set; }
         public DateTime OrderDate { get; set; } = DateTime.UtcNow;
         public DateTime? ExpiredAt { get; set; } 
         public OrderStatus Status { get; set; }
-        public int ToTalAmount { get; set; }
+        public int TotalAmount { get; set; }
         public string PaymentMethod { get; set; }
         public int TransactionId { get; set; }
         public ICollection<OrderMenus> OrderMenus { get; set; } = new List<OrderMenus>();

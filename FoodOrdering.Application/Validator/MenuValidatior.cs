@@ -25,10 +25,6 @@ namespace FoodOrdering.Application.Validator
             RuleFor(x => x.Price)
                 .GreaterThanOrEqualTo(0).WithMessage("Giá bán không được là số âm.")
                 .LessThanOrEqualTo(10000000).WithMessage("Giá bán tối đa là 10.000.000 VNĐ."); // Giả định mức giá tối đa
-
-            // Kiểm tra trường StockQuantity
-            RuleFor(x => x.StockQuantity)
-                .GreaterThanOrEqualTo(0).WithMessage("Số lượng tồn kho không được là số âm.");
         }
     }
 }

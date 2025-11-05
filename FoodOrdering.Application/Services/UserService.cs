@@ -62,48 +62,53 @@ namespace FoodOrdering.Application.Services
             return new PagingReponse<UserDTO>(userParams.Page, userParams.PageSize, users.Count(), usersToDTO);                
         } 
 
-        public async Task UploadAvatarAsync(Guid id, IFormFile file)
-        {
-            var user = await _unitOfWork.User.GetByIdAsync(id);
-
-            if (user == null)
-                throw new KeyNotFoundException(nameof(user));
-
-            var url = await _cloudinaryService.UploadImage(file, folder);
-            if (user.ImageUrl != _defaultAvatar)
-            {
-                await _cloudinaryService.DeleteImage(user.ImageUrl);         
-                user.ImageUrl = url;
-            }
-            else
-            {
-                user.ImageUrl = url;
-            }
-
-            _unitOfWork.User.Update(user);
-            await _unitOfWork.SaveChangeAsync();
-
-        }
-
         public async Task UploadProfileAsync(Guid id, UserRequest request)
         {
             var result = await new UserValidation().ValidateAsync(request);
   
-            if (!result.IsValid)
-            {
-                throw new ValidationDictionaryException(result.ToDictionary());
-            }
-
+            if (!result.IsValid)           
+               throw new ValidationDictionaryException(result.ToDictionary());
+            
             var user = await _unitOfWork.User.GetByIdAsync(id);
 
             if (user == null)
                 throw new KeyNotFoundException(nameof(user));
 
+            var phoneNumbers = _unitOfWork.User.GetAll().Where(u => u.PhoneNumber == request.PhoneNumber && u.Id != id);
+
+            if (phoneNumbers.Any())
+                throw new ArgumentException("Số điện thoại đã tồn tại");
+
+            if (request.Avatar != null)
+            {
+                var url = await _cloudinaryService.UploadImage(request.Avatar, folder);
+
+                if (user.ImageUrl != _defaultAvatar)
+                {
+                    await _cloudinaryService.DeleteImage(user.ImageUrl);
+                    user.ImageUrl = url;
+                }
+                else
+                {
+                    user.ImageUrl = url;
+                }
+            }
+            
             user.FullName = request.FullName;
-            user.Email = request.Email;
+            user.PhoneNumber = request.PhoneNumber;
 
             _unitOfWork.User.Update(user);
             await _unitOfWork.SaveChangeAsync();
+        }
+
+        public async Task<UserDTO> GetUserByIdAsync(Guid id)
+        {
+            var user = await _unitOfWork.User.GetByIdAsync(id);
+
+            if (user == null)
+                throw new KeyNotFoundException(nameof(user));
+
+            return new UserDTO(user, "");
         }
     }
 }

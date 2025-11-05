@@ -41,7 +41,7 @@ namespace FoodOrdering.Application.Services
             // if not, get from db
             var categories = _unitOfWork.Category.GetAll();
 
-            var categoriesToDTO = await categories.Select(c => new CategoryDTO(c)).AsNoTracking().ToListAsync();
+            var categoriesToDTO = await categories.OrderBy(c => c.Name).Select(c => new CategoryDTO(c)).AsNoTracking().ToListAsync();
 
             await _cacheService.SetAsync(cacheKey, categoriesToDTO, TimeSpan.FromMinutes(30));
 

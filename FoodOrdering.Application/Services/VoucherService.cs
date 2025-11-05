@@ -127,9 +127,9 @@ namespace FoodOrdering.Application.Services
             if (cacheVouchers != null)
                 return cacheVouchers;
 
-            var vouchers = await _unitOfWork.Voucher.FindAsync(v => v.IsActive);
+            var vouchers = _unitOfWork.Voucher.GetAll();
 
-            var vouchersToDTO = vouchers.Select(v => new VoucherDTO(v)).ToList();
+            var vouchersToDTO = await vouchers.Where(v => v.IsActive).Select(v => new VoucherDTO(v)).ToListAsync();
 
             await _cacheService.SetAsync(cacheKey, vouchersToDTO, TimeSpan.FromMinutes(30));
 

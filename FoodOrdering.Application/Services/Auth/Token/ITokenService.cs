@@ -12,6 +12,6 @@ namespace FoodOrdering.Application.Services.Auth.Token
     public interface ITokenService
     {
         public Task<AuthResponse> GenerateToken(User user, HttpContext context);
-        public Task<ApiResponse<AuthResponse>> GenerateRefreshToken(HttpContext context);
+        public Task<AuthResponse> GenerateRefreshToken(HttpContext context);
     }
 }

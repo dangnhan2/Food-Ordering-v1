@@ -54,7 +54,7 @@ namespace FoodOrdering.Presentation.Controllers.Auth
         {
             var result = await _authService.VerifyEmail(request);
             var response = ApiResponse<string>.Success("Xác nhận email thành công", result, StatusCodes.Status200OK);
-            return Ok(request);
+            return Ok(response);
 
         }
 

@@ -1,6 +1,7 @@
 using Food_Ordering.Extensions;
 using FoodOrdering.Application.Repositories;
 using FoodOrdering.Infrastructure.Configuration;
+using FoodOrdering.Presentation.Configuration;
 using FoodOrdering.Presentation.Middleware;
 using Hangfire;
 using Npgsql;
@@ -48,6 +49,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseHangfireDashboard("/dashboard");
+app.UseCors("Happy Food");
+await app.SeedAsync();
 
 RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
     "DeleteExpiredCarts_3hours",
