@@ -16,9 +16,9 @@ namespace FoodOrdering.Application.Validator
             .Length(5, 100).WithMessage("Họ và tên phải dài từ 5 đến 100 ký tự.");
 
             // Kiểm tra trường Email
-            RuleFor(x => x.Email)
-                .NotEmpty().WithMessage("Địa chỉ email không được để trống.")
-                .EmailAddress().WithMessage("Địa chỉ email không hợp lệ. Vui lòng kiểm tra lại định dạng.");
+            RuleFor(x => x.PhoneNumber)
+                .NotEmpty().WithMessage("Số điện thoại không được để trống.")
+                .Matches(@"^0\d{9,10}$").WithMessage("Số điện thoại không hợp lệ. Vui lòng nhập đúng định dạng (ví dụ: 0987654321).");
         }
     }
 }

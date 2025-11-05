@@ -2,15 +2,21 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.DTOs.Response
 {
     public class ApiResponse<T>
     {
+        [JsonPropertyName("message")]  
+        
         public string Message { get; set; }
+        [JsonPropertyName("isSuccess")]
         public bool IsSuccess { get; set; }
+        [JsonPropertyName("statusCode")]
         public int StatusCode { get; set; }
+        [JsonPropertyName("data")]
         public T? Data { get; set; }
 
         public ApiResponse(string message, bool success, int code, T data) {

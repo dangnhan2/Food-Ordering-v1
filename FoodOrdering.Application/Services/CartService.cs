@@ -2,12 +2,6 @@
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Domain.Models;
-using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Services
 {
@@ -22,28 +16,74 @@ namespace FoodOrdering.Application.Services
 
         public async Task AddToCartAsync(CartRequest request)
         {
-            var cart = new Carts
+            var user = await _unitOfWork.User.GetUserContainsCartAsync(request.UserId);
+            if (user == null)           
+              throw new KeyNotFoundException(nameof(user));
+            
+            if (user.Carts == null)
             {
-               Id = Guid.NewGuid(),
-               UserId = request.UserId
-            };
-
-            // Thêm món ăn vào cart
-            foreach(var dish in request.CartItems)
-            {
-                var item = new CartItems
+                var cart = new Carts
                 {
                     Id = Guid.NewGuid(),
-                    CartId = cart.Id,
-                    MenuId = dish.MenuId,
-                    Quantity = dish.Quantity,
-                    UnitPrice = dish.UnitPrice
+                    UserId = request.UserId
                 };
 
-                cart.CartItems.Add(item);
-            };
+                // Thêm món ăn vào cart
+                foreach (var dish in request.CartItems)
+                {
+                    var item = new CartItems
+                    {
+                        Id = Guid.NewGuid(),
+                        CartId = cart.Id,
+                        MenuId = dish.MenuId,
+                        Quantity = dish.Quantity,
+                        UnitPrice = dish.UnitPrice
+                    };
 
-            await _unitOfWork.Cart.AddAsync(cart);
+                    cart.CartItems.Add(item);
+                }
+                await _unitOfWork.Cart.AddAsync(cart);
+            }
+            else
+            {
+                var cart = await _unitOfWork.Cart.GetCartByCustomerAsync(request.UserId);
+                if (cart == null)
+                    throw new KeyNotFoundException(nameof(cart));
+
+                foreach (var dish in request.CartItems)
+                {
+                    // Find item if it already exists in cart
+                    var existItem = cart.CartItems.FirstOrDefault(i => i.MenuId == dish.MenuId);
+                    if (existItem != null)
+                    {
+                        // Increase/Decrease if quantity > 0 else quantity = 0 => remove
+                        if (dish.Quantity > 0)
+                            existItem.Quantity += dish.Quantity;
+                        else
+                            cart.CartItems.Remove(existItem);
+                    }
+                    else
+                    {
+                        // add to cart if its a new item
+                        var item = new CartItems
+                        {
+                            Id = Guid.NewGuid(),
+                            CartId = cart.Id,
+                            MenuId = dish.MenuId,
+                            Quantity = dish.Quantity,
+                            UnitPrice = dish.UnitPrice
+                        };
+
+                        cart.CartItems.Add(item);
+                    }
+                }
+
+                if (cart.CartItems.Count() > 0)
+                    _unitOfWork.Cart.Update(cart);
+                else
+                    _unitOfWork.Cart.Remove(cart);
+
+            }
             await _unitOfWork.SaveChangeAsync();
         }
 
@@ -59,48 +99,5 @@ namespace FoodOrdering.Application.Services
             return cartToDTO;
         }
 
-        public async Task UpdateToCartAsync(Guid id, CartRequest request)
-        {
-            var cart = await _unitOfWork.Cart.GetCartWithCartItemAsync(id);
-
-            if(cart == null)
-                throw new KeyNotFoundException(nameof(cart));
-
-            foreach(var dish in request.CartItems)
-            {   
-                // Find item if it already exists in cart
-                var existItem = cart.CartItems.FirstOrDefault(i => i.MenuId == dish.MenuId);
-                if(existItem != null)
-                {   
-                    // Increase/Decrease if quantity > 0 else quantity = 0 => remove
-                    if(dish.Quantity > 0)                   
-                        existItem.Quantity = dish.Quantity;                   
-                    else                   
-                        cart.CartItems.Remove(existItem);                    
-                }
-                else
-                {   
-                    // add to cart if its a new item
-                    var item = new CartItems
-                    {
-                        Id = Guid.NewGuid(),
-                        CartId = cart.Id,
-                        MenuId = dish.MenuId,
-                        Quantity = dish.Quantity,
-                        UnitPrice = dish.UnitPrice
-                    };
-
-                    cart.CartItems.Add(item);
-                }
-            }
-
-            if (cart.CartItems.Count() > 0)
-                _unitOfWork.Cart.Update(cart);
-            else
-                _unitOfWork.Cart.Remove(cart);
-
-            await _unitOfWork.SaveChangeAsync();
-
-        }
     }
 }

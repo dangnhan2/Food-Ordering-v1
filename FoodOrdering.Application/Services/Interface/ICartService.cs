@@ -13,7 +13,6 @@ namespace FoodOrdering.Application.Services.Interface
     public interface ICartService
     {
         public Task AddToCartAsync(CartRequest request);
-        public Task UpdateToCartAsync(Guid id, CartRequest request);
         public Task<CartDTO> GetCartByCustomer(Guid id);
     }
 }

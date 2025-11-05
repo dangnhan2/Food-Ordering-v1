@@ -10,16 +10,9 @@ using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Domain.Models;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Net.payOS.Types;
 using RedLockNet.SERedis;
 using Serilog;
-using StackExchange.Redis;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Services
 {
@@ -29,6 +22,9 @@ namespace FoodOrdering.Application.Services
         private readonly IPaymentGateway _paymentGateway;
         private readonly RedLockFactory _redLockFactory;
         private readonly int orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
+        private const int TAX_RATE = 8;
+        private int _temporaryAmount = 0;
+        private int _totalAmount = 0;
         public OrderService(IUnitOfWork unitOfWork, IPaymentGateway paymentGateway, RedLockFactory redLockFactory)
         {
             _unitOfWork = unitOfWork;
@@ -46,17 +42,19 @@ namespace FoodOrdering.Application.Services
             {
                 ordersToDTO = await orders
                 .OrderByDescending(o => o.OrderDate)
+                .Include(o => o.Address)
                 .Select(o => new OrderDTO(o, o.OrderMenus.Select(m => new OrderMenuDTO(m)).ToList()))
-                .AsNoTracking()
+                .AsNoTrackingWithIdentityResolution()
                 .ToListAsync();
             }
             else
             {
                 ordersToDTO = await orders
                 .OrderByDescending(o => o.OrderDate)
+                .Include(o => o.Address)
                 .Select(o => new OrderDTO(o, o.OrderMenus.Select(m => new OrderMenuDTO(m)).ToList()))
-                .Paging(orderParams.Page, orderParams.PageSize) 
-                .AsNoTracking()
+                .Paging(orderParams.Page, orderParams.PageSize)
+                .AsNoTrackingWithIdentityResolution()
                 .ToListAsync();
             }
 
@@ -67,7 +65,7 @@ namespace FoodOrdering.Application.Services
         public async Task<dynamic> CreateOrderByQRAsync(OrderRequest request)
         {
             Log.Information("Start to create an order with OR");
-
+       
             var cart = await _unitOfWork.Cart.GetCartByCustomerAsync(request.UserId);
 
             if (cart == null)
@@ -75,35 +73,18 @@ namespace FoodOrdering.Application.Services
 
             List<ItemData> items = new List<ItemData>();
 
-            var order = new Orders
-            {
-                Id = Guid.NewGuid(),
-                UserId = request.UserId,
-                Address = request.Address,
-                Note = request.Note,
-                ExpiredAt = DateTime.UtcNow.AddMinutes(10),
-                Status = OrderStatus.Pending,
-                ToTalAmount = request.TotalAmount,
-                PaymentMethod = request.PaymentMethod,
-                TransactionId = orderCode
-            };
+            var newOrder = MappingOrder(request, "QR");
 
             // add menu to order
             foreach(var item in cart.CartItems)
             {
-                var orderItem = new OrderMenus
-                {
-                    OrderId = order.Id,
-                    MenuId = item.MenuId,
-                    Quantity = item.Quantity,
-                    UnitPrice = item.UnitPrice,
-                    SubTotal = item.Quantity * item.UnitPrice
-                };
-
+                var orderItem = MappingOrderMenus(item, newOrder.Id);
+                // get total of each item 
+                _temporaryAmount += orderItem.SubTotal;
                 items.Add(new ItemData(item.Menu.Name, item.Quantity, item.UnitPrice));
-                order.OrderMenus.Add(orderItem);
+                newOrder.OrderMenus.Add(orderItem);
             }
-
+             _totalAmount = _temporaryAmount + (_temporaryAmount * TAX_RATE / 100);
 
             if (request.VoucherId.HasValue)
             {   
@@ -112,30 +93,39 @@ namespace FoodOrdering.Application.Services
 
                 Log.Information("Checking voucher running out of slot or not");
                 using (var redLock = await _redLockFactory.CreateLockAsync(resource, expiry)) {
-                    if (!redLock.IsAcquired)
-                    {
-                        throw new InvalidDataException("Hệ thống đang xử lý voucher này, vui lòng thử lại sau.");          
-                    }
+                    if (!redLock.IsAcquired)                   
+                       throw new InvalidDataException("Hệ thống đang xử lý voucher này, vui lòng thử lại sau.");          
+                    
+                    var voucher = await _unitOfWork.Voucher.GetByIdAsync(request.VoucherId.Value);
+                    if (voucher == null)
+                        throw new KeyNotFoundException(nameof(voucher));
+
+                    voucher.UsedCount++;
+
+                    int discountValue = _totalAmount * 5 / 100;
+
+                    if (discountValue > voucher.MaxDiscount)
+                        _totalAmount = _totalAmount - discountValue;
 
                     //create voucher redemption
-                    await CreateVouherRedemption(request.VoucherId.Value, request.UserId, order.Id);
+                    await CreateVouherRedemption(request.VoucherId.Value, request.UserId, newOrder.Id);
                     //update used count after create payment link
                     await UpdateVoucher(request.VoucherId.Value);
+                   
                 }
             }
 
-            Log.Information("Create payment link");
-
-            var response = await _paymentGateway.CreatePaymentLink(request.TotalAmount, orderCode, items);
-                      
+            Log.Information("Create payment link");          
+            var response = await _paymentGateway.CreatePaymentLink(_totalAmount, orderCode, items);
+            Log.Information("Created!!");
+            
             // schedule to delete cancelled order after 10 days
-            ScheduleCancelledOrder_10days(order.Id);
-
+            ScheduleCancelledOrder_10days(newOrder.Id);
             // schedule to update status after 10 minutes
-            ScheduleExpiredOrder_10mins(order.Id);
+            ScheduleExpiredOrder_10mins(newOrder.Id);
 
             _unitOfWork.Cart.Remove(cart);
-            await _unitOfWork.Order.AddAsync(order);
+            await _unitOfWork.Order.AddAsync(newOrder);
             await _unitOfWork.SaveChangeAsync();
 
             Log.Information("Order created");
@@ -151,33 +141,18 @@ namespace FoodOrdering.Application.Services
 
             if (cart == null)
                 throw new KeyNotFoundException(nameof(cart));
-               
-            var order = new Orders
-            {
-                Id = Guid.NewGuid(),
-                UserId = Guid.NewGuid(),
-                Address = request.Address,
-                Note = request.Note,
-                ExpiredAt = null,
-                ToTalAmount = request.TotalAmount,
-                PaymentMethod = request.PaymentMethod,
-                TransactionId = orderCode,
-                Status = OrderStatus.Paid
-            };
+
+            var newOrder = MappingOrder(request, "COD");
 
             // add menu to order
             foreach (var item in cart.CartItems)
             {
-                var orderItem = new OrderMenus
-                {
-                    OrderId = order.Id,
-                    MenuId = item.MenuId,
-                    Quantity = item.Quantity,
-                    UnitPrice = item.UnitPrice,
-                    SubTotal = item.Quantity * item.UnitPrice
-                };
-                order.OrderMenus.Add(orderItem);
+                var orderItem = MappingOrderMenus(item, newOrder.Id);
+                _temporaryAmount += orderItem.SubTotal;
+                newOrder.OrderMenus.Add(orderItem);
             }
+
+            _totalAmount = _temporaryAmount + (_temporaryAmount * TAX_RATE / 100);
 
             if (request.VoucherId.HasValue)
             {
@@ -188,21 +163,31 @@ namespace FoodOrdering.Application.Services
 
                 using (var redLock = await _redLockFactory.CreateLockAsync(resource, expiry))
                 {
-                    if (!redLock.IsAcquired)
-                    {
-                        throw new InvalidDataException("Hệ thống đang xử lý voucher này, vui lòng thử lại sau.");
-                    }
+                    if (!redLock.IsAcquired)                    
+                       throw new InvalidDataException("Hệ thống đang xử lý voucher này, vui lòng thử lại sau.");
+                    
 
+                    var voucher = await _unitOfWork.Voucher.GetByIdAsync(request.VoucherId.Value);
+                    if (voucher == null)
+                        throw new KeyNotFoundException(nameof(voucher));
+
+                    voucher.UsedCount++;
+
+                    int discountValue = _totalAmount * 5 / 100;
+
+                    if (discountValue > voucher.MaxDiscount)
+                        _totalAmount = _totalAmount - discountValue;
                     //create voucher redemption
-                    await CreateVouherRedemption(request.VoucherId.Value, request.UserId, order.Id);
-                    //update used count after create payment link                 
+                    await CreateVouherRedemption(request.VoucherId.Value, request.UserId, newOrder.Id);
+                    //update used count after create payment link
+                    await UpdateVoucher(request.VoucherId.Value);
                 }
             }
 
-            ScheduleCancelledOrder_10days(order.Id);
+            ScheduleCancelledOrder_10days(newOrder.Id);
 
             _unitOfWork.Cart.Remove(cart);
-            await _unitOfWork.Order.AddAsync(order);
+            await _unitOfWork.Order.AddAsync(newOrder);
             await _unitOfWork.SaveChangeAsync();
 
             Log.Information("Order created");
@@ -253,6 +238,45 @@ namespace FoodOrdering.Application.Services
             _unitOfWork.Voucher.Update(voucher);
         }
 
+        private Orders MappingOrder(OrderRequest request, string type)
+        {
+            var newOrder = new Orders
+            {
+                Id = Guid.NewGuid(),
+                UserId = request.UserId,
+                AddressId = request.AddressId,
+                Note = request.Note,
+                TotalAmount = request.TotalAmount,
+                PaymentMethod = request.PaymentMethod,
+                TransactionId = orderCode
+            };
+
+            if (type == "QR")
+            {
+                newOrder.ExpiredAt = DateTime.UtcNow.AddMinutes(10);
+                newOrder.Status = OrderStatus.Pending;
+            }else if (type == "COD")
+            {
+                newOrder.ExpiredAt = null;
+                newOrder.Status = OrderStatus.Paid;
+            }
+            return newOrder;
+        }
+
+        private OrderMenus MappingOrderMenus(CartItems item, Guid id)
+        {
+            var orderItem = new OrderMenus
+            {
+                OrderId = id,
+                MenuId = item.MenuId,
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice,
+                SubTotal = item.Quantity * item.UnitPrice
+            };
+
+            return orderItem;
+        }
+
         private void ScheduleCancelledOrder_10days(Guid id)
         {
             BackgroundJob.Schedule<IBackgroundJobScheduler>(
@@ -267,6 +291,5 @@ namespace FoodOrdering.Application.Services
                 TimeSpan.FromMinutes(10));
         }
 
-        
     }
 }

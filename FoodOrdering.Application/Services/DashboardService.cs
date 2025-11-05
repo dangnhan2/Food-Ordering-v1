@@ -30,7 +30,7 @@ namespace FoodOrdering.Application.Services
             var totalMenuItems = _unitOfWork.Menu.GetAll().Count();
             var totalUsers = _unitOfWork.User.GetAll().Count();
 
-            var totalAmount = paidOrders.Sum(o => o.ToTalAmount);
+            var totalAmount = paidOrders.Sum(o => o.TotalAmount);
 
             var topSellingDishes = await _unitOfWork.Menu
                 .GetAll()

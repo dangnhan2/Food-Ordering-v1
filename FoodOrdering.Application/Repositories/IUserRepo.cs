@@ -11,6 +11,7 @@ namespace FoodOrdering.Application.Repositories
     {
         public Task<User?> GetUserByEmailAsync(string email);
         public Task<User?> GetUserContainsOtpAsync(Guid id);
+        public Task<User?> GetUserContainsCartAsync(Guid id);
 
     }
 }

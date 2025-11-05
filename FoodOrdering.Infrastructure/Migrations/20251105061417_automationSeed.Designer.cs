@@ -3,6 +3,7 @@ using System;
 using FoodOrdering.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FoodOrdering.Infrastructure.Migrations
 {
     [DbContext(typeof(FoodOrderingDbContext))]
-    partial class FoodOrderingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251105061417_automationSeed")]
+    partial class automationSeed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,14 +37,6 @@ namespace FoodOrdering.Infrastructure.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("PhoneNumber")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -246,8 +241,9 @@ namespace FoodOrdering.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("AddressId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("ExpiredAt")
                         .HasColumnType("timestamp with time zone");
@@ -265,7 +261,7 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<int>("TotalAmount")
+                    b.Property<int>("ToTalAmount")
                         .HasColumnType("integer");
 
                     b.Property<int>("TransactionId")
@@ -275,8 +271,6 @@ namespace FoodOrdering.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AddressId");
 
                     b.HasIndex("UserId");
 
@@ -598,7 +592,7 @@ namespace FoodOrdering.Infrastructure.Migrations
             modelBuilder.Entity("FoodOrdering.Domain.Models.Addresses", b =>
                 {
                     b.HasOne("FoodOrdering.Domain.Models.User", "User")
-                        .WithMany("Addresses")
+                        .WithMany("Addresss")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -690,19 +684,11 @@ namespace FoodOrdering.Infrastructure.Migrations
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.Orders", b =>
                 {
-                    b.HasOne("FoodOrdering.Domain.Models.Addresses", "Address")
-                        .WithMany("Orders")
-                        .HasForeignKey("AddressId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("FoodOrdering.Domain.Models.User", "User")
                         .WithMany("Orders")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Address");
 
                     b.Navigation("User");
                 });
@@ -796,11 +782,6 @@ namespace FoodOrdering.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("FoodOrdering.Domain.Models.Addresses", b =>
-                {
-                    b.Navigation("Orders");
-                });
-
             modelBuilder.Entity("FoodOrdering.Domain.Models.Carts", b =>
                 {
                     b.Navigation("CartItems");
@@ -825,7 +806,7 @@ namespace FoodOrdering.Infrastructure.Migrations
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.User", b =>
                 {
-                    b.Navigation("Addresses");
+                    b.Navigation("Addresss");
 
                     b.Navigation("Carts")
                         .IsRequired();

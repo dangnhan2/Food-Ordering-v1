@@ -9,10 +9,10 @@ namespace FoodOrdering.Application.DTOs.Request
     public class VoucherRequest
     {
         public string Code { get; set; }
-        public string DiscountType { get; set; } // "percent" | "fixed"
-        public decimal DiscountValue { get; set; }
-        public decimal? MaxDiscount { get; set; }
-        public decimal? MinOrderAmount { get; set; }
+        public string DiscountType { get; set; }
+        public int DiscountValue { get; set; }
+        public int MaxDiscount { get; set; }
+        public int MinOrderAmount { get; set; }
         public DateTimeOffset StartDate { get; set; }
         public DateTimeOffset EndDate { get; set; }
         public int? UsageLimit { get; set; }

@@ -82,14 +82,6 @@ namespace FoodOrdering.Presentation.Controllers.Common
             return Ok(response);
         }
 
-        [HttpPut("cart/{id}")]
-        public async Task<IActionResult> UpdateToCart(Guid id, [FromBody] CartRequest request)
-        {
-            await _cartService.UpdateToCartAsync(id, request);
-            var response = ApiResponse<string>.Success("Thêm item thành công", "", StatusCodes.Status201Created);
-            return Ok(response);
-        }
-
         [HttpPost("order")]
         public async Task<IActionResult> CreateOrderWithQR([FromBody] OrderRequest request)
         {   
@@ -116,23 +108,15 @@ namespace FoodOrdering.Presentation.Controllers.Common
             return Ok(response);
         }
 
-        [HttpPut("user/{id}/avatar")]
-        public async Task<IActionResult> UploadAvatar(Guid id, IFormFile file)
-        {
-            await _userService.UploadAvatarAsync(id, file);
-            var response = ApiResponse<string>.Success("Tải ảnh thành công", "", StatusCodes.Status200OK);
-            return Ok(response);
-        }
-
-        [HttpPut("user/{id}")]
-        public async Task<IActionResult> UpdateUser(Guid id, UserRequest request)
+        [HttpPut("user/account/{id}")]
+        public async Task<IActionResult> UpdateUser(Guid id,[FromForm] UserRequest request)
         {
             await _userService.UploadProfileAsync(id, request);
             var response = ApiResponse<string>.Success("Cập nhật thành công", "", StatusCodes.Status200OK);
             return Ok(response);
         }
 
-        [HttpGet("user/voucher")]
+        [HttpGet("user/vouchers")]
         public async Task<IActionResult> GetAllVoucherByCustomer()
         {
             var result = await _voucherService.GetAllByCustomerAsync();
@@ -145,6 +129,15 @@ namespace FoodOrdering.Presentation.Controllers.Common
         {
             var result = await _voucherService.ValidateVoucherAsync(request);
             var response = ApiResponse<VoucherDTO>.Success("", result, StatusCodes.Status201Created);
+            return Ok(response);
+        }
+
+        [HttpGet("user/{id}")]
+        public async Task<IActionResult> GetUserById(Guid id)
+        {
+            var result = await _userService.GetUserByIdAsync(id);
+
+            var response = ApiResponse<UserDTO>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
             return Ok(response);
         }
 
@@ -161,7 +154,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
         public async Task<IActionResult> AddAddress([FromBody] AddressRequest request)
         {
             await _addressService.AddAsync(request);
-            var response = ApiResponse<string>.Success(null, "Thêm mới thành công", StatusCodes.Status201Created);
+            var response = ApiResponse<string>.Success("Thêm mới thành công", null, StatusCodes.Status201Created);
             return Ok(response);
         }
 
@@ -169,7 +162,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
         public async Task<IActionResult> UpdateAddress(Guid id, [FromBody] AddressRequest request)
         {
             await _addressService.UpdateAsync(id, request);
-            var response = ApiResponse<string>.Success(null, "Cập nhật thành công", StatusCodes.Status200OK);
+            var response = ApiResponse<string>.Success("Cập nhật thành công", null, StatusCodes.Status200OK);
             return Ok(response);
         }
 
@@ -177,7 +170,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
         public async Task<IActionResult> DeleteAddress(Guid id)
         {
             await _addressService.DeleteAsync(id);
-            var response = ApiResponse<string>.Success(null, "Xóa thành công", StatusCodes.Status201Created);
+            var response = ApiResponse<string>.Success("Xóa thành công",null, StatusCodes.Status200OK);
             return Ok(response);
         }
 

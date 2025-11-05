@@ -26,5 +26,10 @@ namespace FoodOrdering.Infrastructure.Repository
         {
             return await _context.Users.Include(u => u.EmailOtp).FirstOrDefaultAsync(u => u.Id == id);
         }
+
+        public async Task<User?> GetUserContainsCartAsync(Guid id)
+        {
+            return await _context.Users.Include(u => u.Carts).FirstOrDefaultAsync(u => u.Id == id);
+        }
     }
 }

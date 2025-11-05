@@ -2,6 +2,7 @@
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Services.Interface;
+using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -26,11 +27,17 @@ namespace FoodOrdering.Application.Services
 
         // add new address by specific customer
         public async Task AddAsync(AddressRequest request)
-        {
+        {   
+            var result = await new AddressValidator().ValidateAsync(request);
+            if (!result.IsValid)           
+              throw new ValidationDictionaryException(result.ToDictionary());
+            
             string cacheKey = $"user:{request.UserId}:addresses";
 
             Addresses address = new Addresses
-            {              
+            {   
+                FullName = request.FullName,
+                PhoneNumber = request.PhoneNumber,
                 Address = request.Address,
                 UserId = request.UserId,
             };
@@ -75,12 +82,18 @@ namespace FoodOrdering.Application.Services
         // update address by specific customer
         public async Task UpdateAsync(Guid id, AddressRequest request)
         {
+            var result = await new AddressValidator().ValidateAsync(request);
+            if (!result.IsValid)
+                throw new ValidationDictionaryException(result.ToDictionary());
+
             string cacheKey = $"user:{request.UserId}:addresses";
             var address = await _unitOfWork.Address.GetByIdAsync(id);
 
             if (address == null)
                 throw new KeyNotFoundException(nameof(address));
 
+            address.FullName = request.FullName;
+            address.PhoneNumber = request.PhoneNumber;
             address.Address = request.Address;
             address.UserId = request.UserId;
 

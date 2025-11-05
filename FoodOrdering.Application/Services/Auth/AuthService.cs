@@ -10,6 +10,7 @@ using FoodOrdering.Domain.Models;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,22 +46,33 @@ namespace FoodOrdering.Application.Services.Auth
             var user = await _userManager.FindByIdAsync(request.Id.ToString());
 
             if (user == null)
-                throw new KeyNotFoundException(nameof(user));   
+                throw new KeyNotFoundException(nameof(user));
+
+            var isCorrectlyPassword = await _userManager.CheckPasswordAsync(user, request.CurrentPassword);
+
+            if (!isCorrectlyPassword)
+                throw new InvalidDataException("Mật khẩu hiện tại không đúng");
 
             await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);           
         }
 
         public async Task ForgotPasswordAsync(ForgotPasswordRequest request)
         {
+            Log.Information("User enter email...");
             var user = await _userManager.FindByEmailAsync(request.Email);
 
             if (user == null)
                 throw new KeyNotFoundException(nameof(user));
 
+            Log.Information("Generate otp");
             //generate opt
             var otp = await GenerateOtp(user.Id);
 
+            Log.Information("Send email");
+
             SendEmail(user.Id, user.Email, otp);
+
+            Log.Information("Send email successful");
         }
 
         public async Task<AuthResponse> LoginAsync(LoginRequest request, HttpContext context)
@@ -83,8 +95,7 @@ namespace FoodOrdering.Application.Services.Auth
 
         public async Task LogoutAsync(HttpContext context)
         {
-            var refreshToken = context.Request.Cookies["refresh_token"];
-
+            var refreshToken = context.Request.Cookies["refreshToken"];
             if (refreshToken == null)
                 throw new UnauthorizedAccessException(nameof(refreshToken));
 
@@ -96,22 +107,20 @@ namespace FoodOrdering.Application.Services.Auth
             _unitOfWork.RefreshToken.Remove(isExistToken);
             await _unitOfWork.SaveChangeAsync();
 
-            context.Response.Cookies.Append(
-                "refresh_token",
-                string.Empty,
+            context.Response.Cookies.Delete("refreshToken",
                 new CookieOptions
                 {
                     HttpOnly = true,
-                    SameSite = SameSiteMode.Lax,
-                    Secure = true,
-                    Expires = DateTimeOffset.UnixEpoch
+                    SameSite = SameSiteMode.None,
+                    Secure = false,                 
+                    Path = "/"
                 });
         }
 
         public async Task<AuthResponse> RefreshTokenAsync(HttpContext context)
         {
             var response = await _tokenService.GenerateRefreshToken(context);
-            return response.Data;
+            return response;
         }
 
         public async Task<string> RegisterAsync(RegisterRequest request)
@@ -172,9 +181,13 @@ namespace FoodOrdering.Application.Services.Auth
             if (existUser == null)
                 throw new KeyNotFoundException(nameof(existUser));
 
-            if (existUser.EmailOtp.Otp != request.Otp)
-                throw new ArgumentException("Mã otp không hợp lệ hoặc hết hạn");
+            if (existUser.EmailOtp == null)
+                throw new ArgumentException("Không tồn tại mã OTP hoặc đã hết hạn");
 
+            if (existUser.EmailOtp.Otp != request.Otp)           
+                throw new ArgumentException("Mã otp không hợp lệ hoặc hết hạn");
+            
+                
             existUser.EmailConfirmed = true;
 
             _unitOfWork.EmailOtp.Remove(existUser.EmailOtp);

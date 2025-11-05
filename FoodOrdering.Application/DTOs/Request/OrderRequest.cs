@@ -10,7 +10,7 @@ namespace FoodOrdering.Application.DTOs.Request
     {   
         public Guid UserId { get; set; }
         public Guid? VoucherId { get; set; } 
-        public string Address { get; set; }
+        public Guid AddressId { get; set; }
         public string? Note { get; set; }
         public string PaymentMethod { get; set; }
         public int TotalAmount { get; set; }
