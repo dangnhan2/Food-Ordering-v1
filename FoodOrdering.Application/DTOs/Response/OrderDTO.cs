@@ -1,10 +1,5 @@
 ﻿using Food_Ordering.Models.Enum;
 using FoodOrdering.Domain.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.DTOs.Response
 {
@@ -18,6 +13,7 @@ namespace FoodOrdering.Application.DTOs.Response
         public string Address { get; set; }
         public OrderStatus OrderStatus { get; set; }
         public int TotalAmount { get; set; }
+        public int TransactionCode { get; set; }
         public ICollection<OrderMenuDTO> Menus { get; set; } = new List<OrderMenuDTO>();
 
         public OrderDTO() { }
@@ -31,6 +27,7 @@ namespace FoodOrdering.Application.DTOs.Response
             Address = order.Address.Address;
             OrderStatus = order.Status;
             TotalAmount = order.TotalAmount;
+            TransactionCode = order.TransactionId;
             Menus = menus;
         }
     }

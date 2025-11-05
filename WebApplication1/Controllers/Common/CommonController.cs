@@ -82,22 +82,20 @@ namespace FoodOrdering.Presentation.Controllers.Common
             return Ok(response);
         }
 
-        [HttpPost("order")]
+        [HttpPost("order/qr")]
         public async Task<IActionResult> CreateOrderWithQR([FromBody] OrderRequest request)
-        {   
-            if (request.PaymentMethod == "QR")
-            {
-                var result = await _orderService.CreateOrderByQRAsync(request);
-                var response = ApiResponse<dynamic>.Success("Tạo đơn thành công", result, StatusCodes.Status201Created);
-                return Ok(response);
-            }
-            else
-            {
-                await _orderService.CreateOrderByCODAsync(request);
-                var response = ApiResponse<string>.Success("Tạo đơn thành công", "", StatusCodes.Status201Created);
-                return Ok(response);
-            }
+        {
+            var result = await _orderService.CreateOrderByQRAsync(request);
+            var response = ApiResponse<dynamic>.Success("Tạo đơn thành công", result, StatusCodes.Status201Created);
+            return Ok(response);
+        }
 
+        [HttpPost("order/cod")]
+        public async Task<IActionResult> CreateOrderWithCOD([FromBody] OrderRequest request)
+        {
+            var result = await _orderService.CreateOrderByCODAsync(request);
+            var response = ApiResponse<int>.Success("Tạo đơn thành công", result, StatusCodes.Status201Created);
+            return Ok(response);
         }
 
         [HttpGet("user/{id}/orders")]
