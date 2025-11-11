@@ -21,9 +21,9 @@ namespace FoodOrdering.Application.Services
     public class CategoryService : ICategoryService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly ICacheService _cacheService;
+        private readonly ICachingService _cacheService;
 
-        public CategoryService(IUnitOfWork unitOfWork, ICacheService cacheService)
+        public CategoryService(IUnitOfWork unitOfWork, ICachingService cacheService)
         {
             _unitOfWork = unitOfWork;
             _cacheService = cacheService;
@@ -84,7 +84,7 @@ namespace FoodOrdering.Application.Services
             var category = await _unitOfWork.Category.GetByIdAsync(id);
 
             if (category == null)
-                throw new KeyNotFoundException(nameof(category));
+                throw new KeyNotFoundException("Danh mục không tồn tại");
 
             if (categories.Any())
                 throw new DuplicateNameException($"{request.Name} đã tồn tại");
@@ -102,7 +102,7 @@ namespace FoodOrdering.Application.Services
             var category = await _unitOfWork.Category.GetByIdAsync(id);
 
             if (category == null)           
-               throw new KeyNotFoundException(nameof(category));
+               throw new KeyNotFoundException("Danh mục không tồn tại");
 
             _unitOfWork.Category.Remove(category);
             await _unitOfWork.SaveChangeAsync();

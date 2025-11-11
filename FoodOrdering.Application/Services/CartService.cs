@@ -18,7 +18,7 @@ namespace FoodOrdering.Application.Services
         {
             var user = await _unitOfWork.User.GetUserContainsCartAsync(request.UserId);
             if (user == null)           
-              throw new KeyNotFoundException(nameof(user));
+              throw new KeyNotFoundException("Người dùng không tồn tại");
             
             if (user.Carts == null)
             {
@@ -29,26 +29,14 @@ namespace FoodOrdering.Application.Services
                 };
 
                 // Thêm món ăn vào cart
-                foreach (var dish in request.CartItems)
-                {
-                    var item = new CartItems
-                    {
-                        Id = Guid.NewGuid(),
-                        CartId = cart.Id,
-                        MenuId = dish.MenuId,
-                        Quantity = dish.Quantity,
-                        UnitPrice = dish.UnitPrice
-                    };
-
-                    cart.CartItems.Add(item);
-                }
+                MappingCartItems(request.CartItems, cart);
                 await _unitOfWork.Cart.AddAsync(cart);
             }
             else
             {
                 var cart = await _unitOfWork.Cart.GetCartByCustomerAsync(request.UserId);
                 if (cart == null)
-                    throw new KeyNotFoundException(nameof(cart));
+                    throw new KeyNotFoundException("Giỏ hàng trống / không tồn tại");
 
                 foreach (var dish in request.CartItems)
                 {
@@ -92,11 +80,28 @@ namespace FoodOrdering.Application.Services
             var cart = await _unitOfWork.Cart.GetCartByCustomerAsync(id);
 
             if (cart == null)
-                throw new KeyNotFoundException(nameof(cart));
+            {
+                return new CartDTO();
+            }         
 
             var cartToDTO = new CartDTO(cart, cart.CartItems.Select(ct => new CartItemDTO(ct)).ToList());
             
             return cartToDTO;
+        }
+
+        private void MappingCartItems(ICollection<CartItemRequest> cartItems, Carts cart) {
+            foreach (var dish in cartItems) {
+                var item = new CartItems
+                {
+                    Id = Guid.NewGuid(),
+                    CartId = cart.Id,
+                    MenuId = dish.MenuId,
+                    Quantity = dish.Quantity,
+                    UnitPrice = dish.UnitPrice
+                };
+
+                cart.CartItems.Add(item);
+            }
         }
 
     }

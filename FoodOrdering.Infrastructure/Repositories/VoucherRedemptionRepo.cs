@@ -18,11 +18,6 @@ namespace FoodOrdering.Infrastructure.Repositories
            _context = context;
         }
 
-        public async Task<int> CountAsync(Guid id)
-        {
-            return await _context.VoucherRedemptions.CountAsync(v => v.VoucherID == id);
-        }
-
         public async Task<int> TodayCountAsync(Guid userId, Guid voucherId)
         {
             return await _context.VoucherRedemptions.CountAsync(

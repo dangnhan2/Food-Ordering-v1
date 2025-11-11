@@ -119,14 +119,15 @@ namespace FoodOrdering.Infrastructure.Payment
         }
 
         public async Task<dynamic> CreatePaymentLink(int amount, int orderCode, List<ItemData> data)
-        {
+        {   
+
             var paymentLinkRequest = new PaymentData(
                  orderCode : orderCode,
                  amount : amount,
                  description : "Thanh toán đơn hàng",
                  items : data,
                  expiredAt: (int) DateTimeOffset.UtcNow.AddMinutes(10).ToUnixTimeSeconds(),
-                 returnUrl: returnUrl,
+                 returnUrl: $"{returnUrl}checkout/success?orderCode=${orderCode}&paymentMethod=QR",
                  cancelUrl : cancelUrl
             );
 

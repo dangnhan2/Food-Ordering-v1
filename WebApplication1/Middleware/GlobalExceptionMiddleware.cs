@@ -28,7 +28,7 @@ namespace FoodOrdering.Presentation.Middleware
                 Extensions.LogWarning(ex);
                 await HandleExceptionAsync(context, ex, HttpStatusCode.BadRequest);
             }
-            catch (KeyNotFoundException ex) // lỗi không tìm thấy dữ liệu
+            catch (KeyNotFoundException ex) // lỗi không tìm thấy dữ liệu hoặc null
             {
                 Extensions.LogWarning(ex);
                 await HandleExceptionAsync(context, ex, HttpStatusCode.NotFound);
@@ -80,8 +80,8 @@ namespace FoodOrdering.Presentation.Middleware
                 case ArgumentException argEx:
                     message = argEx.Message;
                     break;
-                case KeyNotFoundException:
-                    message = "Không tìm thấy dữ liệu yêu cầu.";
+                case KeyNotFoundException keyEx:
+                    message = keyEx.Message;
                     break;
                 case UnauthorizedAccessException:
                     message = "Bạn không có quyền truy cập. Vui lòng đăng nhập lại.";

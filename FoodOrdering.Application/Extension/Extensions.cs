@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using FoodOrdering.Domain.Models;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ namespace FoodOrdering.Application.Extension
 {
     public static class Extensions
     {
+        
         public static IQueryable<T> Paging<T>(this IQueryable<T> values, int page, int pageSize) where T : class
         {
             return values.Skip((page -1) * pageSize).Take(pageSize);
@@ -40,13 +42,26 @@ namespace FoodOrdering.Application.Extension
             return sb.ToString();
         }
 
+        public static int GetSubAmount(ICollection<CartItems> items)
+        {
+            int TAX_RATE = 8;
+            int subTotal = 0;
+            foreach (var item in items)
+            {
+                subTotal += item.Quantity * item.UnitPrice;
+            }
+
+            subTotal = subTotal + (subTotal * TAX_RATE) / 100;
+            return subTotal;
+        }
+
         public static void LogError(Exception ex, object? data = null,
             [CallerMemberName] string method = "",
             [CallerLineNumber] int line = 0,
             [CallerFilePath] string file = ""
             )
         {
-            Log.Error(ex, "Lỗi trong {File}:{Line} ({Method}) {Message}", Path.GetFileName(file), line, method, ex.InnerException.Message ?? ex.Message);
+            Log.Error(ex, "Lỗi trong {File}:{Line} ({Method}) {Message}", Path.GetFileName(file), line, method, ex?.InnerException?.Message ?? ex.Message);
         }
 
         public static void LogWarning(Exception ex, object? data = null,

@@ -122,11 +122,11 @@ namespace FoodOrdering.Presentation.Controllers.Common
             return Ok(response);
         }
 
-        [HttpPost("user/voucher/{id}")]
+        [HttpPost("user/voucher/validation")]
         public async Task<IActionResult> ValidateVoucher(ValidateVoucherRequest request)
         {
             var result = await _voucherService.ValidateVoucherAsync(request);
-            var response = ApiResponse<VoucherDTO>.Success("", result, StatusCodes.Status201Created);
+            var response = ApiResponse<dynamic>.Success("Áp dụng voucher thành công", result, StatusCodes.Status200OK);
             return Ok(response);
         }
 

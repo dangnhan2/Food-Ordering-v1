@@ -46,7 +46,7 @@ namespace FoodOrdering.Application.Services.Auth
             var user = await _userManager.FindByIdAsync(request.Id.ToString());
 
             if (user == null)
-                throw new KeyNotFoundException(nameof(user));
+                throw new KeyNotFoundException("Người dùng không tồn tại");
 
             var isCorrectlyPassword = await _userManager.CheckPasswordAsync(user, request.CurrentPassword);
 
@@ -62,7 +62,7 @@ namespace FoodOrdering.Application.Services.Auth
             var user = await _userManager.FindByEmailAsync(request.Email);
 
             if (user == null)
-                throw new KeyNotFoundException(nameof(user));
+                throw new KeyNotFoundException("Người dùng không tồn tại");
 
             Log.Information("Generate otp");
             //generate opt
@@ -169,6 +169,9 @@ namespace FoodOrdering.Application.Services.Auth
 
             var user = await _userManager.FindByEmailAsync(request.Email);
 
+            if (user == null)
+                throw new KeyNotFoundException("Người dùng không tồn tại");
+
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             await _userManager.ResetPasswordAsync(user, token, request.NewPassword);
 
@@ -179,7 +182,7 @@ namespace FoodOrdering.Application.Services.Auth
             var existUser = await _unitOfWork.User.GetUserByEmailAsync(request.Email);
 
             if (existUser == null)
-                throw new KeyNotFoundException(nameof(existUser));
+                throw new KeyNotFoundException("Người dùng không tồn tại");
 
             if (existUser.EmailOtp == null)
                 throw new ArgumentException("Không tồn tại mã OTP hoặc đã hết hạn");
