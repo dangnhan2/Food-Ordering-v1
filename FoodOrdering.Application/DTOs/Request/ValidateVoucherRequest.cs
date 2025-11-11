@@ -10,6 +10,5 @@ namespace FoodOrdering.Application.DTOs.Request
     {
         public Guid UserId { get; set; }
         public Guid VoucherId { get; set; }
-        public decimal TotalAmount { get; set; }
     }
 }

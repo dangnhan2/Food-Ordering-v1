@@ -14,7 +14,7 @@ namespace FoodOrdering.Application.DTOs.Response
         public string MenuName { get; set; }
         public string MenuImage { get; set; }
         public int Quantity { get; set; }
-        public int UnitPrice { get; set; }
+        public int SubPrice { get; set; }
 
         public OrderMenuDTO() { }
         public OrderMenuDTO(OrderMenus order)
@@ -24,7 +24,7 @@ namespace FoodOrdering.Application.DTOs.Response
             MenuName = order.Menus.Name;
             MenuImage = order.Menus.ImageUrl;
             Quantity = order.Quantity;
-            UnitPrice = order.UnitPrice;
+            SubPrice = order.UnitPrice * order.Quantity;
         }
     }
 }

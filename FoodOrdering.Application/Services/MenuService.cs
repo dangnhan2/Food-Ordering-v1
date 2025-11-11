@@ -17,11 +17,11 @@ namespace FoodOrdering.Application.Services
     public class MenuService : IMenuService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly ICacheService _cacheService;
+        private readonly ICachingService _cacheService;
         private const string folder = "Thumbnail";
         private readonly ICloudinaryService _cloudinaryService;
 
-        public MenuService(IUnitOfWork unitOfWork, ICacheService cacheService, ICloudinaryService cloudinaryService)
+        public MenuService(IUnitOfWork unitOfWork, ICachingService cacheService, ICloudinaryService cloudinaryService)
         {
             _unitOfWork = unitOfWork;
             _cacheService = cacheService;
@@ -40,22 +40,8 @@ namespace FoodOrdering.Application.Services
             if (menus.Any(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower()))
                 throw new DuplicateNameException($"Menu {request.Name} đã tồn tại");
 
-            var menu = new Menus
-            {
-                Name = request.Name,
-                CategoriesId = request.CategoriesId,
-                Description = request.Description,
-                Price = request.Price,
-                IsAvailable = request.IsAvailble,
-                SoldQuantity = 0
-            };
-
-            if (request.Thumbnail != null)
-            {
-                var url = await _cloudinaryService.UploadImage(request.Thumbnail, folder);
-                menu.ImageUrl = url;
-            }
-                
+            var menu = await MappingMenu(request);
+            
             await _unitOfWork.Menu.AddAsync(menu);
             await _unitOfWork.SaveChangeAsync();
         }
@@ -65,7 +51,7 @@ namespace FoodOrdering.Application.Services
             var menu = await _unitOfWork.Menu.GetByIdAsync(id);
 
             if(menu == null)            
-              throw new KeyNotFoundException(nameof(menu));
+              throw new KeyNotFoundException("Món ăn không tồn tại");
             
             _unitOfWork.Menu.Remove(menu);
             await _unitOfWork.SaveChangeAsync();
@@ -73,12 +59,12 @@ namespace FoodOrdering.Application.Services
 
         public async Task<PagingReponse<MenuDto>> GetAllAsync(MenuParams menuParams)
         {
-            //string cacheKey = $"menu_page_{menuParams.Page}_size_{menuParams.PageSize}";
-            //var cached = await _cacheService.GetAsync<IEnumerable<MenuDto>>(cacheKey);
+            string cacheKey = $"menu_page_{menuParams.Page}_size_{menuParams.PageSize}";
+            var cached = await _cacheService.GetAsync<PagingReponse<MenuDto>>(cacheKey);
 
-            //if (cached != null)
-            //    return new PagingReponse<MenuDto>(menuParams.Page, menuParams.PageSize, cached.Count(), cached);
-                                     
+            if (cached != null)
+                return cached;
+
             var menus = _unitOfWork.Menu.GetAll();
 
             if (!string.IsNullOrEmpty(menuParams.Name))
@@ -94,14 +80,21 @@ namespace FoodOrdering.Application.Services
             if (!string.IsNullOrEmpty(menuParams.SortBy))
             {
                 var sortBy = menuParams.SortBy.ToLower();
-                var sortOrder = menuParams.SortOrder?.ToLower();
+                var sortOrder = menuParams.SortOrder?.ToLower() ?? "asc";
 
-                menus = sortBy
-                switch
+                menus = sortBy switch
                 {
-                    "price" => sortOrder == "desc" ? menus.OrderByDescending(m => m.Price) : menus.OrderBy(m => m.Price),
-                    "soldQuantity" => sortOrder == "desc" ? menus.OrderByDescending(m => m.SoldQuantity) : menus.OrderBy(m => m.SoldQuantity),
-                    _ => menus.OrderByDescending(m => m.CreatedAt)
+                    "price" => sortOrder == "desc" 
+                    ? menus.OrderByDescending(m => m.Price) 
+                    : menus.OrderBy(m => m.Price),
+
+                    "soldquantity" => sortOrder == "desc" 
+                    ? menus.OrderByDescending(m => m.SoldQuantity) 
+                    : menus.OrderBy(m => m.SoldQuantity),
+
+                    _ => sortOrder == "desc"
+                    ? menus.OrderByDescending(m => m.CreatedAt)
+                    : menus.OrderBy(m => m.CreatedAt)
                 };
             }
 
@@ -123,10 +116,11 @@ namespace FoodOrdering.Application.Services
                   .AsNoTrackingWithIdentityResolution()
                   .ToListAsync();
             }
-           
-            //await _cacheService.SetAsync(cacheKey, menusToDTO, TimeSpan.FromHours(12));
+            
+            var response = new PagingReponse<MenuDto>(menuParams.Page, menuParams.PageSize, menus.Count(), menusToDTO);
+            await _cacheService.SetAsync(cacheKey, response, TimeSpan.FromHours(12));
 
-            return new PagingReponse<MenuDto>(menuParams.Page, menuParams.PageSize, menus.Count(), menusToDTO);
+            return response;
         }
 
         public async Task<MenuDto> GetByIdAsync(Guid id)
@@ -140,7 +134,7 @@ namespace FoodOrdering.Application.Services
             var menu = await _unitOfWork.Menu.GetMenuWithCategoryAsync(id);
 
             if (menu == null)
-                throw new KeyNotFoundException(nameof(menu));
+                throw new KeyNotFoundException("Món ăn không tồn tại");
                 
             await _cacheService.SetAsync(cacheKey, new MenuDto(menu), TimeSpan.FromMinutes(10));
 
@@ -158,7 +152,7 @@ namespace FoodOrdering.Application.Services
             var menus = _unitOfWork.Menu.GetAll();
 
             if (menu == null)
-               throw new KeyNotFoundException(nameof(menus));
+               throw new KeyNotFoundException("Món ăn không tồn tại");
 
             if (await menus.AnyAsync(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower() && m.Id != id))
                 throw new DuplicateNameException($"Menu {request.Name} đã tồn tại");
@@ -179,6 +173,27 @@ namespace FoodOrdering.Application.Services
             _unitOfWork.Menu.Update(menu);
             await _unitOfWork.SaveChangeAsync();
             await _cacheService.RemoveAsync(cacheKey);
+        }
+
+        private async Task<Menus> MappingMenu(MenuRequest request)
+        {
+            var menu = new Menus
+            {
+                Name = request.Name,
+                CategoriesId = request.CategoriesId,
+                Description = request.Description,
+                Price = request.Price,
+                IsAvailable = request.IsAvailble,
+                SoldQuantity = 0
+            };
+
+            if (request.Thumbnail != null)
+            {
+                var url = await _cloudinaryService.UploadImage(request.Thumbnail, folder);
+                menu.ImageUrl = url;
+            }
+
+            return menu;
         }
 
     }

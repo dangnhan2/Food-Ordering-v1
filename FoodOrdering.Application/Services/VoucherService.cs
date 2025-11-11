@@ -22,8 +22,9 @@ namespace FoodOrdering.Application.Services
     public class VoucherService : IVoucherService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly ICacheService _cacheService;
-        public VoucherService(IUnitOfWork unitOfWork, ICacheService cacheService)
+        private readonly ICachingService _cacheService;
+        private int TAX_RATE = 8;
+        public VoucherService(IUnitOfWork unitOfWork, ICachingService cacheService)
         {
             _unitOfWork = unitOfWork;           
             _cacheService = cacheService;            
@@ -66,10 +67,7 @@ namespace FoodOrdering.Application.Services
             var existVoucher = await _unitOfWork.Voucher.GetByIdAsync(id);
 
             if (existVoucher == null)
-                throw new KeyNotFoundException(nameof(existVoucher));               
-
-            //if (existVoucher.IsActive)
-            //    throw new 
+                throw new KeyNotFoundException("Mã giảm giá không tồn tại");               
              
             _unitOfWork.Voucher.Remove(existVoucher);
             await _unitOfWork.SaveChangeAsync();
@@ -95,7 +93,8 @@ namespace FoodOrdering.Application.Services
                 switch
                 {
                     "usageLimit" => sortOrder == "desc" ? vouchers.OrderByDescending(v => v.UsageLimit) : vouchers.OrderBy(v => v.UsageLimit),
-                    "usedCount" => sortOrder == "desc" ? vouchers.OrderByDescending(v => v.UsedCount) : vouchers.OrderBy(v => v.UsedCount)
+                    "usedCount" => sortOrder == "desc" ? vouchers.OrderByDescending(v => v.UsedCount) : vouchers.OrderBy(v => v.UsedCount),
+                    _ => vouchers.OrderByDescending(v => v.StartDate)
                 };
             }
 
@@ -148,7 +147,7 @@ namespace FoodOrdering.Application.Services
             var existVoucher = await _unitOfWork.Voucher.GetByIdAsync(id);
 
             if (existVoucher == null)
-                throw new KeyNotFoundException(nameof(existVoucher));
+                throw new KeyNotFoundException("Mã giảm giá không tồn tại");
 
             existVoucher.Code = request.Code;
             existVoucher.Description = $"Hạn sử dụng {request.StartDate} đến ngày {request.EndDate}";
@@ -170,8 +169,8 @@ namespace FoodOrdering.Application.Services
                 await _cacheService.RemoveAsync(cacheKey);
         }
 
-        public async Task<VoucherDTO> ValidateVoucherAsync(ValidateVoucherRequest request)
-        {
+        public async Task<VoucherValidationDto> ValidateVoucherAsync(ValidateVoucherRequest request)
+        {   
             var voucher = await _unitOfWork.Voucher.GetByIdAsync(
                 v => v.Id == request.VoucherId
                 && v.StartDate <= DateTime.UtcNow
@@ -180,17 +179,48 @@ namespace FoodOrdering.Application.Services
                 && v.IsActive);
 
             if (voucher == null)
-                throw new KeyNotFoundException(nameof(voucher));
+                throw new KeyNotFoundException("Mã giảm giá không tồn tại");
+
+            var cart = await _unitOfWork.Cart.GetCartByCustomerAsync(request.UserId);
+
+            if (cart == null || cart.CartItems.Count == 0)
+                throw new KeyNotFoundException("Giỏ hàng trống / không tồn tại");
+
+            int subTotal = GetTotalAmount(cart.CartItems);
              
-            var todayCount = await _unitOfWork.VoucherRedemption.TodayCountAsync(request.UserId, voucher.Id);
             // check if user already used this voucher in the same day
-            if (todayCount > 1)
+            var todayCount = await _unitOfWork.VoucherRedemption.TodayCountAsync(request.UserId, voucher.Id);
+            if (todayCount >= 1)
                 throw new InvalidDataException("Bạn đã sử dụng voucher này hôm nay rồi");
 
-            if (voucher.MinOrderAmount > request.TotalAmount)
+            if (voucher.MinOrderAmount > subTotal)
                 throw new InvalidDataException($"Đơn hàng phải đạt giá trị tối thiểu {voucher.MinOrderAmount}");
-               
-            return new VoucherDTO(voucher);
+
+            // calculate tax
+            subTotal = subTotal + (subTotal * TAX_RATE) / 100;
+
+            // calculate discount
+            int discountAmount = (subTotal * voucher.DiscountValue) / 100;
+
+            // check if discount amount is greater than max discount or not. 
+            // Yes => assign discount amount to voucher's max discount
+            // No => keep discount amount
+            if (discountAmount > voucher.MaxDiscount)
+                discountAmount = voucher.MaxDiscount;
+
+            int totalAmount = subTotal - discountAmount;
+
+            return new VoucherValidationDto(discountAmount, totalAmount);
+        }
+
+        private int GetTotalAmount(ICollection<CartItems> items)
+        {   
+            int subTotal = 0;
+            foreach(var item in items)
+            {
+                subTotal += item.Quantity * item.UnitPrice;
+            }
+            return subTotal; 
         }
     }
 }

@@ -30,7 +30,7 @@ namespace FoodOrdering.Infrastructure.Repositories
             }
         }
 
-        public async Task DeleteCancelledOrder_10days(Guid id)
+        public async Task DeleteCancelledOrder_30days(Guid id)
         {
             var order = await _unitOfWork.Order.GetByIdAsync(id);
 
@@ -66,6 +66,9 @@ namespace FoodOrdering.Infrastructure.Repositories
         public async Task UpdateExpiredOrder_10mins(Guid id)
         {
             var order = await _unitOfWork.Order.GetByIdAsync(id);
+            if (order == null)
+                throw new KeyNotFoundException(nameof(order));
+
             var voucherRedemption = await _unitOfWork.VoucherRedemption.GetByIdAsync(v => v.OrderID == id);
 
             if (voucherRedemption != null)
@@ -87,15 +90,8 @@ namespace FoodOrdering.Infrastructure.Repositories
                     _unitOfWork.Voucher.Update(voucher);
                 }              
             }
-            
-
-            if (order != null && order.ExpiredAt < DateTime.UtcNow && order.Status == Food_Ordering.Models.Enum.OrderStatus.Pending)
-            {   
-                
-                _unitOfWork.Order.Update(order);
-                await _unitOfWork.SaveChangeAsync();
-            }
-
+            _unitOfWork.Order.Update(order);
+            await _unitOfWork.SaveChangeAsync();        
         }
 
         public async Task PublicVouchers_24hours()

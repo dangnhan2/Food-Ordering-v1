@@ -9,10 +9,12 @@ using FoodOrdering.Application.Repositories;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Domain.Models;
 using Hangfire;
+using Hangfire.Dashboard;
 using Microsoft.EntityFrameworkCore;
 using Net.payOS.Types;
 using RedLockNet.SERedis;
 using Serilog;
+using StackExchange.Redis;
 
 namespace FoodOrdering.Application.Services
 {
@@ -22,9 +24,6 @@ namespace FoodOrdering.Application.Services
         private readonly IPaymentGateway _paymentGateway;
         private readonly RedLockFactory _redLockFactory;
         private readonly int orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
-        private const int TAX_RATE = 8;
-        private int _temporaryAmount = 0;
-        private int _totalAmount = 0;
         public OrderService(IUnitOfWork unitOfWork, IPaymentGateway paymentGateway, RedLockFactory redLockFactory)
         {
             _unitOfWork = unitOfWork;
@@ -67,24 +66,17 @@ namespace FoodOrdering.Application.Services
             Log.Information("Start to create an order with OR");
        
             var cart = await _unitOfWork.Cart.GetCartByCustomerAsync(request.UserId);
-
             if (cart == null)
-                throw new KeyNotFoundException(nameof(cart));              
+                throw new KeyNotFoundException("Giỏ hàng trống / không tồn tại");              
 
-            List<ItemData> items = new List<ItemData>();
+            int totalAmount = Extensions.GetSubAmount(cart.CartItems);
 
-            var newOrder = MappingOrder(request, "QR");
+            var newOrder = MappingOrder(request, totalAmount, "QR");
 
             // add menu to order
-            foreach(var item in cart.CartItems)
-            {
-                var orderItem = MappingOrderMenus(item, newOrder.Id);
-                // get total of each item 
-                _temporaryAmount += orderItem.SubTotal;
-                items.Add(new ItemData(item.Menu.Name, item.Quantity, item.UnitPrice));
-                newOrder.OrderMenus.Add(orderItem);
-            }
-             _totalAmount = _temporaryAmount + (_temporaryAmount * TAX_RATE / 100);
+            MappingMenuToOrder(cart.CartItems, newOrder);
+            // add to list for payment
+            var listItems = AddItemsPayment(cart.CartItems);
 
             if (request.VoucherId.HasValue)
             {   
@@ -97,26 +89,31 @@ namespace FoodOrdering.Application.Services
                        throw new InvalidDataException("Hệ thống đang xử lý voucher này, vui lòng thử lại sau.");          
                     
                     var voucher = await _unitOfWork.Voucher.GetByIdAsync(request.VoucherId.Value);
+
                     if (voucher == null)
-                        throw new KeyNotFoundException(nameof(voucher));
+                        throw new KeyNotFoundException("Mã giảm giá không tồn tại");
 
-                    voucher.UsedCount++;
-
-                    int discountValue = _totalAmount * 5 / 100;
+                    int discountValue = totalAmount * voucher.DiscountValue / 100;
 
                     if (discountValue > voucher.MaxDiscount)
-                        _totalAmount = _totalAmount - discountValue;
+                        discountValue = voucher.MaxDiscount;
 
+                    totalAmount = totalAmount - discountValue;
+
+                    voucher.UsedCount += 1;
+
+                    if (voucher.UsedCount == voucher.UsageLimit)
+                        voucher.IsActive = false;
+
+                    _unitOfWork.Voucher.Update(voucher);
                     //create voucher redemption
                     await CreateVouherRedemption(request.VoucherId.Value, request.UserId, newOrder.Id);
-                    //update used count after create payment link
-                    await UpdateVoucher(request.VoucherId.Value);
                    
                 }
             }
 
             Log.Information("Create payment link");          
-            var response = await _paymentGateway.CreatePaymentLink(_totalAmount, orderCode, items);
+            var response = await _paymentGateway.CreatePaymentLink(totalAmount, orderCode, listItems);
             Log.Information("Created!!");
             
             // schedule to delete cancelled order after 10 days
@@ -140,19 +137,13 @@ namespace FoodOrdering.Application.Services
             var cart = await _unitOfWork.Cart.GetCartByCustomerAsync(request.UserId);
 
             if (cart == null)
-                throw new KeyNotFoundException(nameof(cart));
+                throw new KeyNotFoundException("Giỏ hàng trống / không tồn tại");
 
-            var newOrder = MappingOrder(request, "COD");
+            var totalAmount = Extensions.GetSubAmount(cart.CartItems);
+            var newOrder = MappingOrder(request, totalAmount, "COD");
 
             // add menu to order
-            foreach (var item in cart.CartItems)
-            {
-                var orderItem = MappingOrderMenus(item, newOrder.Id);
-                _temporaryAmount += orderItem.SubTotal;
-                newOrder.OrderMenus.Add(orderItem);
-            }
-
-            _totalAmount = _temporaryAmount + (_temporaryAmount * TAX_RATE / 100);
+            MappingMenuToOrder(cart.CartItems, newOrder);
 
             if (request.VoucherId.HasValue)
             {
@@ -169,18 +160,26 @@ namespace FoodOrdering.Application.Services
 
                     var voucher = await _unitOfWork.Voucher.GetByIdAsync(request.VoucherId.Value);
                     if (voucher == null)
-                        throw new KeyNotFoundException(nameof(voucher));
+                        throw new KeyNotFoundException("Mã giảm giá không tồn tại");
 
                     voucher.UsedCount++;
 
-                    int discountValue = _totalAmount * 5 / 100;
+                    int discountValue = totalAmount * voucher.DiscountValue / 100;
 
                     if (discountValue > voucher.MaxDiscount)
-                        _totalAmount = _totalAmount - discountValue;
+                        discountValue = voucher.MaxDiscount;
+
+                    totalAmount = totalAmount - discountValue;
+
+                    voucher.UsedCount += 1;
+
+                    if (voucher.UsedCount == voucher.UsageLimit)
+                        voucher.IsActive = false;
+
+                    // update voucher after increase voucher used count
+                    _unitOfWork.Voucher.Update(voucher);
                     //create voucher redemption
                     await CreateVouherRedemption(request.VoucherId.Value, request.UserId, newOrder.Id);
-                    //update used count after create payment link
-                    await UpdateVoucher(request.VoucherId.Value);
                 }
             }
 
@@ -196,13 +195,31 @@ namespace FoodOrdering.Application.Services
 
         public async Task<PagingReponse<OrderDTO>> GetAllAsyncByCustomer(Guid id, OrderParams orderParams)
         {
-            var orders = _unitOfWork.Order.GetAll();
+            var orders = _unitOfWork.Order.GetAll().Where(o => o.UserId == id);
 
             var ordersToDTO = await orders
-                .Where(o => o.UserId == id && (o.Status == OrderStatus.Paid || o.Status == OrderStatus.Pending))
                 .OrderByDescending(o => o.OrderDate)
-                .Select(o => new OrderDTO(o, o.OrderMenus
-                .Select(m => new OrderMenuDTO(m)).ToList()))
+                .Select(o => new OrderDTO
+                {
+                    Id = o.Id,
+                    UserId = o.UserId,
+                    OrderDate = o.OrderDate,
+                    FullName = o.Address.FullName,
+                    PhoneNumber = o.Address.PhoneNumber,
+                    Address = o.Address.Address,
+                    OrderStatus = o.Status,
+                    TotalAmount = o.TotalAmount,
+                    TransactionCode = o.TransactionId,
+                    Menus = o.OrderMenus.Select(m => new OrderMenuDTO
+                    {
+                        Id = m.Id,
+                        MenuId = m.MenuId,
+                        MenuName = m.Menus.Name,
+                        MenuImage = m.Menus.ImageUrl,
+                        Quantity = m.Quantity,
+                        SubPrice = m.UnitPrice * m.Quantity
+                    }).ToList()
+                })
                 .Paging(orderParams.Page, orderParams.PageSize)
                 .AsNoTracking()
                 .ToListAsync();
@@ -224,22 +241,7 @@ namespace FoodOrdering.Application.Services
             await _unitOfWork.VoucherRedemption.AddAsync(voucherRedemption);
         }
 
-        private async Task UpdateVoucher(Guid voucherId)
-        {
-            var voucher = await _unitOfWork.Voucher.GetByIdAsync(voucherId);
-
-            if (voucher == null)
-                throw new KeyNotFoundException("Không tìm thấy voucher");
-
-            voucher.UsedCount += 1;
-
-            if (voucher.UsedCount == voucher.UsageLimit)
-                voucher.IsActive = false;
-
-            _unitOfWork.Voucher.Update(voucher);
-        }
-
-        private Orders MappingOrder(OrderRequest request, string type)
+        private Orders MappingOrder(OrderRequest request,int total, string type)
         {
             var newOrder = new Orders
             {
@@ -247,7 +249,7 @@ namespace FoodOrdering.Application.Services
                 UserId = request.UserId,
                 AddressId = request.AddressId,
                 Note = request.Note,
-                TotalAmount = request.TotalAmount,
+                TotalAmount = total,
                 PaymentMethod = request.PaymentMethod,
                 TransactionId = orderCode
             };
@@ -262,26 +264,12 @@ namespace FoodOrdering.Application.Services
                 newOrder.Status = OrderStatus.Paid;
             }
             return newOrder;
-        }
-
-        private OrderMenus MappingOrderMenus(CartItems item, Guid id)
-        {
-            var orderItem = new OrderMenus
-            {
-                OrderId = id,
-                MenuId = item.MenuId,
-                Quantity = item.Quantity,
-                UnitPrice = item.UnitPrice,
-                SubTotal = item.Quantity * item.UnitPrice
-            };
-
-            return orderItem;
-        }
+        }  
 
         private void ScheduleCancelledOrder_10days(Guid id)
         {
             BackgroundJob.Schedule<IBackgroundJobScheduler>(
-                j => j.DeleteCancelledOrder_10days(id),
+                j => j.DeleteCancelledOrder_30days(id),
                 TimeSpan.FromDays(10));
         }
 
@@ -290,6 +278,35 @@ namespace FoodOrdering.Application.Services
             BackgroundJob.Schedule<IBackgroundJobScheduler>(
                 j => j.UpdateExpiredOrder_10mins(id),
                 TimeSpan.FromMinutes(10));
+        }
+
+        private void MappingMenuToOrder(ICollection<CartItems> cartItems, Orders order)
+        {
+            foreach(var item in cartItems)
+            {
+                var orderItem = new OrderMenus
+                {
+                    OrderId = order.Id,
+                    MenuId = item.MenuId,
+                    Quantity = item.Quantity,
+                    UnitPrice = item.UnitPrice,
+                    SubTotal = item.Quantity * item.UnitPrice
+                };
+
+                order.OrderMenus.Add(orderItem);
+            }
+        }
+
+        private List<ItemData> AddItemsPayment(ICollection<CartItems> cartItems)
+        {
+            List<ItemData> items = new List<ItemData>();
+
+            foreach(var item in cartItems)
+            {
+                items.Add(new ItemData(item.Menu.Name, item.Quantity, item.UnitPrice));
+            }
+
+            return items;
         }
 
     }

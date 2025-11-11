@@ -9,7 +9,7 @@ namespace FoodOrdering.Application.Repositories
     public interface IBackgroundJobScheduler
     {
         public Task DeleteExpiredOtp_5mins(Guid id);
-        public Task DeleteCancelledOrder_10days(Guid id);
+        public Task DeleteCancelledOrder_30days(Guid id);
         public Task DeleteExpiredRefreshTokens_3months();
         public Task DeleteExpiredCarts_3hours();
         public Task UpdateExpiredOrder_10mins(Guid id);

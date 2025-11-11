@@ -72,7 +72,7 @@ namespace FoodOrdering.Application.Services
             var user = await _unitOfWork.User.GetByIdAsync(id);
 
             if (user == null)
-                throw new KeyNotFoundException(nameof(user));
+                throw new KeyNotFoundException("Người dùng không tồn tại");
 
             var phoneNumbers = _unitOfWork.User.GetAll().Where(u => u.PhoneNumber == request.PhoneNumber && u.Id != id);
 
@@ -106,7 +106,7 @@ namespace FoodOrdering.Application.Services
             var user = await _unitOfWork.User.GetByIdAsync(id);
 
             if (user == null)
-                throw new KeyNotFoundException(nameof(user));
+                throw new KeyNotFoundException("Người dùng không tồn tại");
 
             return new UserDTO(user, "");
         }

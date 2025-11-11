@@ -9,11 +9,11 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Infrastructure.Cache
 {
-    public class CacheService : ICacheService
+    public class CachingService : ICachingService
     {
         private readonly IDistributedCache _cache;
 
-        public CacheService(IDistributedCache cache)
+        public CachingService(IDistributedCache cache)
         {
             _cache = cache;
         }

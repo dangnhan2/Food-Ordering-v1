@@ -49,7 +49,7 @@ namespace FoodOrdering.Presentation.Controllers.Auth
             return Ok(response);
         }
 
-        [HttpPost("verify-email")]
+        [HttpPost("email/verify")]
         public async Task<IActionResult> VerifyEmail([FromBody] EmailVerifyRequest request)
         {
             var result = await _authService.VerifyEmail(request);
@@ -58,7 +58,7 @@ namespace FoodOrdering.Presentation.Controllers.Auth
 
         }
 
-        [HttpPost("change-password")]
+        [HttpPost("password/change")]
         public async Task<IActionResult> ChangePassword([FromBody] PasswordRequest request)
         {
             await _authService.ChangePasswordAsync(request);
@@ -66,7 +66,7 @@ namespace FoodOrdering.Presentation.Controllers.Auth
             return Ok(response);
         }
 
-        [HttpPost("forgot-password")]
+        [HttpPost("password/forgot")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
         {
             await _authService.ForgotPasswordAsync(request);
@@ -74,7 +74,7 @@ namespace FoodOrdering.Presentation.Controllers.Auth
             return Ok(response);
         }
 
-        [HttpPost("reset-password")]
+        [HttpPost("password/reset")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {
             await _authService.ResetPasswordAsync(request);

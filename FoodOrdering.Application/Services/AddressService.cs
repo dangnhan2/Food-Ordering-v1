@@ -17,9 +17,9 @@ namespace FoodOrdering.Application.Services
     public class AddressService : IAddressService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly ICacheService _cacheService;
+        private readonly ICachingService _cacheService;
         
-        public AddressService(IUnitOfWork unitOfWork, ICacheService cacheService)
+        public AddressService(IUnitOfWork unitOfWork, ICachingService cacheService)
         {
             _unitOfWork = unitOfWork;
             _cacheService = cacheService;
@@ -53,7 +53,7 @@ namespace FoodOrdering.Application.Services
         {
             var address = await _unitOfWork.Address.GetByIdAsync(id);
             if (address == null)
-                throw new KeyNotFoundException(nameof(address));
+                throw new KeyNotFoundException("Địa chỉ không tồn tại");
 
             string cacheKey = $"user:{address.UserId}:addresses";
 
@@ -90,7 +90,7 @@ namespace FoodOrdering.Application.Services
             var address = await _unitOfWork.Address.GetByIdAsync(id);
 
             if (address == null)
-                throw new KeyNotFoundException(nameof(address));
+                throw new KeyNotFoundException("Địa chỉ không tồn tại");
 
             address.FullName = request.FullName;
             address.PhoneNumber = request.PhoneNumber;
