@@ -55,9 +55,9 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         }
 
         [HttpPost("menu")]
-        public async Task<IActionResult> AddMenu([FromBody] MenuRequest request)
+        public async Task<IActionResult> AddMenu([FromForm] MenuRequest request)
         {
-            await _menuService.AddAsync(request);
+            await _menuService.AddMenuAsync(request);
             var response = ApiResponse<dynamic>.Success("Thêm mới thành công", "", StatusCodes.Status201Created);
             return Ok(response);
         }
@@ -65,7 +65,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         [HttpPut("menu/{id}")]
         public async Task<IActionResult> UpdateMenu(Guid id, [FromBody] MenuRequest request)
         {
-            await _menuService.UpdateAsync(id, request);
+            await _menuService.UpdateMenuAsync(id, request);
             var response = ApiResponse<dynamic>.Success("Cập nhật thành công", "", StatusCodes.Status200OK);
             return Ok(response);
         }
@@ -73,7 +73,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         [HttpDelete("menu/{id}")]
         public async Task<IActionResult> DeleteMenu(Guid id)
         {
-            await _menuService.DeleteAsync(id);
+            await _menuService.DeleteMenuAsync(id);
             var response = ApiResponse<dynamic>.Success("Xóa thành công", "", StatusCodes.Status200OK);
             return Ok(response);
         }

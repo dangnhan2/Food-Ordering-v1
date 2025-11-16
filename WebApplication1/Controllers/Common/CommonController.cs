@@ -53,7 +53,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
         [HttpGet("menus")]
         public async Task<IActionResult> GetMenus([FromQuery] MenuParams menuParams)
         {
-            var result = await _menuService.GetAllAsync(menuParams);
+            var result = await _menuService.GetAllMenusAsync(menuParams);
             var response = ApiResponse<PagingReponse<MenuDto>>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
             return Ok(response);
         }
@@ -61,8 +61,26 @@ namespace FoodOrdering.Presentation.Controllers.Common
         [HttpGet("menu/{id}")]
         public async Task<IActionResult> GetMenuById(Guid id)
         {
-            var result = await _menuService.GetByIdAsync(id);
+            var result = await _menuService.GetMenuByIdAsync(id);
             var response = ApiResponse<MenuDto>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
+            return Ok(response);
+        }
+
+        [HttpGet("menus/featured")]
+        public async Task<IActionResult> GetFeaturedMenus()
+        {
+            var result = await _menuService.GetFeaturedMenusAsync();
+            var response = ApiResponse<dynamic>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
+
+            return Ok(response);
+        }
+
+        [HttpGet("menus/{id}/related")]
+        public async Task<IActionResult> GetRelatedMenus(Guid id)
+        {
+            var result = await _menuService.GetRelatedMenusAsync(id);
+            var response = ApiResponse<dynamic>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
+
             return Ok(response);
         }
 

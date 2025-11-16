@@ -1,4 +1,5 @@
 ﻿using FoodOrdering.Application.Caching;
+using FoodOrdering.Application.Contants;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Repositories;
@@ -16,7 +17,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FoodOrdering.Application.Services
+namespace FoodOrdering.Application.Services.Services
 {
     public class CategoryService : ICategoryService
     {
@@ -31,17 +32,19 @@ namespace FoodOrdering.Application.Services
 
         public async Task<IEnumerable<CategoryDTO>> GetAllAsync()
         {   
-            // check cache
-            string cacheKey = "categories:all";
+            string cacheKey = CacheKeys.CATEGORIES_PREFIX;
             var cachedCategories = await _cacheService.GetAsync<IEnumerable<CategoryDTO>>(cacheKey);
 
             if (cachedCategories != null)
                 return cachedCategories;
 
-            // if not, get from db
             var categories = _unitOfWork.Category.GetAll();
 
-            var categoriesToDTO = await categories.OrderBy(c => c.Name).Select(c => new CategoryDTO(c)).AsNoTracking().ToListAsync();
+            var categoriesToDTO = await categories
+                .OrderBy(c => c.Name)
+                .Select(c => new CategoryDTO(c))
+                .AsNoTracking()
+                .ToListAsync();
 
             await _cacheService.SetAsync(cacheKey, categoriesToDTO, TimeSpan.FromMinutes(30));
 
@@ -55,21 +58,20 @@ namespace FoodOrdering.Application.Services
             if (!result.IsValid)
                 throw new ValidationDictionaryException(result.ToDictionary());
              
-            var categories = _unitOfWork.Category.GetAll().Where(c => c.Name.Trim().ToLower() == request.Name.Trim().ToLower());
+            var categories = _unitOfWork.Category
+                .GetAll()
+                .Where(c => c.Name.Trim().ToLower() == request.Name.Trim().ToLower());
 
             if (categories.Any())
                 throw new DuplicateNameException($"{request.Name} đã tồn tại");
-                
-            Categories category= new Categories
-            {
-                Name = request.Name,
-            };
 
-            await _unitOfWork.Category.AddAsync(category);
+            var newCategory = MappingCategory(request);
+
+            await _unitOfWork.Category.AddAsync(newCategory);
             await _unitOfWork.SaveChangeAsync();
 
             // delete old cache
-            await _cacheService.RemoveAsync("categories:all");
+            await _cacheService.RemoveAsync(CacheKeys.CATEGORIES_PREFIX);
         }
 
         public async Task UpdateAsync(Guid id, CategoryRequest request)
@@ -80,7 +82,10 @@ namespace FoodOrdering.Application.Services
             if (!result.IsValid)
                 throw new ValidationDictionaryException(result.ToDictionary());
 
-            var categories = _unitOfWork.Category.GetAll().Where(c => c.Name.Trim().ToLower() ==  request.Name.Trim().ToLower() && c.Id != id);
+            var categories = _unitOfWork.Category
+                .GetAll()
+                .Where(c => c.Name.Trim().ToLower() ==  request.Name.Trim().ToLower() && c.Id != id);
+
             var category = await _unitOfWork.Category.GetByIdAsync(id);
 
             if (category == null)
@@ -94,7 +99,7 @@ namespace FoodOrdering.Application.Services
             _unitOfWork.Category.Update(category);
             await _unitOfWork.SaveChangeAsync();
 
-            await _cacheService.RemoveAsync("categories:all");
+            await _cacheService.RemoveAsync(CacheKeys.CATEGORIES_PREFIX);
         }
 
         public async Task DeleteAsync(Guid id)
@@ -107,7 +112,17 @@ namespace FoodOrdering.Application.Services
             _unitOfWork.Category.Remove(category);
             await _unitOfWork.SaveChangeAsync();
 
-            await _cacheService.RemoveAsync("categories:all");
+            await _cacheService.RemoveAsync(CacheKeys.CATEGORIES_PREFIX);
+        }
+
+        private Categories MappingCategory(CategoryRequest request)
+        {
+            Categories category = new Categories
+            {
+                Name = request.Name,
+            };
+
+            return category;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using FoodOrdering.Application.Caching;
+using FoodOrdering.Application.Contants;
 using FoodOrdering.Application.DTOs.QueryParams;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
@@ -6,18 +7,10 @@ using FoodOrdering.Application.Extension;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using RedLockNet.SERedis;
-using StackExchange.Redis;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace FoodOrdering.Application.Services
+
+namespace FoodOrdering.Application.Services.Services
 {
     public class VoucherService : IVoucherService
     {
@@ -31,39 +24,22 @@ namespace FoodOrdering.Application.Services
         }
         public async Task AddAsync(VoucherRequest request)
         {
-            var cacheKey = $"voucher:active";
-
             var result = await new VoucherValidator().ValidateAsync(request);
 
             if (!result.IsValid)
                 throw new ValidationDictionaryException(result.ToDictionary());
 
-            var voucher = new Voucher
-            {
-                Code = request.Code,
-                Description = $"Hạn sử dụng {request.StartDate} đến ngày {request.EndDate}",
-                DiscountType = request.DiscountType,
-                DiscountValue = request.DiscountValue,
-                StartDate = request.StartDate,
-                EndDate = request.StartDate,
-                MaxDiscount = request.MaxDiscount,
-                MinOrderAmount = request.MinOrderAmount,
-                PerUserLimit = request.PerUserLimit,
-                UsageLimit = request.UsageLimit,
-                UsedCount = 0,
-                IsActive = request.IsActive,
-            };
+            var newVoucher = MappingVoucher(request);
           
-            await _unitOfWork.Voucher.AddAsync(voucher);
+            await _unitOfWork.Voucher.AddAsync(newVoucher);
             await _unitOfWork.SaveChangeAsync();
 
-            if (voucher.IsActive)
-                await _cacheService.RemoveAsync(cacheKey);
+            if (newVoucher.IsActive)
+                await _cacheService.RemoveAsync(CacheKeys.VOUCHER_ACTIVE);
         }
 
         public async Task DeleteAsync(Guid id)
         {
-            string cacheKey = $"voucher:active";
             var existVoucher = await _unitOfWork.Voucher.GetByIdAsync(id);
 
             if (existVoucher == null)
@@ -71,12 +47,14 @@ namespace FoodOrdering.Application.Services
              
             _unitOfWork.Voucher.Remove(existVoucher);
             await _unitOfWork.SaveChangeAsync();
+            await _cacheService.RemoveAsync(CacheKeys.VoucherDetail(existVoucher.Id));
 
-            await _cacheService.RemoveAsync(cacheKey);
+            if(existVoucher.IsActive)
+              await _cacheService.RemoveAsync(CacheKeys.VOUCHER_ACTIVE);
         }
 
         public async Task<PagingReponse<VoucherDTO>> GetAllByAdminAsync(VoucherParams voucherParams)
-        {
+        {          
             var vouchers = _unitOfWork.Voucher.GetAll();
 
             if (voucherParams.StartDate.HasValue)
@@ -92,8 +70,16 @@ namespace FoodOrdering.Application.Services
                 vouchers = sortBy
                 switch
                 {
-                    "usageLimit" => sortOrder == "desc" ? vouchers.OrderByDescending(v => v.UsageLimit) : vouchers.OrderBy(v => v.UsageLimit),
-                    "usedCount" => sortOrder == "desc" ? vouchers.OrderByDescending(v => v.UsedCount) : vouchers.OrderBy(v => v.UsedCount),
+                    "usageLimit" => 
+                    sortOrder == "desc" 
+                    ? vouchers.OrderByDescending(v => v.UsageLimit) 
+                    : vouchers.OrderBy(v => v.UsageLimit),
+
+                    "usedCount" =>
+                    sortOrder == "desc" 
+                    ? vouchers.OrderByDescending(v => v.UsedCount) 
+                    : vouchers.OrderBy(v => v.UsedCount),
+
                     _ => vouchers.OrderByDescending(v => v.StartDate)
                 };
             }
@@ -116,34 +102,53 @@ namespace FoodOrdering.Application.Services
                     .ToListAsync();
             }
 
-            return new PagingReponse<VoucherDTO>(voucherParams.Page, voucherParams.PageSize, vouchers.Count(), voucherToDTO);                 
+            var response = new PagingReponse<VoucherDTO>(voucherParams.Page, voucherParams.PageSize, vouchers.Count(), voucherToDTO);
+            return response; 
         }
 
         public async Task<IEnumerable<VoucherDTO>> GetAllByCustomerAsync()
         {
-            string cacheKey = $"voucher:active";
+            string cacheKey = CacheKeys.VOUCHER_ACTIVE;
             var cacheVouchers = await _cacheService.GetAsync<IEnumerable<VoucherDTO>>(cacheKey);
             if (cacheVouchers != null)
                 return cacheVouchers;
 
             var vouchers = _unitOfWork.Voucher.GetAll();
 
-            var vouchersToDTO = await vouchers.Where(v => v.IsActive).Select(v => new VoucherDTO(v)).ToListAsync();
+            var vouchersToDTO = await vouchers
+                .Where(v => v.IsActive)
+                .Select(v => new VoucherDTO(v))
+                .AsNoTracking()
+                .ToListAsync();
 
             await _cacheService.SetAsync(cacheKey, vouchersToDTO, TimeSpan.FromMinutes(30));
 
             return vouchersToDTO;
-        }      
+        }
+
+        public async Task<VoucherDTO> GetByIdAsync(Guid id)
+        {
+            var cacheKey = CacheKeys.VoucherDetail(id);
+            var cached = await _cacheService.GetAsync<VoucherDTO>(cacheKey);
+            if (cached != null) return cached;
+
+            var voucher = await _unitOfWork.Voucher.GetByIdAsync(id);
+
+            if (voucher == null)
+                throw new KeyNotFoundException("Mã giảm giá không tồn tại");
+            var voucherToDto = new VoucherDTO(voucher);
+
+            await _cacheService.SetAsync(cacheKey, voucherToDto, TimeSpan.FromHours(12));
+            return voucherToDto;
+        }
 
         public async Task UpdateAsync(Guid id, VoucherRequest request)
         {
-            string cacheKey = $"voucher:active";
             var result = await new VoucherValidator().ValidateAsync(request);
 
             if (!result.IsValid)           
                 throw new ValidationDictionaryException(result.ToDictionary());
-            
-
+       
             var existVoucher = await _unitOfWork.Voucher.GetByIdAsync(id);
 
             if (existVoucher == null)
@@ -163,10 +168,11 @@ namespace FoodOrdering.Application.Services
             existVoucher.IsActive = request.IsActive;
 
             _unitOfWork.Voucher.Update(existVoucher);
+            await _cacheService.RemoveAsync(CacheKeys.VoucherDetail(existVoucher.Id));
             await _unitOfWork.SaveChangeAsync();
 
             if (existVoucher.IsActive)
-                await _cacheService.RemoveAsync(cacheKey);
+                await _cacheService.RemoveAsync(CacheKeys.VOUCHER_ACTIVE);
         }
 
         public async Task<VoucherValidationDto> ValidateVoucherAsync(ValidateVoucherRequest request)
@@ -197,10 +203,10 @@ namespace FoodOrdering.Application.Services
                 throw new InvalidDataException($"Đơn hàng phải đạt giá trị tối thiểu {voucher.MinOrderAmount}");
 
             // calculate tax
-            subTotal = subTotal + (subTotal * TAX_RATE) / 100;
+            subTotal = subTotal + subTotal * TAX_RATE / 100;
 
             // calculate discount
-            int discountAmount = (subTotal * voucher.DiscountValue) / 100;
+            int discountAmount = subTotal * voucher.DiscountValue / 100;
 
             // check if discount amount is greater than max discount or not. 
             // Yes => assign discount amount to voucher's max discount
@@ -221,6 +227,27 @@ namespace FoodOrdering.Application.Services
                 subTotal += item.Quantity * item.UnitPrice;
             }
             return subTotal; 
+        }
+
+        private Voucher MappingVoucher(VoucherRequest request)
+        {
+            var voucher = new Voucher
+            {
+                Code = request.Code,
+                Description = $"Hạn sử dụng {request.StartDate} đến ngày {request.EndDate}",
+                DiscountType = request.DiscountType,
+                DiscountValue = request.DiscountValue,
+                StartDate = request.StartDate,
+                EndDate = request.StartDate,
+                MaxDiscount = request.MaxDiscount,
+                MinOrderAmount = request.MinOrderAmount,
+                PerUserLimit = request.PerUserLimit,
+                UsageLimit = request.UsageLimit,
+                UsedCount = 0,
+                IsActive = request.IsActive,
+            };
+
+            return voucher;
         }
     }
 }

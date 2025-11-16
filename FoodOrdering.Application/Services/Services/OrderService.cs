@@ -1,5 +1,7 @@
 ﻿using CloudinaryDotNet.Actions;
 using Food_Ordering.Models.Enum;
+using FoodOrdering.Application.Caching;
+using FoodOrdering.Application.Contants;
 using FoodOrdering.Application.DTOs.QueryParams;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
@@ -9,14 +11,13 @@ using FoodOrdering.Application.Repositories;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Domain.Models;
 using Hangfire;
-using Hangfire.Dashboard;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Net.payOS.Types;
 using RedLockNet.SERedis;
 using Serilog;
-using StackExchange.Redis;
 
-namespace FoodOrdering.Application.Services
+namespace FoodOrdering.Application.Services.Services
 {
     public class OrderService : IOrderService
     {
@@ -24,15 +25,24 @@ namespace FoodOrdering.Application.Services
         private readonly IPaymentGateway _paymentGateway;
         private readonly RedLockFactory _redLockFactory;
         private readonly int orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
-        public OrderService(IUnitOfWork unitOfWork, IPaymentGateway paymentGateway, RedLockFactory redLockFactory)
+        private readonly ICachingService _cachingService;
+   
+        public OrderService(
+            IUnitOfWork unitOfWork, 
+            IPaymentGateway paymentGateway, 
+            RedLockFactory redLockFactory, 
+            ICachingService cachingService
+           )
         {
             _unitOfWork = unitOfWork;
             _paymentGateway = paymentGateway;
             _redLockFactory = redLockFactory;
+            _cachingService = cachingService;
+           
         }
 
         public async Task<PagingReponse<OrderDTO>> GetAllAsync(OrderParams orderParams)
-        {
+        {      
             var orders = _unitOfWork.Order.GetAll();
 
             IEnumerable<OrderDTO> ordersToDTO;
@@ -42,7 +52,9 @@ namespace FoodOrdering.Application.Services
                 ordersToDTO = await orders
                 .OrderByDescending(o => o.OrderDate)
                 .Include(o => o.Address)
-                .Select(o => new OrderDTO(o, o.OrderMenus.Select(m => new OrderMenuDTO(m)).ToList()))
+                .Select(o => new OrderDTO(o, o.OrderMenus
+                                .Select(m => new OrderMenuDTO(m))
+                                .ToList()))
                 .AsNoTrackingWithIdentityResolution()
                 .ToListAsync();
             }
@@ -51,14 +63,16 @@ namespace FoodOrdering.Application.Services
                 ordersToDTO = await orders
                 .OrderByDescending(o => o.OrderDate)
                 .Include(o => o.Address)
-                .Select(o => new OrderDTO(o, o.OrderMenus.Select(m => new OrderMenuDTO(m)).ToList()))
+                .Select(o => new OrderDTO(o, o.OrderMenus
+                                .Select(m => new OrderMenuDTO(m))
+                                .ToList()))
                 .Paging(orderParams.Page, orderParams.PageSize)
                 .AsNoTrackingWithIdentityResolution()
                 .ToListAsync();
             }
 
-
-            return new PagingReponse<OrderDTO>(orderParams.Page, orderParams.PageSize, orders.Count(), ordersToDTO);
+            var response = new PagingReponse<OrderDTO>(orderParams.Page, orderParams.PageSize, orders.Count(), ordersToDTO);
+            return response;
         }
 
         public async Task<dynamic> CreateOrderByQRAsync(OrderRequest request)
@@ -102,7 +116,7 @@ namespace FoodOrdering.Application.Services
 
                     voucher.UsedCount += 1;
 
-                    if (voucher.UsedCount == voucher.UsageLimit)
+                    if (voucher.UsedCount + 1 == voucher.UsageLimit)
                         voucher.IsActive = false;
 
                     _unitOfWork.Voucher.Update(voucher);
@@ -115,9 +129,7 @@ namespace FoodOrdering.Application.Services
             Log.Information("Create payment link");          
             var response = await _paymentGateway.CreatePaymentLink(totalAmount, orderCode, listItems);
             Log.Information("Created!!");
-            
-            // schedule to delete cancelled order after 10 days
-            ScheduleCancelledOrder_10days(newOrder.Id);
+           
             // schedule to update status after 10 minutes
             ScheduleExpiredOrder_10mins(newOrder.Id);
 
@@ -144,25 +156,23 @@ namespace FoodOrdering.Application.Services
 
             // add menu to order
             MappingMenuToOrder(cart.CartItems, newOrder);
+            await UpdateSoldQuantity(cart.CartItems);
 
             if (request.VoucherId.HasValue)
             {
                 var resource = $"lock:voucher:{request.VoucherId.Value}";
                 var expiry = TimeSpan.FromSeconds(5);
 
-                Log.Information("Checking voucher running out of slot or not");
+                Log.Information("Checking voucher running out of slot");
 
                 using (var redLock = await _redLockFactory.CreateLockAsync(resource, expiry))
                 {
                     if (!redLock.IsAcquired)                    
-                       throw new InvalidDataException("Hệ thống đang xử lý voucher này, vui lòng thử lại sau.");
-                    
+                       throw new InvalidDataException("Hệ thống đang xử lý voucher này, vui lòng thử lại sau.");                   
 
                     var voucher = await _unitOfWork.Voucher.GetByIdAsync(request.VoucherId.Value);
                     if (voucher == null)
                         throw new KeyNotFoundException("Mã giảm giá không tồn tại");
-
-                    voucher.UsedCount++;
 
                     int discountValue = totalAmount * voucher.DiscountValue / 100;
 
@@ -173,7 +183,7 @@ namespace FoodOrdering.Application.Services
 
                     voucher.UsedCount += 1;
 
-                    if (voucher.UsedCount == voucher.UsageLimit)
+                    if (voucher.UsedCount + 1 == voucher.UsageLimit)
                         voucher.IsActive = false;
 
                     // update voucher after increase voucher used count
@@ -183,12 +193,9 @@ namespace FoodOrdering.Application.Services
                 }
             }
 
-            ScheduleCancelledOrder_10days(newOrder.Id);
-
             _unitOfWork.Cart.Remove(cart);
             await _unitOfWork.Order.AddAsync(newOrder);
             await _unitOfWork.SaveChangeAsync();
-
             Log.Information("Order created");
             return newOrder.TransactionId;
         }
@@ -266,17 +273,10 @@ namespace FoodOrdering.Application.Services
             return newOrder;
         }  
 
-        private void ScheduleCancelledOrder_10days(Guid id)
-        {
-            BackgroundJob.Schedule<IBackgroundJobScheduler>(
-                j => j.DeleteCancelledOrder_30days(id),
-                TimeSpan.FromDays(10));
-        }
-
         private void ScheduleExpiredOrder_10mins(Guid id)
         {
             BackgroundJob.Schedule<IBackgroundJobScheduler>(
-                j => j.UpdateExpiredOrder_10mins(id),
+                j => j.ScheduleUpdateExpiredOrderJob_10mins(id),
                 TimeSpan.FromMinutes(10));
         }
 
@@ -294,6 +294,18 @@ namespace FoodOrdering.Application.Services
                 };
 
                 order.OrderMenus.Add(orderItem);
+            }
+        }    
+        
+        private async Task UpdateSoldQuantity(ICollection<CartItems> cartItems)
+        {
+            foreach (var item in cartItems)
+            {
+                var menu = await _unitOfWork.Menu.GetByIdAsync(item.MenuId);
+
+                if (menu == null) continue;
+                menu.SoldQuantity = menu.SoldQuantity + item.Quantity;
+                await _cachingService.RemoveAsync(CacheKeys.MenuDetail(menu.Id));
             }
         }
 

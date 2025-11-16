@@ -1,12 +1,6 @@
 ﻿using FoodOrdering.Application;
 using FoodOrdering.Application.Repositories;
-using FoodOrdering.Domain.Models;
 using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FoodOrdering.Infrastructure.Repositories
 {
@@ -19,29 +13,7 @@ namespace FoodOrdering.Infrastructure.Repositories
             _unitOfWork = unitOfWork;
         }
 
-        public async Task DeleteExpiredCarts_3hours()
-        {
-            var carts = await _unitOfWork.Cart.FindAsync(c => c.CreatedAt.AddHours(3) < DateTime.UtcNow);
-
-            if(carts.Count() > 0)
-            {
-                _unitOfWork.Cart.RemoveRange(carts);
-                await _unitOfWork.SaveChangeAsync();
-            }
-        }
-
-        public async Task DeleteCancelledOrder_30days(Guid id)
-        {
-            var order = await _unitOfWork.Order.GetByIdAsync(id);
-
-            if(order != null && order.Status == Food_Ordering.Models.Enum.OrderStatus.Cancelled)
-            {
-                _unitOfWork.Order.Remove(order);
-                await _unitOfWork.SaveChangeAsync();
-            }          
-        }
-
-        public async Task DeleteExpiredOtp_5mins(Guid id)
+        public async Task ScheduleDeleteExpiredOtpJob_5mins(Guid id)
         {
             var user = await _unitOfWork.User.GetUserContainsOtpAsync(id);
       
@@ -52,18 +24,7 @@ namespace FoodOrdering.Infrastructure.Repositories
             }
         }
 
-        public async Task DeleteExpiredRefreshTokens_3months()
-        {
-            var tokens = await _unitOfWork.RefreshToken.FindAsync(t => t.ExpriedAt < DateTime.UtcNow);
-
-            if(tokens.Count() > 0)
-            {
-                _unitOfWork.RefreshToken.RemoveRange(tokens);
-                await _unitOfWork.SaveChangeAsync();
-            }
-        }
-
-        public async Task UpdateExpiredOrder_10mins(Guid id)
+        public async Task ScheduleUpdateExpiredOrderJob_10mins(Guid id)
         {
             var order = await _unitOfWork.Order.GetByIdAsync(id);
             if (order == null)
@@ -83,7 +44,7 @@ namespace FoodOrdering.Infrastructure.Repositories
                     // decrease used voucher if order not paid
                     voucher.UsedCount -= 1; ;
 
-                    if (voucher.UsedCount < voucher.UsageLimit)
+                    if (voucher.UsedCount - 1 < voucher.UsageLimit)
                         voucher.IsActive = true;
                     // delete voucher redemption
                     _unitOfWork.VoucherRedemption.Remove(voucherRedemption);
@@ -94,7 +55,40 @@ namespace FoodOrdering.Infrastructure.Repositories
             await _unitOfWork.SaveChangeAsync();        
         }
 
-        public async Task PublicVouchers_24hours()
+        public async Task RecurringDeleteExpiredCartsJob_3hours()
+        {
+            var carts = await _unitOfWork.Cart.FindAsync(c => c.CreatedAt.AddHours(3) < DateTime.UtcNow);
+
+            if(carts.Count() > 0)
+            {
+                _unitOfWork.Cart.RemoveRange(carts);
+                await _unitOfWork.SaveChangeAsync();
+            }
+        }
+
+        public async Task RecurringCancelledOrderJob_1month(Guid id)
+        {
+            var order = await _unitOfWork.Order.GetByIdAsync(id);
+
+            if(order != null && order.Status == Food_Ordering.Models.Enum.OrderStatus.Cancelled)
+            {
+                _unitOfWork.Order.Remove(order);
+                await _unitOfWork.SaveChangeAsync();
+            }          
+        }
+
+        public async Task RecurringDeleteExpiredRefreshTokensJob_3months()
+        {
+            var tokens = await _unitOfWork.RefreshToken.FindAsync(t => t.ExpriedAt < DateTime.UtcNow);
+
+            if(tokens.Count() > 0)
+            {
+                _unitOfWork.RefreshToken.RemoveRange(tokens);
+                await _unitOfWork.SaveChangeAsync();
+            }
+        }
+
+        public async Task RecurringPublicVouchersJob_24hours()
         {
             Log.Information("Starting public voucher...");
 
@@ -138,7 +132,7 @@ namespace FoodOrdering.Infrastructure.Repositories
             Log.Information("Finish publishing voucher");
         }
 
-        public async Task RetrieveVouchers_24hours()
+        public async Task RecurringRetrieveVouchersJob_24hours()
         {
             Log.Information("Starting retrieve voucher...");
 
@@ -180,7 +174,7 @@ namespace FoodOrdering.Infrastructure.Repositories
             Log.Information("Finish retrieving voucher");
         }
 
-        public async Task ResetVoucherRedemptions_24hours()
+        public async Task RecurringResetVoucherRedemptionsJob_24hours()
         {
             var voucherRedemptions = _unitOfWork.VoucherRedemption.GetAll();
 
@@ -191,7 +185,7 @@ namespace FoodOrdering.Infrastructure.Repositories
             }
         }
 
-        public async Task DeleteNotifications_1month()
+        public async Task RecurringDeleteNotificationsJob_1month()
         {
             DateTime todayUtc = DateTime.UtcNow.Date;
             DateTime tomorrowUtc = todayUtc.AddDays(1);

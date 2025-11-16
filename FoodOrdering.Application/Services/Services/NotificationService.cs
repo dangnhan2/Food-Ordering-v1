@@ -2,13 +2,8 @@
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Domain.Models;
 using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace FoodOrdering.Application.Services
+namespace FoodOrdering.Application.Services.Services
 {
     public class NotificationService : INotificationService
     {
@@ -30,6 +25,11 @@ namespace FoodOrdering.Application.Services
             await _unitOfWork.SaveChangeAsync();
 
             return ApiResponse<Notification>.Success("Cập nhật thông báo thành công", notification, StatusCodes.Status200OK);
+        }
+
+        public Task NotifyAdminAsync(string message)
+        {
+            throw new NotImplementedException();
         }
     }
 }

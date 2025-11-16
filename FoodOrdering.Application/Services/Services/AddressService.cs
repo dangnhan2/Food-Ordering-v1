@@ -1,18 +1,14 @@
 ﻿using FoodOrdering.Application.Caching;
+using FoodOrdering.Application.Contants;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace FoodOrdering.Application.Services
+
+namespace FoodOrdering.Application.Services.Services
 {
     public class AddressService : IAddressService
     {
@@ -25,68 +21,54 @@ namespace FoodOrdering.Application.Services
             _cacheService = cacheService;
         }
 
-        // add new address by specific customer
         public async Task AddAsync(AddressRequest request)
         {   
             var result = await new AddressValidator().ValidateAsync(request);
             if (!result.IsValid)           
               throw new ValidationDictionaryException(result.ToDictionary());
-            
-            string cacheKey = $"user:{request.UserId}:addresses";
 
-            Addresses address = new Addresses
-            {   
-                FullName = request.FullName,
-                PhoneNumber = request.PhoneNumber,
-                Address = request.Address,
-                UserId = request.UserId,
-            };
+            var newAddress = MappingAddress(request);
 
-            await _unitOfWork.Address.AddAsync(address);
+            await _unitOfWork.Address.AddAsync(newAddress);
             await _unitOfWork.SaveChangeAsync();
 
-            await _cacheService.RemoveAsync(cacheKey);
+            await _cacheService.RemoveAsync(CacheKeys.UserAddresses(newAddress.UserId));
         }
 
-        // delete address by specific customer
         public async Task DeleteAsync(Guid id)
         {
             var address = await _unitOfWork.Address.GetByIdAsync(id);
             if (address == null)
                 throw new KeyNotFoundException("Địa chỉ không tồn tại");
-
-            string cacheKey = $"user:{address.UserId}:addresses";
-
             _unitOfWork.Address.Remove(address);
             await _unitOfWork.SaveChangeAsync();
-            await _cacheService.RemoveAsync(cacheKey);
+            await _cacheService.RemoveAsync(CacheKeys.UserAddresses(address.UserId));
         }
 
-        // get addresses by specific customer
         public async Task<IEnumerable<AddressDto>> GetAllByUserAsync(Guid id)
         {
-            string cacheKey = $"user:{id}:addresses";
+            string cacheKey = CacheKeys.UserAddresses(id);
             var cacheAddresses = await _cacheService.GetAsync<IEnumerable<AddressDto>>(cacheKey);
             if (cacheAddresses != null)
                 return cacheAddresses;
 
             var addresses = _unitOfWork.Address.GetAll().Where(a => a.UserId == id);
 
-            var addressesToDto = await addresses.Select(a => new AddressDto(a)).AsNoTracking().ToListAsync();
+            var addressesToDto = await addresses
+                .Select(a => new AddressDto(a))
+                .AsNoTracking()
+                .ToListAsync();
 
             await _cacheService.SetAsync(cacheKey, addressesToDto, TimeSpan.FromHours(1));
 
             return addressesToDto;
         }
 
-        // update address by specific customer
         public async Task UpdateAsync(Guid id, AddressRequest request)
-        {
+        {   
             var result = await new AddressValidator().ValidateAsync(request);
             if (!result.IsValid)
                 throw new ValidationDictionaryException(result.ToDictionary());
-
-            string cacheKey = $"user:{request.UserId}:addresses";
             var address = await _unitOfWork.Address.GetByIdAsync(id);
 
             if (address == null)
@@ -100,7 +82,20 @@ namespace FoodOrdering.Application.Services
             _unitOfWork.Address.Update(address);
             await _unitOfWork.SaveChangeAsync();
 
-            await _cacheService.RemoveAsync(cacheKey);
+            await _cacheService.RemoveAsync(CacheKeys.UserAddresses(address.UserId));
+        }
+
+        private Addresses MappingAddress(AddressRequest request)
+        {
+            Addresses address = new Addresses
+            {
+                FullName = request.FullName,
+                PhoneNumber = request.PhoneNumber,
+                Address = request.Address,
+                UserId = request.UserId,
+            };
+
+            return address;
         }
     }
 }
