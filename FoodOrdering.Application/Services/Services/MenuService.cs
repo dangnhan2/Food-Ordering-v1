@@ -1,5 +1,6 @@
 ﻿using CloudinaryDotNet.Actions;
 using FoodOrdering.Application.Caching;
+using FoodOrdering.Application.Contants;
 using FoodOrdering.Application.DTOs.QueryParams;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
@@ -12,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System.Data;
 
-namespace FoodOrdering.Application.Services
+namespace FoodOrdering.Application.Services.Services
 {
     public class MenuService : IMenuService
     {
@@ -28,7 +29,7 @@ namespace FoodOrdering.Application.Services
             _cloudinaryService = cloudinaryService;
         }
 
-        public async Task AddAsync(MenuRequest request)
+        public async Task AddMenuAsync(MenuRequest request)
         {                    
             var result = await new MenuValidatior().ValidateAsync(request);
 
@@ -41,14 +42,14 @@ namespace FoodOrdering.Application.Services
                 throw new DuplicateNameException($"Menu {request.Name} đã tồn tại");
 
             var menu = await MappingMenu(request);
-            
+
             await _unitOfWork.Menu.AddAsync(menu);
             await _unitOfWork.SaveChangeAsync();
         }
 
-        public async Task DeleteAsync(Guid id)
+        public async Task DeleteMenuAsync(Guid menuId)
         {
-            var menu = await _unitOfWork.Menu.GetByIdAsync(id);
+            var menu = await _unitOfWork.Menu.GetByIdAsync(menuId);
 
             if(menu == null)            
               throw new KeyNotFoundException("Món ăn không tồn tại");
@@ -57,14 +58,8 @@ namespace FoodOrdering.Application.Services
             await _unitOfWork.SaveChangeAsync();
         }
 
-        public async Task<PagingReponse<MenuDto>> GetAllAsync(MenuParams menuParams)
-        {
-            string cacheKey = $"menu_page_{menuParams.Page}_size_{menuParams.PageSize}";
-            var cached = await _cacheService.GetAsync<PagingReponse<MenuDto>>(cacheKey);
-
-            if (cached != null)
-                return cached;
-
+        public async Task<PagingReponse<MenuDto>> GetAllMenusAsync(MenuParams menuParams)
+        {          
             var menus = _unitOfWork.Menu.GetAll();
 
             if (!string.IsNullOrEmpty(menuParams.Name))
@@ -118,20 +113,20 @@ namespace FoodOrdering.Application.Services
             }
             
             var response = new PagingReponse<MenuDto>(menuParams.Page, menuParams.PageSize, menus.Count(), menusToDTO);
-            await _cacheService.SetAsync(cacheKey, response, TimeSpan.FromHours(12));
-
             return response;
         }
 
-        public async Task<MenuDto> GetByIdAsync(Guid id)
+        public async Task<MenuDto> GetMenuByIdAsync(Guid menuId)
         {
-            string cacheKey = $"menu:{id}";
-            var cacheMenu = await _cacheService.GetAsync<MenuDto>(cacheKey);
+            string cacheKey = CacheKeys.MenuDetail(menuId);
+            var cacheMenu = await _cacheService
+                .GetAsync<MenuDto>(cacheKey);
 
             if (cacheMenu != null)
                 return cacheMenu;
 
-            var menu = await _unitOfWork.Menu.GetMenuWithCategoryAsync(id);
+            var menu = await _unitOfWork.Menu
+                .GetMenuWithCategoryAsync(menuId);
 
             if (menu == null)
                 throw new KeyNotFoundException("Món ăn không tồn tại");
@@ -141,20 +136,19 @@ namespace FoodOrdering.Application.Services
             return new MenuDto(menu);
         }
 
-        public async Task UpdateAsync(Guid id, MenuRequest request)
+        public async Task UpdateMenuAsync(Guid menuId, MenuRequest request)
         {          
-            string cacheKey = $"menu:{id}";
             var result = await new MenuValidatior().ValidateAsync(request);
             if (!result.IsValid)
                 throw new ValidationDictionaryException(result.ToDictionary());
 
-            var menu = await _unitOfWork.Menu.GetByIdAsync(id);
+            var menu = await _unitOfWork.Menu.GetByIdAsync(menuId);
             var menus = _unitOfWork.Menu.GetAll();
 
             if (menu == null)
                throw new KeyNotFoundException("Món ăn không tồn tại");
 
-            if (await menus.AnyAsync(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower() && m.Id != id))
+            if (await menus.AnyAsync(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower() && m.Id != menuId))
                 throw new DuplicateNameException($"Menu {request.Name} đã tồn tại");
             
             menu.Name = request.Name;
@@ -172,7 +166,47 @@ namespace FoodOrdering.Application.Services
 
             _unitOfWork.Menu.Update(menu);
             await _unitOfWork.SaveChangeAsync();
-            await _cacheService.RemoveAsync(cacheKey);
+            await _cacheService.RemoveAsync(CacheKeys.MenuDetail(menuId));
+        }
+
+        public async Task<IEnumerable<MenuDto>> GetFeaturedMenusAsync()
+        {
+            var menus = _unitOfWork.Menu
+                .GetAll()               
+                .Where(m => m.IsAvailable)
+                .OrderByDescending(x => x.SoldQuantity)
+                .Take(10);
+
+            var menusToDto = await menus
+                .Include(m => m.Categories)
+                .Select(x => new MenuDto(x))
+                .AsNoTrackingWithIdentityResolution()
+                .ToListAsync();
+
+            return menusToDto;
+        }
+
+        public async Task<IEnumerable<MenuDto>> GetRelatedMenusAsync(Guid menuId)
+        {
+            var currentMenu = await _unitOfWork.Menu.GetMenuWithCategoryAsync(menuId);
+
+            if (currentMenu == null)
+                return Enumerable.Empty<MenuDto>();
+
+            var menus = _unitOfWork.Menu
+                .GetAll()
+                .Where(m =>
+                      m.Id != menuId
+                   && m.CategoriesId == currentMenu.CategoriesId
+                   && m.IsAvailable)
+                .Take(10);
+
+            var menusToDto = await menus
+                .Include(m => m.Categories)
+                .Select(m => new MenuDto(m))
+                .AsNoTrackingWithIdentityResolution()
+                .ToListAsync(); 
+            return menusToDto;
         }
 
         private async Task<Menus> MappingMenu(MenuRequest request)
@@ -195,6 +229,5 @@ namespace FoodOrdering.Application.Services
 
             return menu;
         }
-
     }
 }

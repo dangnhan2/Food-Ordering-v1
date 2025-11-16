@@ -54,35 +54,35 @@ await app.SeedAsync();
 
 RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
     "DeleteExpiredCarts_3hours",
-    j => j.DeleteExpiredCarts_3hours(),
+    j => j.RecurringDeleteExpiredCartsJob_3hours(),
     Cron.Hourly);
 
 RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
     "DeleteExpiredRefreshTokens_3months",
-    j => j.DeleteExpiredRefreshTokens_3months(),
+    j => j.RecurringDeleteExpiredRefreshTokensJob_3months(),
     Cron.Daily());
 
 RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
     "PublicVouchers_24hours",
-    j => j.PublicVouchers_24hours(),
+    j => j.RecurringPublicVouchersJob_24hours(),
     Cron.Daily(),
     TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
 
 RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
     "RetrieveVouchers_24hours",
-    j => j.RetrieveVouchers_24hours(),
+    j => j.RecurringRetrieveVouchersJob_24hours(),
     Cron.Daily(),
     TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
 
 RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
     "ResetVoucherRedemptions_24hours",
-    j => j.ResetVoucherRedemptions_24hours(),
+    j => j.RecurringResetVoucherRedemptionsJob_24hours(),
     Cron.Daily(),
     TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
 
 RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
     "DeleteNotifications_1month",
-    j => j.DeleteNotifications_1month(),
+    j => j.RecurringDeleteNotificationsJob_1month(),
     Cron.Monthly(),
     TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
 

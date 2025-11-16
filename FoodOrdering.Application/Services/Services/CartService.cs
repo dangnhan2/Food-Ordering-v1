@@ -3,7 +3,7 @@ using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Domain.Models;
 
-namespace FoodOrdering.Application.Services
+namespace FoodOrdering.Application.Services.Services
 {
     public class CartService : ICartService
     {

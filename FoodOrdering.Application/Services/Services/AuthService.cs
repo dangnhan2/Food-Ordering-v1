@@ -4,20 +4,16 @@ using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Email;
 using FoodOrdering.Application.Extension;
 using FoodOrdering.Application.Repositories;
-using FoodOrdering.Application.Services.Auth.Token;
+using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace FoodOrdering.Application.Services.Auth
+
+namespace FoodOrdering.Application.Services.Services
 {
     public class AuthService : IAuthService
     {
@@ -225,11 +221,16 @@ namespace FoodOrdering.Application.Services.Auth
                 $"<p>Mã sẽ hết hạn trong {5} phút. Không chia sẻ mã otp này cho bất kì ai</p>";
 
             // schedule to delete expired otp after 5 minutes
-            BackgroundJob.Schedule<IBackgroundJobScheduler>(
-                 j => j.DeleteExpiredOtp_5mins(userId),
-                 TimeSpan.FromMinutes(5));
+            ScheduleDeleteExpiredOpt_5mins(userId);
 
             BackgroundJob.Enqueue(() => _emailService.EmailSender(email, "Một email đã gửi đến email của bạn . Hãy nhập mã xác nhận", htmlBody));
+        }
+
+        private void ScheduleDeleteExpiredOpt_5mins(Guid userId)
+        {
+            BackgroundJob.Schedule<IBackgroundJobScheduler>(
+                j => j.ScheduleDeleteExpiredOtpJob_5mins(userId),
+                TimeSpan.FromMinutes(5));
         }
     }
 }

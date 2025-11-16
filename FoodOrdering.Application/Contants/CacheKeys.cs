@@ -8,10 +8,21 @@ namespace FoodOrdering.Application.Contants
 {
     public static class CacheKeys
     {
-        public const string MENU_PAGE_PREFIX = "menu:page:";
+        public static string UserAddresses(Guid userId)        
+            => $"user:address:{userId}:";
         public const string USER_ADDRESS_PREFIX = "user:address:";
-        public const string VOUCHER_PAGE_PREFIX = "voucher:page";
+
+        public const string CATEGORIES_PREFIX = "category:all";
+        public static string MenuDetail(Guid menuId)
+            => $"menu:detail:{menuId}";
+    
         public const string VOUCHER_ACTIVE = "voucher:active";
-        public const string CATEGORIES_PREFIX = "category";
+        public static string VoucherDetail(Guid voucherId)
+            => $"voucher:detail:{voucherId}";
+
+        public const string ORDERS_ADMIN_PREFIX = "order:admin:";
+
+        public static string UserDetail(Guid userId)
+            => $"user:detail:{userId}";
     }
 }

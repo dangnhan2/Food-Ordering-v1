@@ -1,20 +1,14 @@
 ﻿using DotNetEnv;
+using FoodOrdering.Application.Caching;
+using FoodOrdering.Application.Contants;
 using FoodOrdering.Application.DTOs.QueryParams;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Extension;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Validator;
-using FoodOrdering.Domain.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FoodOrdering.Application.Services
+namespace FoodOrdering.Application.Services.Services
 {
     public class UserService : IUserService
     {
@@ -22,19 +16,20 @@ namespace FoodOrdering.Application.Services
         private readonly ICloudinaryService _cloudinaryService;
         private readonly string _defaultAvatar;
         private const string folder = "Avatar";
+        private readonly ICachingService _cachingService;
 
-        public UserService(IUnitOfWork unitOfWork, ICloudinaryService cloudinaryService)
+        public UserService(IUnitOfWork unitOfWork, ICloudinaryService cloudinaryService, ICachingService cachingService)
         {
             Env.Load();
             _unitOfWork = unitOfWork;
             _cloudinaryService = cloudinaryService;
             _defaultAvatar = Env.GetString("DEFAULT_AVATAR");
+            _cachingService = cachingService;
         }
 
         public async Task<PagingReponse<UserDTO>> GetAllAsync(UserParams userParams)
-        {
+        {         
             var users = _unitOfWork.User.GetAll();
-
             if (!string.IsNullOrEmpty(userParams.FullName))            
                 users = users.Where(u => u.FullName.Trim().ToLower() == userParams.FullName.Trim().ToLower());
 
@@ -47,19 +42,24 @@ namespace FoodOrdering.Application.Services
             IEnumerable<UserDTO> usersToDTO;
             if (userParams.Page == 0 || userParams.PageSize == 0)
             {
-                usersToDTO = await users.OrderByDescending(u => u.CreatedAt).Select(u => new UserDTO(u))   
+                usersToDTO = await users
+                    .OrderByDescending(u => u.CreatedAt)
+                    .Select(u => new UserDTO(u))   
                     .AsNoTracking()
                     .ToListAsync();
             }
             else
             {
-                usersToDTO = await users.OrderByDescending(u => u.CreatedAt).Select(u => new UserDTO(u))
+                usersToDTO = await users
+                    .OrderByDescending(u => u.CreatedAt)
+                    .Select(u => new UserDTO(u))
                     .Paging(userParams.Page, userParams.PageSize)
                     .AsNoTracking()
                     .ToListAsync();
             }
 
-            return new PagingReponse<UserDTO>(userParams.Page, userParams.PageSize, users.Count(), usersToDTO);                
+            var response = new PagingReponse<UserDTO>(userParams.Page, userParams.PageSize, users.Count(), usersToDTO);
+            return response;
         } 
 
         public async Task UploadProfileAsync(Guid id, UserRequest request)
@@ -99,16 +99,24 @@ namespace FoodOrdering.Application.Services
 
             _unitOfWork.User.Update(user);
             await _unitOfWork.SaveChangeAsync();
+            await _cachingService.RemoveAsync(CacheKeys.UserDetail(user.Id));
         }
 
         public async Task<UserDTO> GetUserByIdAsync(Guid id)
         {
+            var cacheKey = CacheKeys.UserDetail(id);
+            var cached = await _cachingService.GetAsync<UserDTO>(cacheKey);
+            if (cached != null)
+                return cached;
+
             var user = await _unitOfWork.User.GetByIdAsync(id);
 
             if (user == null)
                 throw new KeyNotFoundException("Người dùng không tồn tại");
 
-            return new UserDTO(user, "");
+            var response = new UserDTO(user, "");
+            await _cachingService.SetAsync(cacheKey, response, TimeSpan.FromHours(12));
+            return response;
         }
     }
 }

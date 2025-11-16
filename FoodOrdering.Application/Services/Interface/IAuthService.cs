@@ -1,15 +1,8 @@
 ﻿using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
-using FoodOrdering.Domain.Models;
 using Microsoft.AspNetCore.Http;
-using Sprache;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace FoodOrdering.Application.Services.Auth
+namespace FoodOrdering.Application.Services.Interface
 {
     public interface IAuthService
     {

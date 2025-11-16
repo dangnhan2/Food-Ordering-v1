@@ -1,21 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FoodOrdering.Application.Repositories
+﻿namespace FoodOrdering.Application.Repositories
 {
     public interface IBackgroundJobScheduler
     {
-        public Task DeleteExpiredOtp_5mins(Guid id);
-        public Task DeleteCancelledOrder_30days(Guid id);
-        public Task DeleteExpiredRefreshTokens_3months();
-        public Task DeleteExpiredCarts_3hours();
-        public Task UpdateExpiredOrder_10mins(Guid id);
-        public Task PublicVouchers_24hours();
-        public Task RetrieveVouchers_24hours();
-        public Task ResetVoucherRedemptions_24hours();
-        public Task DeleteNotifications_1month();
+        public Task ScheduleDeleteExpiredOtpJob_5mins(Guid id);
+        public Task ScheduleUpdateExpiredOrderJob_10mins(Guid id);
+        public Task RecurringCancelledOrderJob_1month(Guid id);
+        public Task RecurringDeleteExpiredRefreshTokensJob_3months();
+        public Task RecurringDeleteExpiredCartsJob_3hours();
+        public Task RecurringPublicVouchersJob_24hours();
+        public Task RecurringRetrieveVouchersJob_24hours();
+        public Task RecurringResetVoucherRedemptionsJob_24hours();
+        public Task RecurringDeleteNotificationsJob_1month();
     }
 }
