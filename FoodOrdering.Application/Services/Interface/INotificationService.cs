@@ -5,7 +5,12 @@ namespace FoodOrdering.Application.Services.Interface
 {
     public interface INotificationService
     {
-        public Task NotifyAdminAsync(string message);
-        public Task<ApiResponse<Notification>> MarkAsReadAsync(Guid id);
+        public Task<IEnumerable<NotificationDto>> GetUnreadByAdmin(Guid id);
+        public Task MarkAsReadAsync(List<Guid> ids);
+    }
+
+    public interface INotificationSenderService
+    {
+        public Task NotifyAdminAsync(int orderCode);
     }
 }

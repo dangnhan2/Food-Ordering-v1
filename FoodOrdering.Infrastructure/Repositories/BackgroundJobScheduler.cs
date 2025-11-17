@@ -57,7 +57,9 @@ namespace FoodOrdering.Infrastructure.Repositories
 
         public async Task RecurringDeleteExpiredCartsJob_3hours()
         {
-            var carts = await _unitOfWork.Cart.FindAsync(c => c.CreatedAt.AddHours(3) < DateTime.UtcNow);
+            var carts = _unitOfWork.Cart
+                .GetAll()
+                .Where(c => c.CreatedAt.AddHours(3) < DateTime.UtcNow);
 
             if(carts.Count() > 0)
             {
@@ -79,7 +81,10 @@ namespace FoodOrdering.Infrastructure.Repositories
 
         public async Task RecurringDeleteExpiredRefreshTokensJob_3months()
         {
-            var tokens = await _unitOfWork.RefreshToken.FindAsync(t => t.ExpriedAt < DateTime.UtcNow);
+            var tokens = _unitOfWork.RefreshToken
+                .GetAll()
+                .Where(t => t.ExpriedAt < DateTime.UtcNow);
+               
 
             if(tokens.Count() > 0)
             {
@@ -109,8 +114,9 @@ namespace FoodOrdering.Infrastructure.Repositories
             Log.Information($"VN Range: {startOfTodayVn} -> {startOfTomorrowVn}");
             Log.Information($"UTC Range: {startUtc} -> {endUtc}");
 
-            var vouchers = await _unitOfWork.Voucher.FindAsync(
-                v => v.StartDate >= startUtc &&
+            var vouchers = _unitOfWork.Voucher
+                .GetAll()
+                .Where(v => v.StartDate >= startUtc &&
                      v.StartDate < endUtc &&
                      !v.IsActive);
 
@@ -151,10 +157,9 @@ namespace FoodOrdering.Infrastructure.Repositories
 
             Log.Information($"VN Range Ended: < {todayUtc} (UTC end cutoff)");
 
-            var vouchers = await _unitOfWork.Voucher.FindAsync(
-                v => v.EndDate < todayUtc &&
-                     v.IsActive
-            );
+            var vouchers = _unitOfWork.Voucher
+                .GetAll()
+                .Where(v => v.EndDate < todayUtc && v.IsActive);
 
             Log.Information($"Voucher cần thu hồi: {vouchers.Count()}");
 

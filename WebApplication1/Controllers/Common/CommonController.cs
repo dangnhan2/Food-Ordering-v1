@@ -191,15 +191,12 @@ namespace FoodOrdering.Presentation.Controllers.Common
         }
 
         [HttpPut("notification/{id}")]
-        public async Task<IActionResult> UpdateNotification(Guid id)
+        public async Task<IActionResult> UpdateNotification(List<Guid> ids)
         {
-            var result = await _notificationService.MarkAsReadAsync(id);
+            await _notificationService.MarkAsReadAsync(ids);
 
-            return Ok(new
-            {
-                result.Message,
-                result.StatusCode
-            });
+            var response = ApiResponse<dynamic>.Success("Cập nhật thành công", null, StatusCodes.Status200OK);
+            return Ok(response);
         }
 
     }
