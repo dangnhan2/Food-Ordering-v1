@@ -26,18 +26,21 @@ namespace FoodOrdering.Application.Services.Services
         private readonly RedLockFactory _redLockFactory;
         private readonly int orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
         private readonly ICachingService _cachingService;
+        private readonly INotificationSenderService _notificationSenderServer;
    
         public OrderService(
             IUnitOfWork unitOfWork, 
             IPaymentGateway paymentGateway, 
             RedLockFactory redLockFactory, 
-            ICachingService cachingService
+            ICachingService cachingService,
+            INotificationSenderService notificationSenderServer
            )
         {
             _unitOfWork = unitOfWork;
             _paymentGateway = paymentGateway;
             _redLockFactory = redLockFactory;
             _cachingService = cachingService;
+            _notificationSenderServer = notificationSenderServer;
            
         }
 
@@ -116,7 +119,7 @@ namespace FoodOrdering.Application.Services.Services
 
                     voucher.UsedCount += 1;
 
-                    if (voucher.UsedCount + 1 == voucher.UsageLimit)
+                    if (voucher.UsedCount >= voucher.UsageLimit)
                         voucher.IsActive = false;
 
                     _unitOfWork.Voucher.Update(voucher);
@@ -183,7 +186,7 @@ namespace FoodOrdering.Application.Services.Services
 
                     voucher.UsedCount += 1;
 
-                    if (voucher.UsedCount + 1 == voucher.UsageLimit)
+                    if (voucher.UsedCount >= voucher.UsageLimit)
                         voucher.IsActive = false;
 
                     // update voucher after increase voucher used count
@@ -196,6 +199,10 @@ namespace FoodOrdering.Application.Services.Services
             _unitOfWork.Cart.Remove(cart);
             await _unitOfWork.Order.AddAsync(newOrder);
             await _unitOfWork.SaveChangeAsync();
+
+            Log.Information("Send notification to admin");
+            await _notificationSenderServer.NotifyAdminAsync(newOrder.TransactionId);
+
             Log.Information("Order created");
             return newOrder.TransactionId;
         }

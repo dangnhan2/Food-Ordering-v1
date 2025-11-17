@@ -2,6 +2,7 @@
 using FoodOrdering.Application;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Payment;
+using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Domain.Models;
 using FoodOrdering.Infrastructure.SignalR_Hub;
 using Microsoft.AspNetCore.Http;
@@ -24,7 +25,12 @@ namespace FoodOrdering.Infrastructure.Payment
         private readonly string _checksumKey;
         private readonly IHubContext<NotificationHub> _hubContext;
         private readonly UserManager<User> _userManager;
-        public PaymentGateway(IUnitOfWork unitOfWork, IHubContext<NotificationHub> hubContext, UserManager<User> userManager) {
+        private readonly INotificationSenderService _notificationSenderServer;
+        public PaymentGateway(
+            IUnitOfWork unitOfWork, 
+            IHubContext<NotificationHub> hubContext, 
+            UserManager<User> userManager, 
+            INotificationSenderService notificationSenderServer) {
             Env.Load();
             _unitOfWork = unitOfWork;
             _payOS = new PayOS(
@@ -38,6 +44,7 @@ namespace FoodOrdering.Infrastructure.Payment
             _checksumKey = Env.GetString("PAYOS_CHECKSUM_KEY");
             _hubContext = hubContext;
             _userManager = userManager;
+            _notificationSenderServer = notificationSenderServer;
         }
 
         public async Task<ApiResponse<string>> CallBack(HttpRequest request)
@@ -47,8 +54,6 @@ namespace FoodOrdering.Infrastructure.Payment
 
             if (string.IsNullOrWhiteSpace(rawJson))
                 return ApiResponse<string>.Fail("Empty body", StatusCodes.Status400BadRequest);
-
-            //Console.WriteLine("Webhook raw: " + rawJson);
 
             // Parse JSON
             var root = JObject.Parse(rawJson);
@@ -76,11 +81,9 @@ namespace FoodOrdering.Infrastructure.Payment
             var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(transactionStr));
             var signatureComputed = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
 
-            if (!string.Equals(signatureProvided, signatureComputed, StringComparison.OrdinalIgnoreCase))
-            {
-                return ApiResponse<string>.Fail("Invalid signature", StatusCodes.Status401Unauthorized);
-            }
-
+            if (!string.Equals(signatureProvided, signatureComputed, StringComparison.OrdinalIgnoreCase))            
+               return ApiResponse<string>.Fail("Invalid signature", StatusCodes.Status401Unauthorized);
+            
             // check order if success 
             var code = data["orderCode"].ToObject<int>();
             if (code == null)
@@ -91,8 +94,10 @@ namespace FoodOrdering.Infrastructure.Payment
             if (order == null)            
                 return ApiResponse<string>.Fail("Không tìm thấy order", StatusCodes.Status404NotFound);
 
+            // Update status after order is paid
             order.Status = Food_Ordering.Models.Enum.OrderStatus.Paid;
 
+            // Update sold quantity of each menu in paid order
             foreach(var menu in order.OrderMenus)
             {
                 var item = await _unitOfWork.Menu.GetByIdAsync(menu.MenuId);
@@ -102,7 +107,7 @@ namespace FoodOrdering.Infrastructure.Payment
             }
             
             _unitOfWork.Order.Update(order);
-            await SendNotificationToAdminAsync(order.TransactionId);
+            await _notificationSenderServer.NotifyAdminAsync(order.TransactionId);
             await _unitOfWork.SaveChangeAsync();
 
             return ApiResponse<string>.Success("Webhook processed successfully", "", StatusCodes.Status200OK);
@@ -121,7 +126,7 @@ namespace FoodOrdering.Infrastructure.Payment
                  orderCode : orderCode,
                  amount : amount,
                  description : "Thanh toán đơn hàng",
-                 items : data,
+                 items: data,
                  expiredAt: (int) DateTimeOffset.UtcNow.AddMinutes(10).ToUnixTimeSeconds(),
                  returnUrl: $"{returnUrl}checkout/success?orderCode=${orderCode}&paymentMethod=QR",
                  cancelUrl : cancelUrl
@@ -130,40 +135,6 @@ namespace FoodOrdering.Infrastructure.Payment
             var response = await _payOS.createPaymentLink(paymentLinkRequest);
 
             return response;
-        }
-
-        private async Task SendNotificationToAdminAsync(int orderCode)
-        {
-            var users = await _userManager.GetUsersInRoleAsync("Admin");
-
-            foreach(var user in users)
-            {
-                var notification = new Notification
-                {  
-                    Id = Guid.NewGuid(),
-                    UserId = user.Id,
-                    Tiltle = "Bạn có đơn hàng mới",
-                    Message = $"Đơn hàng #{orderCode} vừa đặt thành công",
-                    Type = "Order",
-                    Data = "",
-                    IsRead = false
-                };
-
-                // add notification to db
-                await _unitOfWork.Notification.AddAsync(notification);
-
-                // send notification to group admins
-                await _hubContext.Clients.Group("Admins")
-                    .SendAsync("ReceiveNotification", new NotificationDto
-                    {   
-                        Id = notification.Id,
-                        Tiltle = "Bạn có đơn hàng mới",
-                        Message = $"Đơn hàng #{orderCode} vừa được tạo",
-                        Type = "Order",
-                        Data = "",
-                        IsRead = false
-                    });
-            }
         }
     }
 }

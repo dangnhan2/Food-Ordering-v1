@@ -23,9 +23,9 @@ namespace FoodOrdering.Infrastructure.Repository
             await _context.Set<T>().AddAsync(entity);
         }
 
-        public async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate)
+        public async Task AddRangeAsync(List<T> entities)
         {
-           return await _context.Set<T>().Where(predicate).ToListAsync();
+            await _context.Set<T>().AddRangeAsync(entities);
         }
 
         public IQueryable<T> GetAll()

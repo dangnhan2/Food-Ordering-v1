@@ -2,9 +2,6 @@
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Services.Interface;
-using FoodOrdering.Application.Validator;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FoodOrdering.Presentation.Controllers.Admin
@@ -19,7 +16,15 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         private readonly IUserService _userService;
         private readonly IVoucherService _voucherService;
         private readonly IDashboardService _dashBoardService;
-        public AdminController(ICategoryService categoryService, IMenuService menuService, IOrderService orderService, IUserService userService, IVoucherService voucherService, IDashboardService dashboardService)
+        private readonly INotificationService _notificationService;
+        public AdminController(
+            ICategoryService categoryService, 
+            IMenuService menuService, 
+            IOrderService orderService, 
+            IUserService userService, 
+            IVoucherService voucherService, 
+            IDashboardService dashboardService, 
+            INotificationService notificationService)
         {
             _categoryService = categoryService;
             _menuService = menuService;
@@ -27,6 +32,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             _userService = userService;
             _voucherService = voucherService;
             _dashBoardService = dashboardService;
+            _notificationService = notificationService;
         }
 
         [HttpPost("category")]
@@ -131,6 +137,14 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         {
             var result = await _dashBoardService.GetInfoAsync();
             var response = ApiResponse<DashboardOverviewDTO>.Success("Lấy dữ liệu thành công", result,StatusCodes.Status201Created);
+            return Ok(response);
+        }
+
+        [HttpGet("notifications")]
+        public async Task<IActionResult> GetUnreadNotificationByAdmin(Guid id)
+        {
+            var result = await _notificationService.GetUnreadByAdmin(id);
+            var response = ApiResponse<dynamic>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
             return Ok(response);
         }
     }

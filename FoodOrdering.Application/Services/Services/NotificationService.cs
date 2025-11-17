@@ -1,7 +1,6 @@
 ﻿using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Services.Interface;
-using FoodOrdering.Domain.Models;
-using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace FoodOrdering.Application.Services.Services
 {
@@ -13,23 +12,39 @@ namespace FoodOrdering.Application.Services.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<ApiResponse<Notification>> MarkAsReadAsync(Guid id)
+        public async Task<IEnumerable<NotificationDto>> GetUnreadByAdmin(Guid id)
         {
-            var notification = await _unitOfWork.Notification.GetByIdAsync(id);
+            var notifications = _unitOfWork.Notification
+                .GetAll()
+                .Where(x => x.UserId == id && !x.IsRead);
 
-            if (notification == null)
-                return ApiResponse<Notification>.Fail("Không tìm thấy thông báo", StatusCodes.Status404NotFound);
+            var notificationToDto = await notifications
+                .Select(n => new NotificationDto
+                {
+                    Id = id,
+                    Tiltle = n.Tiltle,
+                    Message = n.Message,
+                    Type = n.Type,
+                    Data = n.Data,
+                    IsRead = n.IsRead,
+                    CreatedAt = n.CreatedAt
+                }).ToListAsync();
 
-            notification.IsRead = true;
-            _unitOfWork.Notification.Update(notification);
-            await _unitOfWork.SaveChangeAsync();
-
-            return ApiResponse<Notification>.Success("Cập nhật thông báo thành công", notification, StatusCodes.Status200OK);
+            return notificationToDto;
         }
 
-        public Task NotifyAdminAsync(string message)
+        public async Task MarkAsReadAsync(List<Guid> ids)
         {
-            throw new NotImplementedException();
+            foreach (var id in ids)
+            {
+                var existNotification = await _unitOfWork.Notification.GetByIdAsync(id);
+
+                if (existNotification == null) continue;
+
+                existNotification.IsRead = true;
+            }
+
+            await _unitOfWork.SaveChangeAsync();
         }
     }
 }

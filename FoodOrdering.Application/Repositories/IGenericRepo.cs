@@ -12,8 +12,8 @@ namespace FoodOrdering.Application.Repositories
         Task<T?> GetByIdAsync(Guid id);
         Task<T?> GetByIdAsync(Expression<Func<T, bool>> predicate);
         IQueryable<T> GetAll();
-        Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate);
         Task AddAsync(T entity);
+        Task AddRangeAsync(List<T> entities);
         void Update(T entity);
         void Remove(T entity);
         void RemoveRange(IEnumerable<T> entities);

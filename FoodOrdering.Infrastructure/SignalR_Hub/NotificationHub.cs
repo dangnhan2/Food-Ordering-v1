@@ -9,7 +9,10 @@ namespace FoodOrdering.Infrastructure.SignalR_Hub
         {
             var userId = Context.UserIdentifier;
             // get role of user from claims
-            var roles = Context.User.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value);
+            var roles = Context.User.Claims
+                .Where(c => c.Type == ClaimTypes.Role)
+                .Select(c => c.Value);
+
             // check role if user is admin
             if (roles.Contains("Admin"))
             // if user is admin to admin group

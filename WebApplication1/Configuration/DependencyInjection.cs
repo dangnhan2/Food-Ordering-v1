@@ -14,6 +14,7 @@ using FoodOrdering.Infrastructure.Identity;
 using FoodOrdering.Infrastructure.Payment;
 using FoodOrdering.Infrastructure.Repositories;
 using FoodOrdering.Infrastructure.Repository;
+using FoodOrdering.Infrastructure.SignalR_Hub;
 using RedLockNet.SERedis;
 using RedLockNet.SERedis.Configuration;
 using StackExchange.Redis;
@@ -48,7 +49,8 @@ namespace Food_Ordering.Extensions
             services.AddScoped<IAddressService, AddressService>();
             services.AddScoped<INotificationRepo, NotificationRepo>();
             services.AddScoped<INotificationService, NotificationService>();
-            services.AddScoped<ICachingService, CachingService>();  
+            services.AddScoped<ICachingService, CachingService>();
+            services.AddScoped<INotificationSenderService, SignalRNotificationService>();
 
             services.AddTransient<ICloudinaryService, CLoudinaryService>();
             services.AddTransient<IPaymentGateway, PaymentGateway>();
