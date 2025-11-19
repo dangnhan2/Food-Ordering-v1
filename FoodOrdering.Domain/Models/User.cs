@@ -14,12 +14,12 @@ namespace FoodOrdering.Domain.Models
         public string ImageUrl { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public bool IsAdmin { get; set; } = false;
-        public Carts Carts { get; set; }
-        public RefreshTokens RefreshTokens { get; set; }
+        public Cart Carts { get; set; }
+        public RefreshToken RefreshTokens { get; set; }
         public EmailOtp EmailOtp { get; set; }
         public ICollection<VoucherRedemptions> VoucherRedemptions { get; set; } = new List<VoucherRedemptions>();
-        public ICollection<Orders> Orders { get; set; } = new List<Orders>();
-        public ICollection<Addresses> Addresses { get; set; } = new List<Addresses>();
+        public ICollection<Order> Orders { get; set; } = new List<Order>();
+        public ICollection<Address> Addresses { get; set; } = new List<Address>();
         public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     }
 }

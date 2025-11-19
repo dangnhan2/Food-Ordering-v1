@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Repositories
 {
-    public interface IMenuRepo : IGenericRepo<Menus>
+    public interface IMenuRepo : IGenericRepo<Menu>
     {
-        public Task<Menus?> GetMenuWithCategoryAsync(Guid id);
+        public Task<Menu?> GetMenuWithCategoryAsync(Guid id);
     }
 }

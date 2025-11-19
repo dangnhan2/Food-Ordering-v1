@@ -17,7 +17,7 @@ namespace FoodOrdering.Application.DTOs.Response
         public int UnitPrice { get; set; }
 
         public CartItemDTO() { }
-        public CartItemDTO(CartItems item) {
+        public CartItemDTO(CartItem item) {
             Id = item.Id;
             MenuId = item.MenuId;
             MenuName = item.Menu.Name;

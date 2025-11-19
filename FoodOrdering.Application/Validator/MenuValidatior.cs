@@ -22,7 +22,7 @@ namespace FoodOrdering.Application.Validator
                 .MaximumLength(500).WithMessage("Mô tả không được vượt quá 500 ký tự.");
 
             // Kiểm tra trường Price
-            RuleFor(x => x.Price)
+            RuleFor(x => x.OriginalPrice)
                 .GreaterThanOrEqualTo(0).WithMessage("Giá bán không được là số âm.")
                 .LessThanOrEqualTo(10000000).WithMessage("Giá bán tối đa là 10.000.000 VNĐ."); // Giả định mức giá tối đa
         }

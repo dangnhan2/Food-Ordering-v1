@@ -107,7 +107,7 @@ namespace FoodOrdering.Infrastructure.Identity
             // refreshToken
             string refresh = Guid.NewGuid().ToString() + "-" + Guid.NewGuid().ToString();
 
-            var refreshToken = new RefreshTokens
+            var refreshToken = new RefreshToken
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,

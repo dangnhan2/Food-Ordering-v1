@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Repositories
 {
-    public interface ICartRepo : IGenericRepo<Carts>
+    public interface ICartRepo : IGenericRepo<Cart>
     {
-        public Task<Carts?> GetCartByCustomerAsync(Guid id);
-        public Task<Carts?> GetCartWithCartItemAsync(Guid id);
-        public void DeleteExpiredCart(IEnumerable<Carts> carts);
+        public Task<Cart?> GetCartByCustomerAsync(Guid id);
+        public Task<Cart?> GetCartWithCartItemAsync(Guid id);
+        public void DeleteExpiredCart(IEnumerable<Cart> carts);
     }
 }

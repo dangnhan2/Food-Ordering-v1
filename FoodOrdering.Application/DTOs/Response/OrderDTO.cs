@@ -17,14 +17,14 @@ namespace FoodOrdering.Application.DTOs.Response
         public ICollection<OrderMenuDTO> Menus { get; set; } = new List<OrderMenuDTO>();
 
         public OrderDTO() { }
-        public OrderDTO(Orders order, List<OrderMenuDTO> menus) 
+        public OrderDTO(Order order, List<OrderMenuDTO> menus) 
         {
             Id = order.Id;
             UserId = order.UserId;
             OrderDate = order.OrderDate;
             FullName = order.Address.FullName;
             PhoneNumber = order.Address.PhoneNumber;
-            Address = order.Address.Address;
+            Address = order.Address.AddressName;
             OrderStatus = order.Status;
             TotalAmount = order.TotalAmount;
             TransactionCode = order.TransactionId;

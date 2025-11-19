@@ -10,16 +10,16 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Infrastructure.Repository
 {
-    public class MenuRepo : GenericRepo<Menus>, IMenuRepo
+    public class MenuRepo : GenericRepo<Menu>, IMenuRepo
     {
         private readonly FoodOrderingDbContext _context;
         public MenuRepo(FoodOrderingDbContext context) : base(context) {
             _context = context;
         }
 
-        public async Task<Menus?> GetMenuWithCategoryAsync(Guid id)
+        public async Task<Menu?> GetMenuWithCategoryAsync(Guid id)
         {
-            return await _context.Menus.Include(m => m.Categories).FirstOrDefaultAsync(m => m.Id == id);
+            return await _context.Menu.Include(m => m.Categories).FirstOrDefaultAsync(m => m.Id == id);
         }
     }
 }

@@ -219,7 +219,7 @@ namespace FoodOrdering.Application.Services.Services
             return new VoucherValidationDto(discountAmount, totalAmount);
         }
 
-        private int GetTotalAmount(ICollection<CartItems> items)
+        private int GetTotalAmount(ICollection<CartItem> items)
         {   
             int subTotal = 0;
             foreach(var item in items)

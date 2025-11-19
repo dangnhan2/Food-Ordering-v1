@@ -51,7 +51,12 @@ namespace FoodOrdering.Presentation.Middleware
             catch(InvalidDataException ex) // lỗi dữ liệu ở db
             {
                 Extensions.LogWarning(ex);
-                await HandleExceptionAsync(context,ex, HttpStatusCode.BadRequest);
+                await HandleExceptionAsync(context, ex, HttpStatusCode.BadRequest);
+            }
+            catch(InvalidOperationException ex)
+            {
+                Extensions.LogWarning(ex);
+                await HandleExceptionAsync(context, ex, HttpStatusCode.BadRequest);
             }
             catch (Exception ex) // các lỗi còn lại
             {
@@ -72,6 +77,9 @@ namespace FoodOrdering.Presentation.Middleware
             {   
                 case InvalidDataException invalidDataException:
                     message = invalidDataException.Message;
+                    break;
+                case InvalidOperationException invalidOperationException:
+                    message = invalidOperationException.Message;
                     break;
                 case ValidationDictionaryException validationEx:
                     message = "Dữ liệu không hợp lệ";

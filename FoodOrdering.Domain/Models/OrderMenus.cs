@@ -9,10 +9,12 @@ namespace FoodOrdering.Domain.Models
     public class OrderMenus
     {
         public Guid Id { get; set; }
-        public Orders Orders { get; set; } = null!;
+        public Order Orders { get; set; } = null!;
         public Guid OrderId { get; set; }
-        public Menus Menus { get; set; } = null!;
+
+        public Menu Menus { get; set; } = null!;
         public Guid MenuId { get; set; }
+
         public int Quantity { get; set; }
         public int UnitPrice { get; set; }
         public int SubTotal { get; set; }

@@ -20,7 +20,7 @@ namespace FoodOrdering.Infrastructure.Repositories
 
         public async Task<int> TodayCountAsync(Guid userId, Guid voucherId)
         {
-            return await _context.VoucherRedemptions.CountAsync(
+            return await _context.VoucherRedemption.CountAsync(
                 v => v.UserID == userId 
                 && v.VoucherID == voucherId 
                 && v.RedeemedAt.Date == DateTime.UtcNow.Date);

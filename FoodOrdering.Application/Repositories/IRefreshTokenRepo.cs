@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Repositories
 {
-    public interface IRefreshTokenRepo : IGenericRepo<RefreshTokens>
+    public interface IRefreshTokenRepo : IGenericRepo<RefreshToken>
     {
-        public Task<RefreshTokens?> GetTokenByRefreshToken(string refreshToken); 
+        public Task<RefreshToken?> GetTokenByRefreshToken(string refreshToken); 
     }
 }

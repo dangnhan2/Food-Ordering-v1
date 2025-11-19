@@ -76,7 +76,7 @@ namespace FoodOrdering.Application.Services.Services
 
             address.FullName = request.FullName;
             address.PhoneNumber = request.PhoneNumber;
-            address.Address = request.Address;
+            address.AddressName = request.Address;
             address.UserId = request.UserId;
 
             _unitOfWork.Address.Update(address);
@@ -85,13 +85,13 @@ namespace FoodOrdering.Application.Services.Services
             await _cacheService.RemoveAsync(CacheKeys.UserAddresses(address.UserId));
         }
 
-        private Addresses MappingAddress(AddressRequest request)
+        private Address MappingAddress(AddressRequest request)
         {
-            Addresses address = new Addresses
+            Address address = new Address
             {
                 FullName = request.FullName,
                 PhoneNumber = request.PhoneNumber,
-                Address = request.Address,
+                AddressName = request.Address,
                 UserId = request.UserId,
             };
 

@@ -14,7 +14,7 @@ namespace FoodOrdering.Application.DTOs.Response
         public string Name { get; set; } 
 
         public CategoryDTO() { }
-        public CategoryDTO(Categories category)
+        public CategoryDTO(Category category)
         {
             Id = category.Id;
             Name = category.Name;

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Infrastructure.Repository
 {
-    public class CategoryRepo : GenericRepo<Categories>, ICategoryRepo
+    public class CategoryRepo : GenericRepo<Category>, ICategoryRepo
     {
         public CategoryRepo(FoodOrderingDbContext context) : base(context) { }
     }

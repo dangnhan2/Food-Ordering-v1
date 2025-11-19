@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Infrastructure.Repositories
 {
-    public class AddressRepo : GenericRepo<Addresses>, IAddressRepo
+    public class AddressRepo : GenericRepo<Address>, IAddressRepo
     {       
         public AddressRepo(FoodOrderingDbContext context) : base(context) { }
        

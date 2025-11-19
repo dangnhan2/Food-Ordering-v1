@@ -115,9 +115,9 @@ namespace FoodOrdering.Application.Services.Services
             await _cacheService.RemoveAsync(CacheKeys.CATEGORIES_PREFIX);
         }
 
-        private Categories MappingCategory(CategoryRequest request)
+        private Category MappingCategory(CategoryRequest request)
         {
-            Categories category = new Categories
+            Category category = new Category
             {
                 Name = request.Name,
             };

@@ -1,10 +1,4 @@
 ﻿using FoodOrdering.Domain.Models;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.DTOs.Response
 {
@@ -14,23 +8,31 @@ namespace FoodOrdering.Application.DTOs.Response
         public string Name { get; set; }
         public string Category { get; set; }
         public string Description { get; set; }
-        public int Price { get; set; }
+        public int OriginalPrice { get; set; }
+        public int? DiscountPrice { get; set; }
+        public double AverageRating { get; set; }
         public string ImageUrl { get; set; }
         public int SoldQuantity { get; set; }
+        public int RatingCount { get; set; }
         public bool IsAvailable { get; set; }
+        public bool IsOnSale { get; set; }
         public DateTime CreatedAt { get; set; }
 
         public MenuDto() { }
-        public MenuDto(Menus menu)
+        public MenuDto(Menu menu)
         {
             Id = menu.Id;
             Name = menu.Name;
             Category = menu.Categories.Name;
             Description = menu.Description;
-            Price = menu.Price;
+            OriginalPrice = menu.OriginalPrice;
+            AverageRating = menu.AverageRating;
+            DiscountPrice = menu.DiscountPrice;
             ImageUrl = menu.ImageUrl;
             SoldQuantity = menu.SoldQuantity;
+            RatingCount = menu.Ratings.Count();
             IsAvailable = menu.IsAvailable;
+            IsOnSale = menu.IsOnSale;
             CreatedAt = menu.CreatedAt;
         }
     }
