@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Repositories
 {
-    public interface ICategoryRepo : IGenericRepo<Categories>
+    public interface ICategoryRepo : IGenericRepo<Category>
     {
     }
 }

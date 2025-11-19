@@ -51,6 +51,8 @@ namespace Food_Ordering.Extensions
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<ICachingService, CachingService>();
             services.AddScoped<INotificationSenderService, SignalRNotificationService>();
+            services.AddScoped<IRatingRepo, RatingRepo>();
+            services.AddScoped<IRatingService, RatingService>();
 
             services.AddTransient<ICloudinaryService, CLoudinaryService>();
             services.AddTransient<IPaymentGateway, PaymentGateway>();

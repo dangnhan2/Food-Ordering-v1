@@ -22,6 +22,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
         private readonly IVoucherService _voucherService;
         private readonly IAddressService _addressService; 
         private readonly INotificationService _notificationService;
+        private readonly IRatingService _ratingService;
         public CommonController(
             ICategoryService categoryService, 
             IMenuService menuService, 
@@ -30,7 +31,8 @@ namespace FoodOrdering.Presentation.Controllers.Common
             IUserService userService, 
             IVoucherService voucherService, 
             IAddressService addressService, 
-            INotificationService notificationService)
+            INotificationService notificationService,
+            IRatingService ratingService)
         {
             _categoryService = categoryService;
             _menuService = menuService;
@@ -40,6 +42,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
             _voucherService = voucherService;
             _addressService = addressService;
             _notificationService = notificationService;
+            _ratingService = ratingService;
         }
 
         [HttpGet("categories")]
@@ -190,7 +193,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
             return Ok(response);
         }
 
-        [HttpPut("notification/{id}")]
+        [HttpPut("notification")]
         public async Task<IActionResult> UpdateNotification(List<Guid> ids)
         {
             await _notificationService.MarkAsReadAsync(ids);
@@ -199,5 +202,23 @@ namespace FoodOrdering.Presentation.Controllers.Common
             return Ok(response);
         }
 
+        [HttpGet("ratings/menu/{id}")]
+        public async Task<IActionResult> GetAllRatingsByMenuId(Guid id,[FromQuery] RatingParams ratingParams)
+        {   
+            
+            var result = await _ratingService.GetAllRatingsByMenuAsync(id, ratingParams);
+
+            var response = ApiResponse<dynamic>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
+            return Ok(response);
+        }
+
+        [HttpPost("rating")]
+        public async Task<IActionResult> RatingPaidOrder([FromForm] RatingRequest request)
+        {
+             await _ratingService.RatingPaidOrderAsync(request);
+
+            var response = ApiResponse<dynamic>.Success("Đánh giá thành công", null, StatusCodes.Status200OK);
+            return Ok(response);
+        }
     }
 }

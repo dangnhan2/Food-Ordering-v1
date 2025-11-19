@@ -42,7 +42,7 @@ namespace FoodOrdering.Application.Extension
             return sb.ToString();
         }
 
-        public static int GetSubAmount(ICollection<CartItems> items)
+        public static int GetSubAmount(ICollection<CartItem> items)
         {
             int TAX_RATE = 8;
             int subTotal = 0;

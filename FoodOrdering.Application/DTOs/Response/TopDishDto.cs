@@ -13,7 +13,7 @@ namespace FoodOrdering.Application.DTOs.Response
         public string ImageUrl { get; set; }
         public int SoldQuantity { get; set; }
 
-        public TopDishDto(Menus menu)
+        public TopDishDto(Menu menu)
         {
             Name = menu.Name;
             ImageUrl = menu.ImageUrl;

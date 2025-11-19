@@ -22,7 +22,7 @@ namespace FoodOrdering.Application.Services.Services
             
             if (user.Carts == null)
             {
-                var cart = new Carts
+                var cart = new Cart
                 {
                     Id = Guid.NewGuid(),
                     UserId = request.UserId
@@ -53,7 +53,7 @@ namespace FoodOrdering.Application.Services.Services
                     else
                     {
                         // add to cart if its a new item
-                        var item = new CartItems
+                        var item = new CartItem
                         {
                             Id = Guid.NewGuid(),
                             CartId = cart.Id,
@@ -89,9 +89,9 @@ namespace FoodOrdering.Application.Services.Services
             return cartToDTO;
         }
 
-        private void MappingCartItems(ICollection<CartItemRequest> cartItems, Carts cart) {
+        private void MappingCartItems(ICollection<CartItemRequest> cartItems, Cart cart) {
             foreach (var dish in cartItems) {
-                var item = new CartItems
+                var item = new CartItem
                 {
                     Id = Guid.NewGuid(),
                     CartId = cart.Id,

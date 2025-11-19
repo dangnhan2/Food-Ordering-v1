@@ -24,15 +24,15 @@ namespace FoodOrdering.Infrastructure.Data
                     om.OrderId, om.MenuId
                 });
 
-            builder.Entity<CartItems>()
+            builder.Entity<CartItem>()
                 .HasKey(ct => new {ct.MenuId, ct.CartId });
 
-            builder.Entity<CartItems>()
+            builder.Entity<CartItem>()
                 .HasOne(ct => ct.Menu)
                 .WithMany(ct => ct.CartItems)
                 .HasForeignKey(ct => ct.MenuId);
 
-            builder.Entity<CartItems>()
+            builder.Entity<CartItem>()
                 .HasOne(ct => ct.Cart)
                 .WithMany(ct => ct.CartItems)
                 .HasForeignKey(ct => ct.CartId);
@@ -57,11 +57,15 @@ namespace FoodOrdering.Infrastructure.Data
                 .WithMany(om => om.OrderMenus)
                 .HasForeignKey(om => om.OrderId);
 
-            builder.Entity<Categories>()
+            builder.Entity<Category>()
                 .HasMany(c => c.Menus)
                 .WithOne(c => c.Categories)
                 .HasForeignKey(c => c.CategoriesId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Rating>()
+                .HasIndex(r => new { r.OrderId, r.MenuId })
+                .IsUnique();
 
             return builder;
         }

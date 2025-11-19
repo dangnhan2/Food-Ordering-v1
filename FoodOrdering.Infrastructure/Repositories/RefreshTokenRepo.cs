@@ -11,16 +11,16 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Infrastructure.Repository
 {
-    public class RefreshTokenRepo : GenericRepo<RefreshTokens>, IRefreshTokenRepo
+    public class RefreshTokenRepo : GenericRepo<RefreshToken>, IRefreshTokenRepo
     {
         private readonly FoodOrderingDbContext _context;
         public RefreshTokenRepo(FoodOrderingDbContext context) : base(context) {
            _context = context;
         }
 
-        public async Task<RefreshTokens?> GetTokenByRefreshToken(string refreshToken)
+        public async Task<RefreshToken?> GetTokenByRefreshToken(string refreshToken)
         {
-            return await _context.RefreshTokens
+            return await _context.RefreshToken
                 .Include(t => t.User)
                 .FirstOrDefaultAsync(t => t.Token == refreshToken.HashToken());
         }

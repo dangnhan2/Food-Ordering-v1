@@ -7,7 +7,8 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Repositories
 {
-    public interface IAddressRepo : IGenericRepo<Address>
-    {        
+    public interface IRatingRepo : IGenericRepo<Rating>
+    {
+        public Task<double> GetAverageRating(Guid menuId);
     }
 }

@@ -11,29 +11,29 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Infrastructure.Repositories
 {
-    public class CartRepo : GenericRepo<Carts>, ICartRepo
+    public class CartRepo : GenericRepo<Cart>, ICartRepo
     {
         private readonly FoodOrderingDbContext _context;
         public CartRepo(FoodOrderingDbContext context) : base(context) {
            _context = context;
         }
 
-        public void DeleteExpiredCart(IEnumerable<Carts> carts)
+        public void DeleteExpiredCart(IEnumerable<Cart> carts)
         {
-            _context.Carts.RemoveRange(carts);
+            _context.Cart.RemoveRange(carts);
         }
 
-        public async Task<Carts?> GetCartByCustomerAsync(Guid id)
+        public async Task<Cart?> GetCartByCustomerAsync(Guid id)
         {
-            return await _context.Carts
+            return await _context.Cart
                 .Include(c => c.CartItems)
                 .ThenInclude(ct => ct.Menu)
                 .FirstOrDefaultAsync(c => c.UserId == id);
         }
 
-        public async Task<Carts?> GetCartWithCartItemAsync(Guid id)
+        public async Task<Cart?> GetCartWithCartItemAsync(Guid id)
         {
-            return await _context.Carts.Include(c => c.CartItems).FirstOrDefaultAsync(c => c.Id == id);
+            return await _context.Cart.Include(c => c.CartItems).FirstOrDefaultAsync(c => c.Id == id);
         }
     }
 }

@@ -80,8 +80,8 @@ namespace FoodOrdering.Application.Services.Services
                 menus = sortBy switch
                 {
                     "price" => sortOrder == "desc" 
-                    ? menus.OrderByDescending(m => m.Price) 
-                    : menus.OrderBy(m => m.Price),
+                    ? menus.OrderByDescending(m => m.OriginalPrice) 
+                    : menus.OrderBy(m => m.OriginalPrice),
 
                     "soldquantity" => sortOrder == "desc" 
                     ? menus.OrderByDescending(m => m.SoldQuantity) 
@@ -154,8 +154,10 @@ namespace FoodOrdering.Application.Services.Services
             menu.Name = request.Name;
             menu.CategoriesId = request.CategoriesId;
             menu.Description = request.Description;
-            menu.Price = request.Price;
+            menu.OriginalPrice = request.OriginalPrice;
+            menu.DiscountPrice = request.DiscountPrice;
             menu.IsAvailable = request.IsAvailble;
+            menu.IsOnSale = request.IsOnSale;
 
             if (request.Thumbnail != null)
             {
@@ -209,14 +211,16 @@ namespace FoodOrdering.Application.Services.Services
             return menusToDto;
         }
 
-        private async Task<Menus> MappingMenu(MenuRequest request)
+        private async Task<Menu> MappingMenu(MenuRequest request)
         {
-            var menu = new Menus
+            var menu = new Menu
             {
                 Name = request.Name,
                 CategoriesId = request.CategoriesId,
                 Description = request.Description,
-                Price = request.Price,
+                OriginalPrice = request.OriginalPrice,
+                DiscountPrice = request.DiscountPrice,
+                IsOnSale = request.IsOnSale,
                 IsAvailable = request.IsAvailble,
                 SoldQuantity = 0
             };

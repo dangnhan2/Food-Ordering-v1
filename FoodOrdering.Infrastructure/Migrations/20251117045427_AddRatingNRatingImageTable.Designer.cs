@@ -3,6 +3,7 @@ using System;
 using FoodOrdering.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FoodOrdering.Infrastructure.Migrations
 {
     [DbContext(typeof(FoodOrderingDbContext))]
-    partial class FoodOrderingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251117045427_AddRatingNRatingImageTable")]
+    partial class AddRatingNRatingImageTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -50,7 +53,7 @@ namespace FoodOrdering.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Address");
+                    b.ToTable("Addresses");
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.Cart", b =>
@@ -70,7 +73,7 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Cart");
+                    b.ToTable("Carts");
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.CartItem", b =>
@@ -94,7 +97,7 @@ namespace FoodOrdering.Infrastructure.Migrations
 
                     b.HasIndex("CartId");
 
-                    b.ToTable("CartItem");
+                    b.ToTable("CartItems");
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.Category", b =>
@@ -109,7 +112,7 @@ namespace FoodOrdering.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Category");
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.EmailOtp", b =>
@@ -133,7 +136,7 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("EmailOtp");
+                    b.ToTable("EmailOtps");
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.Menu", b =>
@@ -142,8 +145,8 @@ namespace FoodOrdering.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<double>("AverageRating")
-                        .HasColumnType("double precision");
+                    b.Property<float>("AverageRating")
+                        .HasColumnType("real");
 
                     b.Property<Guid>("CategoriesId")
                         .HasColumnType("uuid");
@@ -181,7 +184,7 @@ namespace FoodOrdering.Infrastructure.Migrations
 
                     b.HasIndex("CategoriesId");
 
-                    b.ToTable("Menu");
+                    b.ToTable("Menus");
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.Notification", b =>
@@ -262,7 +265,7 @@ namespace FoodOrdering.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Order");
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.OrderMenus", b =>
@@ -289,7 +292,7 @@ namespace FoodOrdering.Infrastructure.Migrations
 
                     b.HasIndex("MenuId");
 
-                    b.ToTable("OrderMenu");
+                    b.ToTable("OrderMenus");
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.Rating", b =>
@@ -304,10 +307,7 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.Property<Guid>("MenuId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("OrderId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Stars")
+                    b.Property<int>("Starts")
                         .HasColumnType("integer");
 
                     b.Property<Guid>("UserId")
@@ -318,9 +318,6 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.HasIndex("MenuId");
 
                     b.HasIndex("UserId");
-
-                    b.HasIndex("OrderId", "MenuId")
-                        .IsUnique();
 
                     b.ToTable("Rating");
                 });
@@ -372,7 +369,7 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("RefreshToken");
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.User", b =>
@@ -527,7 +524,7 @@ namespace FoodOrdering.Infrastructure.Migrations
 
                     b.HasIndex("VoucherID");
 
-                    b.ToTable("VoucherRedemption");
+                    b.ToTable("VoucherRedemptions");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
@@ -780,12 +777,6 @@ namespace FoodOrdering.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FoodOrdering.Domain.Models.Order", "Order")
-                        .WithMany("Ratings")
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("FoodOrdering.Domain.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -793,8 +784,6 @@ namespace FoodOrdering.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Menu");
-
-                    b.Navigation("Order");
 
                     b.Navigation("User");
                 });
@@ -926,8 +915,6 @@ namespace FoodOrdering.Infrastructure.Migrations
             modelBuilder.Entity("FoodOrdering.Domain.Models.Order", b =>
                 {
                     b.Navigation("OrderMenus");
-
-                    b.Navigation("Ratings");
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.Rating", b =>

@@ -14,9 +14,9 @@ namespace FoodOrdering.Application.DTOs.Response
         public string FullName { get; set; }
         public string PhoneNumber { get; set; }
         public AddressDto() { }
-        public AddressDto(Addresses address) {
+        public AddressDto(Address address) {
            Id = address.Id;
-           Address = address.Address;
+           Address = address.AddressName;
            FullName = address.FullName;
            PhoneNumber = address.PhoneNumber;
         }

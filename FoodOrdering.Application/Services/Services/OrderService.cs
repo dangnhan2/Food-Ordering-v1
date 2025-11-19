@@ -220,7 +220,7 @@ namespace FoodOrdering.Application.Services.Services
                     OrderDate = o.OrderDate,
                     FullName = o.Address.FullName,
                     PhoneNumber = o.Address.PhoneNumber,
-                    Address = o.Address.Address,
+                    Address = o.Address.AddressName,
                     OrderStatus = o.Status,
                     TotalAmount = o.TotalAmount,
                     TransactionCode = o.TransactionId,
@@ -255,9 +255,9 @@ namespace FoodOrdering.Application.Services.Services
             await _unitOfWork.VoucherRedemption.AddAsync(voucherRedemption);
         }
 
-        private Orders MappingOrder(OrderRequest request,int total, string type)
+        private Order MappingOrder(OrderRequest request,int total, string type)
         {
-            var newOrder = new Orders
+            var newOrder = new Order
             {
                 Id = Guid.NewGuid(),
                 UserId = request.UserId,
@@ -287,7 +287,7 @@ namespace FoodOrdering.Application.Services.Services
                 TimeSpan.FromMinutes(10));
         }
 
-        private void MappingMenuToOrder(ICollection<CartItems> cartItems, Orders order)
+        private void MappingMenuToOrder(ICollection<CartItem> cartItems, Order order)
         {
             foreach(var item in cartItems)
             {
@@ -304,7 +304,7 @@ namespace FoodOrdering.Application.Services.Services
             }
         }    
         
-        private async Task UpdateSoldQuantity(ICollection<CartItems> cartItems)
+        private async Task UpdateSoldQuantity(ICollection<CartItem> cartItems)
         {
             foreach (var item in cartItems)
             {
@@ -316,7 +316,7 @@ namespace FoodOrdering.Application.Services.Services
             }
         }
 
-        private List<ItemData> AddItemsPayment(ICollection<CartItems> cartItems)
+        private List<ItemData> AddItemsPayment(ICollection<CartItem> cartItems)
         {
             List<ItemData> items = new List<ItemData>();
 

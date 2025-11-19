@@ -11,19 +11,20 @@ namespace FoodOrdering.Infrastructure.Data
         {
         }
 
-        public DbSet<Orders> Orders { get; set; }
-        public DbSet<Menus> Menus { get; set; }
-        public DbSet<Categories> Categories { get; set; }
+        public DbSet<Order> Order { get; set; }
+        public DbSet<Menu> Menu { get; set; }
+        public DbSet<Category> Category { get; set; }
         public DbSet<Voucher> Voucher { get; set; }
-        public DbSet<VoucherRedemptions> VoucherRedemptions { get; set; }
-        public DbSet<RefreshTokens> RefreshTokens { get; set; }
-        public DbSet<OrderMenus> OrderMenus { get; set; }
-        public DbSet<User> Users { get; set; }
-        public DbSet<Carts> Carts { get; set; }
-        public DbSet<CartItems> CartItems { get; set; }
-        public DbSet<EmailOtp> EmailOtps { get; set; }
-        public DbSet<Addresses> Addresses { get; set; }
+        public DbSet<VoucherRedemptions> VoucherRedemption { get; set; }
+        public DbSet<RefreshToken> RefreshToken { get; set; }
+        public DbSet<OrderMenus> OrderMenu { get; set; }
+        public DbSet<User> User { get; set; }
+        public DbSet<Cart> Cart { get; set; }
+        public DbSet<CartItem> CartItem { get; set; }
+        public DbSet<EmailOtp> EmailOtp { get; set; }
+        public DbSet<Address> Address { get; set; }
         public DbSet<Notification> Notification { get; set; }
+        public DbSet<Rating> Rating { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
