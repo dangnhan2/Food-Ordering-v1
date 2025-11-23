@@ -13,7 +13,7 @@ namespace FoodOrdering.Application.DTOs.Response
         public string Address { get; set; }
         public OrderStatus OrderStatus { get; set; }
         public int TotalAmount { get; set; }
-        public int TransactionCode { get; set; }
+        public int TransactionCode { get; set; }     
         public ICollection<OrderMenuDTO> Menus { get; set; } = new List<OrderMenuDTO>();
 
         public OrderDTO() { }

@@ -7,7 +7,7 @@ namespace FoodOrdering.Application.DTOs.Response
         public Guid Id { get; set; }
         public string Name { get; set; }
         public string Category { get; set; }
-        public string Description { get; set; }
+        public string? Description { get; set; }
         public int OriginalPrice { get; set; }
         public int? DiscountPrice { get; set; }
         public double AverageRating { get; set; }
@@ -19,7 +19,7 @@ namespace FoodOrdering.Application.DTOs.Response
         public DateTime CreatedAt { get; set; }
 
         public MenuDto() { }
-        public MenuDto(Menu menu)
+        public MenuDto(Menu menu, int ratingCount)
         {
             Id = menu.Id;
             Name = menu.Name;
@@ -30,7 +30,7 @@ namespace FoodOrdering.Application.DTOs.Response
             DiscountPrice = menu.DiscountPrice;
             ImageUrl = menu.ImageUrl;
             SoldQuantity = menu.SoldQuantity;
-            RatingCount = menu.Ratings.Count();
+            RatingCount = ratingCount;
             IsAvailable = menu.IsAvailable;
             IsOnSale = menu.IsOnSale;
             CreatedAt = menu.CreatedAt;
