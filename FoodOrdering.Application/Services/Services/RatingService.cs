@@ -73,6 +73,7 @@ namespace FoodOrdering.Application.Services.Services
             var orders = _unitOfWork.OrderMenu
                 .GetAll()
                 .Where(o => o.OrderId == request.OrderId
+                            && o.Orders.Status == Food_Ordering.Models.Enum.OrderStatus.Paid
                             && o.MenuId == request.MenuId
                             && o.Orders.UserId == request.UserId);
 
