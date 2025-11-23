@@ -3,6 +3,7 @@ using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Extension;
 using FoodOrdering.Application.Services.Interface;
+using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -27,7 +28,7 @@ namespace FoodOrdering.Application.Services.Services
             _unitOfWork = unitOfWork;
             _cloudinaryService = cloudinaryService;
         }
-        public async Task<IEnumerable<RatingDto>> GetAllRatingsByMenuAsync(Guid menuId, RatingParams ratingParams)
+        public async Task<PagingReponse<RatingDto>> GetAllRatingsByMenuAsync(Guid menuId, RatingParams ratingParams)
         {
             var ratingsByMenu = _unitOfWork.Rating.GetAll().Where(r => r.MenuId == menuId);
 
@@ -43,7 +44,7 @@ namespace FoodOrdering.Application.Services.Services
                               FullName = r.User.FullName,
                               Comment = r.Comment,
                               Stars = r.Stars,
-                              Images = r.Images.Select(i => i.ImageUrl).ToList()
+                              Images = r.Images.Select(i => i.ImageUrl).ToList(),                           
                           })
                           .AsNoTracking()
                           .ToListAsync();
@@ -65,22 +66,32 @@ namespace FoodOrdering.Application.Services.Services
                           .AsNoTracking()
                           .ToListAsync();
             }
-            return ratings;
+
+            var response = new PagingReponse<RatingDto> (ratingParams.Page, ratingParams.PageSize, ratingsByMenu.Count(), ratings);
+            return response;
         }
 
         public async Task RatingPaidOrderAsync(RatingRequest request)
         {
+            var result = await new RatingValidator().ValidateAsync(request);
+
+            if (!result.IsValid) throw new ValidationDictionaryException(result.ToDictionary());
+
             var orders = _unitOfWork.OrderMenu
                 .GetAll()
                 .Where(o => o.OrderId == request.OrderId
+                            && o.Orders.Status == Food_Ordering.Models.Enum.OrderStatus.Paid
                             && o.MenuId == request.MenuId
                             && o.Orders.UserId == request.UserId);
 
             if (!orders.Any()) throw new InvalidDataException("Bạn chưa đặt món này");
 
-            var ratings = _unitOfWork.Rating.GetAll().Where(r => r.OrderId == request.OrderId && r.MenuId == request.MenuId);
+            var ratings = _unitOfWork.Rating
+                .GetAll()
+                .Where(r => r.OrderId == request.OrderId 
+                            && r.MenuId == request.MenuId);
 
-            if (await ratings.AnyAsync()) throw new InvalidOperationException("Bạn chỉ có thể đánh giá món đã mua trong đơn hàng này");
+            if (await ratings.AnyAsync()) throw new InvalidOperationException("Bạn đã đánh giá món ăn trong đơn hàng này rồi");
 
             var newRating = await MappingRating(request);
 

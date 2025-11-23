@@ -33,13 +33,11 @@ namespace FoodOrdering.Application.Services.Services
         {                    
             var result = await new MenuValidatior().ValidateAsync(request);
 
-            if (!result.IsValid)
-              throw new ValidationDictionaryException(result.ToDictionary());
+            if (!result.IsValid) throw new ValidationDictionaryException(result.ToDictionary());
 
             var menus = _unitOfWork.Menu.GetAll();
 
-            if (menus.Any(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower()))
-                throw new DuplicateNameException($"Menu {request.Name} đã tồn tại");
+            if (menus.Any(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower())) throw new DuplicateNameException($"Menu {request.Name} đã tồn tại");
 
             var menu = await MappingMenu(request);
 
@@ -51,9 +49,8 @@ namespace FoodOrdering.Application.Services.Services
         {
             var menu = await _unitOfWork.Menu.GetByIdAsync(menuId);
 
-            if(menu == null)            
-              throw new KeyNotFoundException("Món ăn không tồn tại");
-            
+            if(menu == null) throw new KeyNotFoundException("Món ăn không tồn tại");
+
             _unitOfWork.Menu.Remove(menu);
             await _unitOfWork.SaveChangeAsync();
         }
@@ -98,7 +95,7 @@ namespace FoodOrdering.Application.Services.Services
             {
                 menusToDTO = await menus
                 .Include(m => m.Categories)
-                .Select(m => new MenuDto(m))
+                .Select(m => new MenuDto(m, m.Ratings.Count()))
                 .AsNoTrackingWithIdentityResolution()
                 .ToListAsync();
             }
@@ -106,7 +103,7 @@ namespace FoodOrdering.Application.Services.Services
             {
                 menusToDTO = await menus
                   .Include(m => m.Categories)
-                  .Select(m => new MenuDto(m))
+                  .Select(m => new MenuDto(m, m.Ratings.Count()))
                   .Paging(menuParams.Page, menuParams.PageSize)
                   .AsNoTrackingWithIdentityResolution()
                   .ToListAsync();
@@ -128,29 +125,26 @@ namespace FoodOrdering.Application.Services.Services
             var menu = await _unitOfWork.Menu
                 .GetMenuWithCategoryAsync(menuId);
 
-            if (menu == null)
-                throw new KeyNotFoundException("Món ăn không tồn tại");
-                
-            await _cacheService.SetAsync(cacheKey, new MenuDto(menu), TimeSpan.FromMinutes(10));
+            if (menu == null) throw new KeyNotFoundException("Món ăn không tồn tại");
 
-            return new MenuDto(menu);
+            await _cacheService.SetAsync(cacheKey, new MenuDto(menu, menu.Ratings.Count()), TimeSpan.FromMinutes(10));
+
+            return new MenuDto(menu, menu.Ratings.Count());
         }
 
         public async Task UpdateMenuAsync(Guid menuId, MenuRequest request)
         {          
             var result = await new MenuValidatior().ValidateAsync(request);
-            if (!result.IsValid)
-                throw new ValidationDictionaryException(result.ToDictionary());
+
+            if (!result.IsValid) throw new ValidationDictionaryException(result.ToDictionary());
 
             var menu = await _unitOfWork.Menu.GetByIdAsync(menuId);
             var menus = _unitOfWork.Menu.GetAll();
 
-            if (menu == null)
-               throw new KeyNotFoundException("Món ăn không tồn tại");
+            if (menu == null) throw new KeyNotFoundException("Món ăn không tồn tại");
 
-            if (await menus.AnyAsync(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower() && m.Id != menuId))
-                throw new DuplicateNameException($"Menu {request.Name} đã tồn tại");
-            
+            if (await menus.AnyAsync(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower() && m.Id != menuId)) throw new DuplicateNameException($"Menu {request.Name} đã tồn tại");
+
             menu.Name = request.Name;
             menu.CategoriesId = request.CategoriesId;
             menu.Description = request.Description;
@@ -181,7 +175,7 @@ namespace FoodOrdering.Application.Services.Services
 
             var menusToDto = await menus
                 .Include(m => m.Categories)
-                .Select(x => new MenuDto(x))
+                .Select(x => new MenuDto(x, x.Ratings.Count()))
                 .AsNoTrackingWithIdentityResolution()
                 .ToListAsync();
 
@@ -205,7 +199,7 @@ namespace FoodOrdering.Application.Services.Services
 
             var menusToDto = await menus
                 .Include(m => m.Categories)
-                .Select(m => new MenuDto(m))
+                .Select(m => new MenuDto(m, m.Ratings.Count()))
                 .AsNoTrackingWithIdentityResolution()
                 .ToListAsync(); 
             return menusToDto;

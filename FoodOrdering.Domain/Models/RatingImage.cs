@@ -13,7 +13,7 @@ namespace FoodOrdering.Domain.Models
         public Rating Rating { get; set; }
 
         public string ImageUrl { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         
     }
 }

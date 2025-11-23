@@ -11,7 +11,6 @@ using FoodOrdering.Application.Repositories;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Domain.Models;
 using Hangfire;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Net.payOS.Types;
 using RedLockNet.SERedis;
@@ -211,7 +210,11 @@ namespace FoodOrdering.Application.Services.Services
         {
             var orders = _unitOfWork.Order.GetAll().Where(o => o.UserId == id);
 
-            var ordersToDTO = await orders
+            IEnumerable<OrderDTO> ordersToDto;
+
+            if (orderParams.Page == 0 || orderParams.PageSize == 0)
+            {
+                ordersToDto = await orders
                 .OrderByDescending(o => o.OrderDate)
                 .Select(o => new OrderDTO
                 {
@@ -231,14 +234,44 @@ namespace FoodOrdering.Application.Services.Services
                         MenuName = m.Menus.Name,
                         MenuImage = m.Menus.ImageUrl,
                         Quantity = m.Quantity,
-                        SubPrice = m.UnitPrice * m.Quantity
+                        SubPrice = m.UnitPrice * m.Quantity,
+                        IsRated = o.Ratings.Any(r => r.MenuId == m.MenuId && r.OrderId == o.Id)
+                    }).ToList()
+                })
+                .AsNoTracking()
+                .ToListAsync();
+            }else
+            {
+                ordersToDto =  await orders
+                .OrderByDescending(o => o.OrderDate)
+                .Select(o => new OrderDTO
+                {
+                    Id = o.Id,
+                    UserId = o.UserId,
+                    OrderDate = o.OrderDate,
+                    FullName = o.Address.FullName,
+                    PhoneNumber = o.Address.PhoneNumber,
+                    Address = o.Address.AddressName,
+                    OrderStatus = o.Status,
+                    TotalAmount = o.TotalAmount,
+                    TransactionCode = o.TransactionId,
+                    Menus = o.OrderMenus.Select(m => new OrderMenuDTO
+                    {
+                        Id = m.Id,
+                        MenuId = m.MenuId,
+                        MenuName = m.Menus.Name,
+                        MenuImage = m.Menus.ImageUrl,
+                        Quantity = m.Quantity,
+                        SubPrice = m.UnitPrice * m.Quantity,
+                        IsRated = o.Ratings.Any(r => r.MenuId == m.MenuId && r.OrderId == o.Id)
                     }).ToList()
                 })
                 .Paging(orderParams.Page, orderParams.PageSize)
                 .AsNoTracking()
                 .ToListAsync();
+            }
 
-            return new PagingReponse<OrderDTO>(orderParams.Page, orderParams.PageSize, orders.Count(), ordersToDTO);               
+            return new PagingReponse<OrderDTO>(orderParams.Page, orderParams.PageSize, orders.Count(), ordersToDto);               
         }
 
         private async Task CreateVouherRedemption(Guid voucherId, Guid userId, Guid orderId)
@@ -293,6 +326,7 @@ namespace FoodOrdering.Application.Services.Services
             {
                 var orderItem = new OrderMenus
                 {
+                    Id = Guid.NewGuid(),
                     OrderId = order.Id,
                     MenuId = item.MenuId,
                     Quantity = item.Quantity,

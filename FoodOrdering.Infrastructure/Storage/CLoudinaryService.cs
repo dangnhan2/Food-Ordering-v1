@@ -17,6 +17,7 @@ namespace FoodOrdering.Infrastructure.Storage
     {
         private readonly string[] allowedExtensions = { ".jpeg", ".gif", ".png", ".jpg" };
         private readonly Cloudinary _cloudinary;
+        private const int MaxFileSize = 1 * 1024 * 1024;
 
         public CLoudinaryService()
         {
@@ -33,9 +34,7 @@ namespace FoodOrdering.Infrastructure.Storage
         {
             var publicId = ExtractPublicIdFromUrl(url);
 
-            if (publicId == null)           
-              throw new InvalidOperationException($"Lỗi khi trích xuất publicId từ URL: {url}");
-            
+            if (publicId == null) throw new InvalidOperationException($"Lỗi khi trích xuất publicId từ URL: {url}");
 
             if (!string.IsNullOrEmpty(publicId))
             {
@@ -46,14 +45,14 @@ namespace FoodOrdering.Infrastructure.Storage
 
         public async Task<string> UploadImage(IFormFile file, string folder)
         {
-            if (file == null || file.Length == 0)
-                throw new FileNotFoundException("File ảnh không được để trống");
+            if (file == null || file.Length == 0) throw new FileNotFoundException("File ảnh không được để trống");
+
+            if (file.Length > MaxFileSize) throw new  InvalidOperationException($"Ảnh không vượt quá {MaxFileSize / (1024 * 1024)} MB");
 
             var fileExtension = Path.GetExtension(file.FileName);
 
-            if (!allowedExtensions.Contains(fileExtension))            
-                throw new ArgumentException($"Hãy upload các file có đuôi {string.Join(",", allowedExtensions)}");
-            
+            if (!allowedExtensions.Contains(fileExtension)) throw new ArgumentException($"Hãy upload các file có đuôi {string.Join(",", allowedExtensions)}");
+
             using var stream = file.OpenReadStream();
 
             var uploadParams = new ImageUploadParams

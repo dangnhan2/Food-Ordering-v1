@@ -15,7 +15,7 @@ namespace FoodOrdering.Application.DTOs.Response
         public string MenuImage { get; set; }
         public int Quantity { get; set; }
         public int SubPrice { get; set; }
-
+        public bool IsRated { get; set; }
         public OrderMenuDTO() { }
         public OrderMenuDTO(OrderMenus order)
         {

@@ -217,7 +217,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
         {
              await _ratingService.RatingPaidOrderAsync(request);
 
-            var response = ApiResponse<dynamic>.Success("Đánh giá thành công", null, StatusCodes.Status200OK);
+            var response = ApiResponse<dynamic>.Success("Đánh giá thành công", null, StatusCodes.Status201Created);
             return Ok(response);
         }
     }
