@@ -24,5 +24,6 @@ namespace FoodOrdering.Application.Contants
 
         public static string UserDetail(Guid userId)
             => $"user:detail:{userId}";
+
     }
 }

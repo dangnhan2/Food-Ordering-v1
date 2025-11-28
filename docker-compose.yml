@@ -1,31 +1,77 @@
-version: "3.9"
+version: '3.9'
 
 services:
-  seq:
-    image: datalust/seq:latest
-    container_name: seq
-    restart: unless-stopped
-    environment:
-      - ACCEPT_EULA=Y
+  postgres:
+    image: postgres:16
+    restart: always
+    container_name: postgres_db
     ports:
-      - "5341:80"   # UI Seq
-      - "5342:5341" # API nh?n log
+      - "${DB_PORT}:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     volumes:
-      - seq-data:/data
-  # redis:
-  #   image: redis:7
-  #   container_name: redis
-  #   restart: unless-stopped
-  #   command: ["redis-server", "--appendonly", "yes"]
-  #   ports:
-  #     - "6379:6379"
-  #   volumes:
-  #     - redis-data:/data
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+  
+  redis:
+    image: redis:7
+    container_name: redis_cache
+    restart: always
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+
   foodordering.presentation:
     image: ${DOCKER_REGISTRY-}foodorderingpresentation
     build:
       context: .
-      dockerfile: WebApplication1/Dockerfile
+      dockerfile: FoodOrdering.Presentation/Dockerfile
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=FoodOrdering;Username=postgres;Password=123456"
+
+      CacheSettings__Redis: "redis:6379"
+
+      Cloudinary__CloudName: ${CLOUDINARY_CLOUD_NAME}
+      Cloudinary__ApiKey: ${CLOUDINARY_API_KEY}
+      Cloudinary__ApiSecret: ${CLOUDINARY_API_SECRET}
+
+      PayOS__ClientId: ${PAYOS_CLIENT_ID}
+      PayOS__ApiKey: ${PAYOS_API_KEY}
+      PayOS__ChecksumKey: ${PAYOS_CHECKSUM_KEY}
+      PayOS__ReturnUrl: ${PAYOS_RETURN_URL}
+      PayOS__CancelUrl: ${PAYOS_CANCEL_URL}
+
+      Smtp__Host: ${SMTP_HOST}
+      Smtp__Port: ${SMTP_PORT}
+      Smtp__Username: ${SMTP_USERNAME}
+      Smtp__Password: ${SMTP_PASSWORD}
+      Smtp__Enable_SSL: ${SMTP_ENABLE_SSL}
+      Smtp__From_Name: ${SMTP_FROM_NAME}
+      Smtp__From_Email: ${SMTP_FROM_EMAIL}
+
+      Default_Avatar: ${DEFAULT_AVATAR}
+
+    ports:
+      - "8080:8080"
+    networks:
+      - app_network
+
+networks:
+  app_network:
 
 volumes:
-  seq-data:
+  postgres_data:
+  redis_data:

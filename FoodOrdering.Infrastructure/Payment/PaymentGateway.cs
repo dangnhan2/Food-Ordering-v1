@@ -39,8 +39,8 @@ namespace FoodOrdering.Infrastructure.Payment
                 Env.GetString("PAYOS_CHECKSUM_KEY")
                 );
 
-            returnUrl = Env.GetString("RETURN_URL");
-            cancelUrl = Env.GetString("CANCEL_URL");
+            returnUrl = Env.GetString("PAYOS_RETURN_URL");
+            cancelUrl = Env.GetString("PAYOS_CANCEL_URL");
             _checksumKey = Env.GetString("PAYOS_CHECKSUM_KEY");
             _hubContext = hubContext;
             _userManager = userManager;
