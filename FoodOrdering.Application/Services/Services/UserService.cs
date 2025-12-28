@@ -1,10 +1,10 @@
 ﻿using DotNetEnv;
-using FoodOrdering.Application.Caching;
 using FoodOrdering.Application.Contants;
 using FoodOrdering.Application.DTOs.QueryParams;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
-using FoodOrdering.Application.Extension;
+using FoodOrdering.Application.Helper.Extensions;
+using FoodOrdering.Application.Repositories.Caching;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Validator;
 using Microsoft.EntityFrameworkCore;
@@ -24,45 +24,34 @@ namespace FoodOrdering.Application.Services.Services
             _unitOfWork = unitOfWork;
             _cloudinaryService = cloudinaryService;
             _defaultAvatar = Env.GetString("DEFAULT_AVATAR");
-            _cachingService = cachingService;
+            _cachingService = cachingService;         
         }
 
         public async Task<PagingReponse<UserDTO>> GetAllAsync(UserParams userParams)
-        {         
-            var users = _unitOfWork.User.GetAll();
-            if (!string.IsNullOrEmpty(userParams.FullName))            
-                users = users.Where(u => u.FullName.Trim().ToLower() == userParams.FullName.Trim().ToLower());
+        {
+            var users = _unitOfWork.User.GetAll().Where(u => !u.IsAdmin);
 
-            if (!string.IsNullOrEmpty(userParams.PhoneNumber))
-                users = users.Where(u => u.PhoneNumber == u.PhoneNumber);
-
-            if (!string.IsNullOrEmpty(userParams.Email))
-                users = users.Where(u => u.Email == userParams.Email);
-
-            IEnumerable<UserDTO> usersToDTO;
-            if (userParams.Page == 0 || userParams.PageSize == 0)
+            if (!string.IsNullOrEmpty(userParams.Search))
             {
-                usersToDTO = await users
-                    .OrderByDescending(u => u.CreatedAt)
-                    .Select(u => new UserDTO(u))   
-                    .AsNoTracking()
-                    .ToListAsync();
+                users = users.Where(u => u.UserName.Trim().ToLower().Contains(userParams.Search.Trim().ToLower()) 
+                || u.PhoneNumber.Contains(userParams.Search) 
+                || u.Email.Contains(userParams.Search));
             }
-            else
-            {
-                usersToDTO = await users
+
+            var usersToDTO = users
                     .OrderByDescending(u => u.CreatedAt)
                     .Select(u => new UserDTO(u))
-                    .Paging(userParams.Page, userParams.PageSize)
-                    .AsNoTracking()
-                    .ToListAsync();
-            }
+                    .AsNoTracking();
+                    
 
-            var response = new PagingReponse<UserDTO>(userParams.Page, userParams.PageSize, users.Count(), usersToDTO);
+            if (userParams.Page != 0 && userParams.PageSize != 0)
+                usersToDTO = usersToDTO.Paging(userParams.Page, userParams.PageSize);
+
+            var response = new PagingReponse<UserDTO>(userParams.Page, userParams.PageSize, users.Count(), await usersToDTO.ToListAsync());
             return response;
         } 
 
-        public async Task UploadProfileAsync(Guid id, UserRequest request)
+        public async Task UploadProfileAsync(Guid id, UserRequestDto request)
         {
             var result = await new UserValidation().ValidateAsync(request);
   
@@ -74,10 +63,12 @@ namespace FoodOrdering.Application.Services.Services
             if (user == null)
                 throw new KeyNotFoundException("Người dùng không tồn tại");
 
-            var phoneNumbers = _unitOfWork.User.GetAll().Where(u => u.PhoneNumber == request.PhoneNumber && u.Id != id);
+            var phoneNumbers = _unitOfWork.User
+                .GetAll()
+                .Where(u => u.PhoneNumber == request.PhoneNumber && u.Id != id);
 
             if (phoneNumbers.Any())
-                throw new ArgumentException("Số điện thoại đã tồn tại");
+                throw new ArgumentException("Số điện thoại đã đăng kí");
 
             if (request.Avatar != null)
             {
@@ -93,8 +84,7 @@ namespace FoodOrdering.Application.Services.Services
                     user.ImageUrl = url;
                 }
             }
-            
-            user.FullName = request.FullName;
+           
             user.PhoneNumber = request.PhoneNumber;
 
             _unitOfWork.User.Update(user);

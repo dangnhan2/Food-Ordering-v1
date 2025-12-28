@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.DTOs.Request
 {
-    public class RatingRequest
+    public class RatingRequestDto
     {
         public Guid MenuId { get; set; }
         public Guid OrderId { get; set; }

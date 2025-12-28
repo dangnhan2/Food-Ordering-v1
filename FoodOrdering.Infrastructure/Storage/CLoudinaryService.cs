@@ -24,7 +24,7 @@ namespace FoodOrdering.Infrastructure.Storage
             Env.Load();
             Account account = new Account
             {
-                Cloud = Env.GetString("CLOUD_NAME"),
+                Cloud = Env.GetString("API_NAME"),
                 ApiKey = Env.GetString("API_KEY"),
                 ApiSecret = Env.GetString("API_SECRET")
             };

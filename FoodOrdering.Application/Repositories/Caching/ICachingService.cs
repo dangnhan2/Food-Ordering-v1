@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FoodOrdering.Application.Caching
+namespace FoodOrdering.Application.Repositories.Caching
 {
     public interface ICachingService
     {

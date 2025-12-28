@@ -21,35 +21,87 @@ namespace FoodOrdering.Application.Services.Services
         public async Task<DashboardOverviewDTO> GetInfoAsync()
         {
             var today = DateTime.UtcNow.Date;
+            var month = DateTime.UtcNow.Month;
 
-            var totalOrders = _unitOfWork.Order.GetAll().Count(o => o.OrderDate.Date == today);
-            var paidOrders = _unitOfWork.Order.GetAll();
-            var cancelledOrders = _unitOfWork.Order.GetAll().Count(o => o.Status == OrderStatus.Cancelled && o.OrderDate.Date == today);
-            var newCustomersToday = _unitOfWork.User.GetAll().Count(u => u.CreatedAt.Date == today);
-            var totalPaidOrders = paidOrders.Count(o => o.Status == OrderStatus.Paid && o.OrderDate.Date == today);
-            var totalMenuItems = _unitOfWork.Menu.GetAll().Count();
-            var totalUsers = _unitOfWork.User.GetAll().Count();
+            var totalOrdersToday = _unitOfWork.Order
+                .GetAll()
+                .Count(o => o.OrderDate.Date == today);
 
-            var totalAmount = paidOrders.Sum(o => o.TotalAmount);
+            var cancelledOrdersToday = _unitOfWork.Order
+                .GetAll()
+                .Count(o => o.Status == OrderStatus.Cancelled && o.OrderDate.Date == today);
 
+            var paidOrders = _unitOfWork.Order
+                .GetAll()
+                .Where(o => o.Status == OrderStatus.Paid);
+
+            var totalPaidOrdersToday = paidOrders
+                .Count(o => o.Status == OrderStatus.Paid && o.OrderDate.Date == today);
+
+            var totalMenuItems = _unitOfWork.Menu
+                .GetAll()
+                .Where(m => m.IsAvailable)
+                .Count();
+
+            var totalUsers = _unitOfWork.User
+                .GetAll()
+                .Where(u => !u.IsAdmin)
+                .Count();
+
+            var revenuePaidOrdersMonthly = _unitOfWork.Order
+                .GetAll()
+                .Where(u => u.Status == OrderStatus.Paid && u.OrderDate.Month == month)
+                .Sum(o => o.TotalAmount);
+    
+
+            var totalAmount = paidOrders
+                .Where(o => o.OrderDate.Date == today)
+                .Sum(o => o.TotalAmount);
+
+            // Get 5 the best dishes 
             var topSellingDishes = await _unitOfWork.Menu
                 .GetAll()
                 .OrderByDescending(m => m.SoldQuantity)
-                .Take(3)
+                .Take(5)
                 .Select(d => new TopDishDto(d))
+                .AsNoTracking()
+                .ToListAsync();
+
+            // Get paid orders monthly
+            var totalPaidOrdersMonthly = _unitOfWork.Order
+                .GetAll()
+                .Where(o => o.Status == OrderStatus.Paid && o.OrderDate.Month == month)
+                .Count();
+
+            // Get 5 the most spenders monthly
+            var topBuyers = await _unitOfWork.User
+                .GetAll()
+                .Take(5)
+                .Where(u => !u.IsAdmin)
+                .OrderByDescending(u => u.Orders.Sum(o => o.TotalAmount))
+                .Select(u => new TopBuyerDto
+                {
+                    Id = u.Id,
+                    UserName = u.UserName,
+                    Email = u.Email,
+                    PhoneNumber = u.PhoneNumber,
+                    TotalAmountInAMonth = u.Orders.Sum(o => o.TotalAmount)
+                })
                 .AsNoTracking()
                 .ToListAsync();
 
             var dashboardToDTO = new DashboardOverviewDTO
             {
-                TotalOrdersToday = totalOrders,
-                PaidOrdersToday = totalPaidOrders,
-                CancelledOrdersToday = cancelledOrders,
+                TotalOrdersToday = totalOrdersToday,
+                PaidOrdersToday = totalPaidOrdersToday,
+                CancelledOrdersToday = cancelledOrdersToday,
                 RevenueToday = totalAmount,
                 TotalCustomers = totalUsers,
                 TotalMenuItems = totalMenuItems,
-                NewCustomersToday = newCustomersToday,
-                TopSellingDishes = topSellingDishes
+                TopSellingDishes = topSellingDishes,
+                RevenueMonthly = revenuePaidOrdersMonthly,
+                TotalPaidOrdersMontly = totalPaidOrdersMonthly,
+                TopBuyers = topBuyers
             };
 
             return dashboardToDTO;

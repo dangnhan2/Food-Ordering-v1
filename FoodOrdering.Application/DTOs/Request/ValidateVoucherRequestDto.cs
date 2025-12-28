@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.DTOs.Request
 {
-    public class CategoryRequest
+    public class ValidateVoucherRequestDto
     {
-        public string Name { get; set; } = string.Empty;
+        public Guid UserId { get; set; }
+        public Guid VoucherId { get; set; }
     }
 }

@@ -7,9 +7,8 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.DTOs.Request
 {
-    public class UserRequest
+    public class UserRequestDto
     {
-        public string FullName { get; set; }
         public string PhoneNumber { get; set; }
         public IFormFile? Avatar { get; set; }
     }

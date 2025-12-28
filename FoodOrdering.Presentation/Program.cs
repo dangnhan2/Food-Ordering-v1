@@ -4,9 +4,7 @@ using FoodOrdering.Infrastructure.Configuration;
 using FoodOrdering.Presentation.Configuration;
 using FoodOrdering.Presentation.Middleware;
 using Hangfire;
-using Npgsql;
 using Serilog;
-using Serilog.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +25,7 @@ builder.Host.UseSerilog((context, services, configuration) =>
 builder.Services.AddExtensions();
 builder.Services.AddConnection();
 builder.Services.AddHangfireServer();
+builder.Services.AddDistributedMemoryCache();
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -41,6 +40,10 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.ApplyMigrations();
+    app.UseHangfireServer();
+    app.UseHangfireDashboard("/dashboard");
+    await app.SeedAsync();
 }
 
 app.UseHttpsRedirection();
@@ -48,9 +51,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<GlobalExceptionMiddleware>();
-app.UseHangfireDashboard("/dashboard");
 app.UseCors("Happy Food");
-await app.SeedAsync();
 
 RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
     "DeleteExpiredCarts_3hours",

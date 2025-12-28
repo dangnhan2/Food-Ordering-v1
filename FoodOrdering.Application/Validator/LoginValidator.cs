@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Validator
 {
-    public class LoginValidator : AbstractValidator<LoginRequest>
+    public class LoginValidator : AbstractValidator<LoginRequestDto>
     {
         public LoginValidator() {
             // Kiểm tra trường Email

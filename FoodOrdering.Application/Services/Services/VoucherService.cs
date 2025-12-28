@@ -1,9 +1,10 @@
-﻿using FoodOrdering.Application.Caching;
-using FoodOrdering.Application.Contants;
+﻿using FoodOrdering.Application.Contants;
 using FoodOrdering.Application.DTOs.QueryParams;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Extension;
+using FoodOrdering.Application.Helper.Extensions;
+using FoodOrdering.Application.Repositories.Caching;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
@@ -22,7 +23,7 @@ namespace FoodOrdering.Application.Services.Services
             _unitOfWork = unitOfWork;           
             _cacheService = cacheService;            
         }
-        public async Task AddAsync(VoucherRequest request)
+        public async Task AddAsync(VoucherRequestDto request)
         {
             var result = await new VoucherValidator().ValidateAsync(request);
 
@@ -43,8 +44,11 @@ namespace FoodOrdering.Application.Services.Services
             var existVoucher = await _unitOfWork.Voucher.GetByIdAsync(id);
 
             if (existVoucher == null)
-                throw new KeyNotFoundException("Mã giảm giá không tồn tại");               
-             
+                throw new KeyNotFoundException("Mã giảm giá không tồn tại");
+
+            if (existVoucher.IsActive)
+                throw new InvalidOperationException("Mã giảm giá đang được áp dụng. Hãy cập nhật lại trước khi xóa");
+
             _unitOfWork.Voucher.Remove(existVoucher);
             await _unitOfWork.SaveChangeAsync();
             await _cacheService.RemoveAsync(CacheKeys.VoucherDetail(existVoucher.Id));
@@ -57,52 +61,43 @@ namespace FoodOrdering.Application.Services.Services
         {          
             var vouchers = _unitOfWork.Voucher.GetAll();
 
-            if (voucherParams.StartDate.HasValue)
-                vouchers = vouchers.Where(v => v.StartDate == voucherParams.StartDate.Value);
-            if (voucherParams.EndDate.HasValue)
-                vouchers = vouchers.Where(v => v.EndDate == voucherParams.EndDate.Value);
+            if (!string.IsNullOrEmpty(voucherParams.Search))
+                vouchers = vouchers.Where(v => v.Code.ToUpper() == voucherParams.Search.ToUpper());
+
+            if (voucherParams.StartDate.HasValue && voucherParams.EndDate.HasValue)
+                vouchers = vouchers.Where(v => v.StartDate == voucherParams.StartDate.Value && v.EndDate == voucherParams.EndDate.Value);            
 
             if (!string.IsNullOrEmpty(voucherParams.SortBy))
-            {   
+            {
                 var sortBy = voucherParams.SortBy.ToLower();
                 var sortOrder = voucherParams.SortOrder?.ToLower() ?? "asc";
 
                 vouchers = sortBy
                 switch
                 {
-                    "usageLimit" => 
-                    sortOrder == "desc" 
-                    ? vouchers.OrderByDescending(v => v.UsageLimit) 
+                    "usageLimit" =>
+                    sortOrder == "desc"
+                    ? vouchers.OrderByDescending(v => v.UsageLimit)
                     : vouchers.OrderBy(v => v.UsageLimit),
 
                     "usedCount" =>
-                    sortOrder == "desc" 
-                    ? vouchers.OrderByDescending(v => v.UsedCount) 
+                    sortOrder == "desc"
+                    ? vouchers.OrderByDescending(v => v.UsedCount)
                     : vouchers.OrderBy(v => v.UsedCount),
 
                     _ => vouchers.OrderByDescending(v => v.StartDate)
                 };
             }
 
-            IEnumerable<VoucherDTO> voucherToDTO;
-
-            if (voucherParams.Page == 0 || voucherParams.PageSize == 0)
-            {
-               voucherToDTO = await vouchers
+            var voucherToDTO = vouchers
                     .Select(v => new VoucherDTO(v))
-                    .AsNoTracking()
-                    .ToListAsync();
-            }
-            else
-            {
-                voucherToDTO = await vouchers
-                    .Select(v => new VoucherDTO(v))
-                    .Paging(voucherParams.Page, voucherParams.PageSize)
-                    .AsNoTracking()
-                    .ToListAsync();
-            }
+                    .AsNoTracking();
 
-            var response = new PagingReponse<VoucherDTO>(voucherParams.Page, voucherParams.PageSize, vouchers.Count(), voucherToDTO);
+            if (voucherParams.Page != 0 && voucherParams.PageSize != 0)           
+              voucherToDTO = voucherToDTO.Paging(voucherParams.Page, voucherParams.PageSize);
+                      
+
+            var response = new PagingReponse<VoucherDTO>(voucherParams.Page, voucherParams.PageSize, vouchers.Count(), await voucherToDTO.ToListAsync());
             return response; 
         }
 
@@ -142,7 +137,7 @@ namespace FoodOrdering.Application.Services.Services
             return voucherToDto;
         }
 
-        public async Task UpdateAsync(Guid id, VoucherRequest request)
+        public async Task UpdateAsync(Guid id, VoucherRequestDto request)
         {
             var result = await new VoucherValidator().ValidateAsync(request);
 
@@ -155,7 +150,7 @@ namespace FoodOrdering.Application.Services.Services
                 throw new KeyNotFoundException("Mã giảm giá không tồn tại");
 
             existVoucher.Code = request.Code;
-            existVoucher.Description = $"Hạn sử dụng {request.StartDate} đến ngày {request.EndDate}";
+            existVoucher.Description = $"Hạn sử dụng {request.StartDate.FormatDateTimeOffset()} đến ngày {request.EndDate.FormatDateTimeOffset()}";
             existVoucher.DiscountType = request.DiscountType;
             existVoucher.DiscountValue = request.DiscountValue;
             existVoucher.StartDate = request.StartDate;
@@ -175,7 +170,7 @@ namespace FoodOrdering.Application.Services.Services
                 await _cacheService.RemoveAsync(CacheKeys.VOUCHER_ACTIVE);
         }
 
-        public async Task<VoucherValidationDto> ValidateVoucherAsync(ValidateVoucherRequest request)
+        public async Task<VoucherValidationDto> ValidateVoucherAsync(ValidateVoucherRequestDto request)
         {   
             var voucher = await _unitOfWork.Voucher.GetByIdAsync(
                 v => v.Id == request.VoucherId
@@ -229,12 +224,12 @@ namespace FoodOrdering.Application.Services.Services
             return subTotal; 
         }
 
-        private Voucher MappingVoucher(VoucherRequest request)
-        {
+        private Voucher MappingVoucher(VoucherRequestDto request)
+        {              
             var voucher = new Voucher
             {
                 Code = request.Code,
-                Description = $"Hạn sử dụng {request.StartDate} đến ngày {request.EndDate}",
+                Description = $"Hạn sử dụng {request.StartDate.FormatDateTimeOffset()} đến ngày {request.EndDate.FormatDateTimeOffset()}",
                 DiscountType = request.DiscountType,
                 DiscountValue = request.DiscountValue,
                 StartDate = request.StartDate,

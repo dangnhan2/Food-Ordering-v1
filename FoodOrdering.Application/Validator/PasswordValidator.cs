@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Validator
 {
-    public class PasswordValidator : AbstractValidator<PasswordRequest>
+    public class PasswordValidator : AbstractValidator<PasswordRequestDto>
     {
         public PasswordValidator() {
             // 1. Kiểm tra trường CurrentPassword (Mật khẩu hiện tại)

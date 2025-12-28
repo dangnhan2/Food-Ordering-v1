@@ -1,13 +1,13 @@
-﻿using CloudinaryDotNet.Actions;
-using Food_Ordering.Models.Enum;
-using FoodOrdering.Application.Caching;
+﻿using Food_Ordering.Models.Enum;
 using FoodOrdering.Application.Contants;
 using FoodOrdering.Application.DTOs.QueryParams;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Extension;
+using FoodOrdering.Application.Helper.Extensions;
 using FoodOrdering.Application.Payment;
 using FoodOrdering.Application.Repositories;
+using FoodOrdering.Application.Repositories.Caching;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Domain.Models;
 using Hangfire;
@@ -47,45 +47,51 @@ namespace FoodOrdering.Application.Services.Services
         {      
             var orders = _unitOfWork.Order.GetAll();
 
-            IEnumerable<OrderDTO> ordersToDTO;
+            var ordersToDTO = orders
+               .OrderByDescending(o => o.OrderDate)
+               .Select(o => new OrderDTO
+               {
+                   Id = o.Id,
+                   UserId = o.UserId,
+                   OrderDate = o.OrderDate.FormatDateTime(),
+                   FullName = o.Address.FullName,
+                   PhoneNumber = o.Address.PhoneNumber,
+                   Address = o.Address.AddressName,
+                   OrderStatus = o.Status,
+                   TotalAmount = o.TotalAmount,
+                   TransactionCode = o.TransactionId,
+                   Menus = o.OrderMenus.Select(m => new OrderMenuDTO
+                   {
+                       Id = m.Id,
+                       MenuId = m.MenuId,
+                       MenuName = m.Menus.Name,
+                       MenuImage = m.Menus.ImageUrl,
+                       Quantity = m.Quantity,
+                       SubPrice = m.UnitPrice * m.Quantity
+                   }).ToList()
+               })
+               .AsNoTracking();
+               
 
-            if (orderParams.Page == 0 || orderParams.PageSize == 0)
-            {
-                ordersToDTO = await orders
-                .OrderByDescending(o => o.OrderDate)
-                .Include(o => o.Address)
-                .Select(o => new OrderDTO(o, o.OrderMenus
-                                .Select(m => new OrderMenuDTO(m))
-                                .ToList()))
-                .AsNoTrackingWithIdentityResolution()
-                .ToListAsync();
-            }
-            else
-            {
-                ordersToDTO = await orders
-                .OrderByDescending(o => o.OrderDate)
-                .Include(o => o.Address)
-                .Select(o => new OrderDTO(o, o.OrderMenus
-                                .Select(m => new OrderMenuDTO(m))
-                                .ToList()))
-                .Paging(orderParams.Page, orderParams.PageSize)
-                .AsNoTrackingWithIdentityResolution()
-                .ToListAsync();
-            }
 
-            var response = new PagingReponse<OrderDTO>(orderParams.Page, orderParams.PageSize, orders.Count(), ordersToDTO);
+            if (orderParams.Page != 0 && orderParams.PageSize != 0)
+            {
+                ordersToDTO =  ordersToDTO.Paging(orderParams.Page, orderParams.PageSize);
+            }       
+
+                var response = new PagingReponse<OrderDTO>(orderParams.Page, orderParams.PageSize, orders.Count(), await ordersToDTO.ToListAsync());
             return response;
         }
 
-        public async Task<dynamic> CreateOrderByQRAsync(OrderRequest request)
+        public async Task<dynamic> CreateOrderByQRAsync(OrderRequestDto request)
         {
             Log.Information("Start to create an order with OR");
        
             var cart = await _unitOfWork.Cart.GetCartByCustomerAsync(request.UserId);
             if (cart == null)
-                throw new KeyNotFoundException("Giỏ hàng trống / không tồn tại");              
+                throw new KeyNotFoundException("Giỏ hàng trống / không tồn tại");
 
-            int totalAmount = Extensions.GetSubAmount(cart.CartItems);
+            int totalAmount = GetSubAmount(cart.CartItems);
 
             var newOrder = MappingOrder(request, totalAmount, "QR");
 
@@ -144,7 +150,7 @@ namespace FoodOrdering.Application.Services.Services
             return response;
         }
 
-        public async Task<int> CreateOrderByCODAsync(OrderRequest request)
+        public async Task<int> CreateOrderByCODAsync(OrderRequestDto request)
         {
             Log.Information("Start to create an order with COD");
 
@@ -153,7 +159,7 @@ namespace FoodOrdering.Application.Services.Services
             if (cart == null)
                 throw new KeyNotFoundException("Giỏ hàng trống / không tồn tại");
 
-            var totalAmount = Extensions.GetSubAmount(cart.CartItems);
+            var totalAmount = GetSubAmount(cart.CartItems);
             var newOrder = MappingOrder(request, totalAmount, "COD");
 
             // add menu to order
@@ -210,68 +216,37 @@ namespace FoodOrdering.Application.Services.Services
         {
             var orders = _unitOfWork.Order.GetAll().Where(o => o.UserId == id);
 
-            IEnumerable<OrderDTO> ordersToDto;
+            var ordersToDTO = orders
+               .OrderByDescending(o => o.OrderDate)
+               .Select(o => new OrderDTO
+               {
+                   Id = o.Id,
+                   UserId = o.UserId,
+                   OrderDate = o.OrderDate.FormatDateTime(),
+                   FullName = o.Address.FullName,
+                   PhoneNumber = o.Address.PhoneNumber,
+                   Address = o.Address.AddressName,
+                   OrderStatus = o.Status,
+                   TotalAmount = o.TotalAmount,
+                   TransactionCode = o.TransactionId,
+                   Menus = o.OrderMenus.Select(m => new OrderMenuDTO
+                   {
+                       Id = m.Id,
+                       MenuId = m.MenuId,
+                       MenuName = m.Menus.Name,
+                       MenuImage = m.Menus.ImageUrl,
+                       Quantity = m.Quantity,
+                       SubPrice = m.UnitPrice * m.Quantity
+                   }).ToList()
+               })
+               .AsNoTracking();
 
-            if (orderParams.Page == 0 || orderParams.PageSize == 0)
+            if (orderParams.Page != 0 && orderParams.PageSize != 0)
             {
-                ordersToDto = await orders
-                .OrderByDescending(o => o.OrderDate)
-                .Select(o => new OrderDTO
-                {
-                    Id = o.Id,
-                    UserId = o.UserId,
-                    OrderDate = o.OrderDate,
-                    FullName = o.Address.FullName,
-                    PhoneNumber = o.Address.PhoneNumber,
-                    Address = o.Address.AddressName,
-                    OrderStatus = o.Status,
-                    TotalAmount = o.TotalAmount,
-                    TransactionCode = o.TransactionId,
-                    Menus = o.OrderMenus.Select(m => new OrderMenuDTO
-                    {
-                        Id = m.Id,
-                        MenuId = m.MenuId,
-                        MenuName = m.Menus.Name,
-                        MenuImage = m.Menus.ImageUrl,
-                        Quantity = m.Quantity,
-                        SubPrice = m.UnitPrice * m.Quantity,
-                        IsRated = o.Ratings.Any(r => r.MenuId == m.MenuId && r.OrderId == o.Id)
-                    }).ToList()
-                })
-                .AsNoTracking()
-                .ToListAsync();
-            }else
-            {
-                ordersToDto =  await orders
-                .OrderByDescending(o => o.OrderDate)
-                .Select(o => new OrderDTO
-                {
-                    Id = o.Id,
-                    UserId = o.UserId,
-                    OrderDate = o.OrderDate,
-                    FullName = o.Address.FullName,
-                    PhoneNumber = o.Address.PhoneNumber,
-                    Address = o.Address.AddressName,
-                    OrderStatus = o.Status,
-                    TotalAmount = o.TotalAmount,
-                    TransactionCode = o.TransactionId,
-                    Menus = o.OrderMenus.Select(m => new OrderMenuDTO
-                    {
-                        Id = m.Id,
-                        MenuId = m.MenuId,
-                        MenuName = m.Menus.Name,
-                        MenuImage = m.Menus.ImageUrl,
-                        Quantity = m.Quantity,
-                        SubPrice = m.UnitPrice * m.Quantity,
-                        IsRated = o.Ratings.Any(r => r.MenuId == m.MenuId && r.OrderId == o.Id)
-                    }).ToList()
-                })
-                .Paging(orderParams.Page, orderParams.PageSize)
-                .AsNoTracking()
-                .ToListAsync();
+                ordersToDTO = ordersToDTO.Paging(orderParams.Page, orderParams.PageSize);
             }
 
-            return new PagingReponse<OrderDTO>(orderParams.Page, orderParams.PageSize, orders.Count(), ordersToDto);               
+            return new PagingReponse<OrderDTO>(orderParams.Page, orderParams.PageSize, orders.Count(), await ordersToDTO.ToListAsync());               
         }
 
         private async Task CreateVouherRedemption(Guid voucherId, Guid userId, Guid orderId)
@@ -288,7 +263,7 @@ namespace FoodOrdering.Application.Services.Services
             await _unitOfWork.VoucherRedemption.AddAsync(voucherRedemption);
         }
 
-        private Order MappingOrder(OrderRequest request,int total, string type)
+        private Order MappingOrder(OrderRequestDto request,int total, string type)
         {
             var newOrder = new Order
             {
@@ -362,5 +337,17 @@ namespace FoodOrdering.Application.Services.Services
             return items;
         }
 
+        private int GetSubAmount(ICollection<CartItem> items)
+        {
+            int TAX_RATE = 8;
+            int subTotal = 0;
+            foreach (var item in items)
+            {
+                subTotal += item.Quantity * item.UnitPrice;
+            }
+
+            subTotal = subTotal + (subTotal * TAX_RATE) / 100;
+            return subTotal;
+        }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Food_Ordering.Models.Enum;
+using FoodOrdering.Application.Helper.Extensions;
 using FoodOrdering.Domain.Models;
 
 namespace FoodOrdering.Application.DTOs.Response
@@ -7,7 +8,7 @@ namespace FoodOrdering.Application.DTOs.Response
     {
         public Guid Id { get; set; }
         public Guid UserId { get; set; }
-        public DateTime OrderDate { get; set; }
+        public string OrderDate { get; set; }
         public string FullName { get; set; }
         public string PhoneNumber { get; set; }
         public string Address { get; set; }
@@ -21,7 +22,7 @@ namespace FoodOrdering.Application.DTOs.Response
         {
             Id = order.Id;
             UserId = order.UserId;
-            OrderDate = order.OrderDate;
+            OrderDate = order.OrderDate.FormatDateTime();
             FullName = order.Address.FullName;
             PhoneNumber = order.Address.PhoneNumber;
             Address = order.Address.AddressName;

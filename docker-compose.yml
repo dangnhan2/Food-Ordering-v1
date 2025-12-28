@@ -1,77 +1,102 @@
-version: '3.9'
+﻿version: '3.8'
 
 services:
-  postgres:
-    image: postgres:16
+  foodordering.database:
+    image: postgres:15-alpine
+    container_name: foodordering.database
     restart: always
-    container_name: postgres_db
     ports:
-      - "${DB_PORT}:5432"
+      - "5432:5432"
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - app_network
   
-  redis:
-    image: redis:7
-    container_name: redis_cache
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: foodordering.dbadmin
+    restart: always
+    ports:
+      - "8082:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+    - app_network 
+
+  # --- REDIS CACHE ---
+  foodordering.cache:
+    image: redis:latest
+    container_name: foodordering.cache
     restart: always
     ports:
       - "6379:6379"
-    command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis_data:/data
     networks:
       - app_network
 
+  # --- API PRESENTATION ---
   foodordering.presentation:
     image: ${DOCKER_REGISTRY-}foodorderingpresentation
+    container_name: foodordering_api
     build:
       context: .
       dockerfile: FoodOrdering.Presentation/Dockerfile
+    env_file:
+      - .env
+
     depends_on:
-      - postgres
-      - redis
+      - "foodordering.database"
+      - "foodordering.cache"
+
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_URLS: http://+:8080
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
+      - ConnectionStrings__DefaultConnection=${DefaultConnection}
+      - REDIS=${REDIS}
 
-      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=FoodOrdering;Username=postgres;Password=123456"
-
-      CacheSettings__Redis: "redis:6379"
-
-      Cloudinary__CloudName: ${CLOUDINARY_CLOUD_NAME}
-      Cloudinary__ApiKey: ${CLOUDINARY_API_KEY}
-      Cloudinary__ApiSecret: ${CLOUDINARY_API_SECRET}
-
-      PayOS__ClientId: ${PAYOS_CLIENT_ID}
-      PayOS__ApiKey: ${PAYOS_API_KEY}
-      PayOS__ChecksumKey: ${PAYOS_CHECKSUM_KEY}
-      PayOS__ReturnUrl: ${PAYOS_RETURN_URL}
-      PayOS__CancelUrl: ${PAYOS_CANCEL_URL}
-
-      Smtp__Host: ${SMTP_HOST}
-      Smtp__Port: ${SMTP_PORT}
-      Smtp__Username: ${SMTP_USERNAME}
-      Smtp__Password: ${SMTP_PASSWORD}
-      Smtp__Enable_SSL: ${SMTP_ENABLE_SSL}
-      Smtp__From_Name: ${SMTP_FROM_NAME}
-      Smtp__From_Email: ${SMTP_FROM_EMAIL}
-
-      Default_Avatar: ${DEFAULT_AVATAR}
-
+      - API_NAME=${API_NAME}
+      - API_KEY=${API_KEY}
+      - API_SECRET=${API_SECRET}
+      
+      - SECRET_KEY=${SECRET_KEY}
+      - ISSUER=${ISSUER}
+      - AUDIENCE=${AUDIENCE}
+      
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_ENABLE_SSL=${SMTP_ENABLE_SSL}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL}
+      - SMTP_FROM_NAME=${SMTP_FROM_NAME}
+      
+      - PAYOS_CLIENT_ID=${PAYOS_CLIENT_ID}
+      - PAYOS_API_KEY=${PAYOS_API_KEY}
+      - PAYOS_CHECKSUM_KEY=${PAYOS_CHECKSUM_KEY}
+      - PAYOS_RETURN_URL=${PAYOS_RETURN_URL}
+      - PAYOS_CANCEL_URL=${PAYOS_CANCEL_URL}
+      
+      - DEFAULT_AVATAR=${DEFAULT_AVATAR}
     ports:
       - "8080:8080"
-    networks:
-      - app_network
+      - "8081:8081"
+    networks:      
+      - app_network 
 
 networks:
   app_network:
+    driver: bridge
 
 volumes:
   postgres_data:
   redis_data:
+  pgadmin-data:

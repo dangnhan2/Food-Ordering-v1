@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Validator
 {
-    public class ResetPasswordValidator : AbstractValidator<ResetPasswordRequest>
+    public class ResetPasswordValidator : AbstractValidator<ResetPasswordRequestDto>
     {
         public ResetPasswordValidator() {
             // 1. Kiểm tra trường Email

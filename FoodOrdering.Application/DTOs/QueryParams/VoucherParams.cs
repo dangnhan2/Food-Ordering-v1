@@ -13,6 +13,10 @@ namespace FoodOrdering.Application.DTOs.QueryParams
         public int Page { get; set; }
         [JsonPropertyName("pageSize")]
         public int PageSize { get; set; }
+      
+        [JsonPropertyName("search")]
+        public string? Search { get; set; }
+
         [JsonPropertyName("startDate")]
         public DateTime? StartDate { get; set; }
         [JsonPropertyName("endDate")]

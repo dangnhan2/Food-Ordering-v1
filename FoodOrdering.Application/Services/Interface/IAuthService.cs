@@ -6,13 +6,13 @@ namespace FoodOrdering.Application.Services.Interface
 {
     public interface IAuthService
     {
-        public Task<string> RegisterAsync(RegisterRequest request);
-        public Task<AuthResponse> LoginAsync(LoginRequest request, HttpContext context);
+        public Task<string> RegisterAsync(RegisterRequestDto request);
+        public Task<AuthResponse> LoginAsync(LoginRequestDto request, HttpContext context);
         public Task<AuthResponse> RefreshTokenAsync(HttpContext context);
         public Task LogoutAsync(HttpContext context);
-        public Task<string> VerifyEmail(EmailVerifyRequest request);
-        public Task ChangePasswordAsync(PasswordRequest request);
-        public Task ForgotPasswordAsync(ForgotPasswordRequest request);
-        public Task ResetPasswordAsync(ResetPasswordRequest request);
+        public Task<string> VerifyEmail(EmailVerifyRequestDto request);
+        public Task ChangePasswordAsync(PasswordRequestDto request);
+        public Task ForgotPasswordAsync(ForgotPasswordRequestDto request);
+        public Task ResetPasswordAsync(ResetPasswordRequestDto request);
     }
 }

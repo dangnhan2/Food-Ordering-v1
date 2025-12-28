@@ -6,10 +6,11 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.DTOs.Request
 {
-    public class ResetPasswordRequest
+    public class RegisterRequestDto
     {   
         public string Email { get; set; }
-        public string NewPassword { get; set; }
+        public string UserName { get; set; }
+        public string Password { get; set; }
         public string ConfirmPassword { get; set; }
     }
 }

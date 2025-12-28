@@ -15,9 +15,9 @@ namespace FoodOrdering.Application.Services.Interface
         public Task<PagingReponse<VoucherDTO>> GetAllByAdminAsync(VoucherParams voucherParams);
         public Task<IEnumerable<VoucherDTO>> GetAllByCustomerAsync();
         public Task<VoucherDTO> GetByIdAsync(Guid id);
-        public Task AddAsync(VoucherRequest request);
-        public Task UpdateAsync(Guid id, VoucherRequest request);
+        public Task AddAsync(VoucherRequestDto request);
+        public Task UpdateAsync(Guid id, VoucherRequestDto request);
         public Task DeleteAsync(Guid id);
-        public Task<VoucherValidationDto> ValidateVoucherAsync(ValidateVoucherRequest request);
+        public Task<VoucherValidationDto> ValidateVoucherAsync(ValidateVoucherRequestDto request);
     }
 }

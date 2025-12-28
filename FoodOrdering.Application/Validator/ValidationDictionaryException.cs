@@ -15,10 +15,5 @@ namespace FoodOrdering.Application.Validator
             Errors = errors;
         }
 
-        public override string ToString()
-        {
-            var message = string.Join("; ", Errors.Select(kv => $"{kv.Key}: {kv.Value}"));
-            return message;
-        }
     }
 }

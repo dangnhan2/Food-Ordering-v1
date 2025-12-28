@@ -2,12 +2,14 @@
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FoodOrdering.Presentation.Controllers.Admin
 {
-    [Route("api/[controller]")]
+    [Route("api/admin")]
     [ApiController]
+    [Authorize (Roles = "Admin")]
     public class AdminController : ControllerBase
     {
         private readonly ICategoryService _categoryService;
@@ -35,8 +37,9 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             _notificationService = notificationService;
         }
 
+        // Category EndPoints
         [HttpPost("category")]
-        public async Task<IActionResult> CreateCategory(CategoryRequest request)
+        public async Task<IActionResult> CreateCategory(CategoryRequestDto request)
         {
             await _categoryService.AddAsync(request);
             var response = ApiResponse<dynamic>.Success("Thêm thành công", null, StatusCodes.Status201Created);
@@ -44,7 +47,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         }
         
         [HttpPut("category/{id}")]
-        public async Task<IActionResult> UpdateCatetogy(Guid id, CategoryRequest request)
+        public async Task<IActionResult> UpdateCatetogy(Guid id, CategoryRequestDto request)
         {
             await _categoryService.UpdateAsync(id, request);
             var response = ApiResponse<dynamic>.Success("Cập nhật thành công", null, StatusCodes.Status200OK);
@@ -60,8 +63,9 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             return Ok(response);
         }
 
+        // Menu EndPoints
         [HttpPost("menu")]
-        public async Task<IActionResult> AddMenu([FromForm] MenuRequest request)
+        public async Task<IActionResult> AddMenu([FromForm] MenuRequestDto request)
         {
             await _menuService.AddMenuAsync(request);
             var response = ApiResponse<dynamic>.Success("Thêm mới thành công", "", StatusCodes.Status201Created);
@@ -69,7 +73,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         }
 
         [HttpPut("menu/{id}")]
-        public async Task<IActionResult> UpdateMenu(Guid id, [FromBody] MenuRequest request)
+        public async Task<IActionResult> UpdateMenu(Guid id, [FromForm] MenuRequestDto request)
         {
             await _menuService.UpdateMenuAsync(id, request);
             var response = ApiResponse<dynamic>.Success("Cập nhật thành công", "", StatusCodes.Status200OK);
@@ -84,6 +88,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             return Ok(response);
         }
 
+        // Order EndPoint
         [HttpGet("orders")]
         public async Task<IActionResult> GetOrders([FromQuery] OrderParams orderParams)
         {
@@ -92,6 +97,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             return Ok(response);
         }
 
+        // User EndPoint
         [HttpGet("users")]
         public async Task<IActionResult> GetUsers([FromQuery] UserParams userParams)
         {
@@ -100,6 +106,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             return Ok(response);
         }
 
+        // Voucher EndPoints
         [HttpGet("vouchers")]
         public async Task<IActionResult> GetVoucher([FromQuery] VoucherParams voucherParams)
         {        
@@ -109,7 +116,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         }
 
         [HttpPost("voucher")]
-        public async Task<IActionResult> CreateVoucher([FromBody] VoucherRequest request)
+        public async Task<IActionResult> CreateVoucher([FromBody] VoucherRequestDto request)
         {
             await _voucherService.AddAsync(request);
             var response = ApiResponse<string>.Success("Thêm mới thành công", "", StatusCodes.Status201Created);
@@ -117,7 +124,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         }
 
         [HttpPut("voucher/{id}")]
-        public async Task<IActionResult> UpdateVoucher(Guid id, [FromBody] VoucherRequest request)
+        public async Task<IActionResult> UpdateVoucher(Guid id, [FromBody] VoucherRequestDto request)
         {
             await _voucherService.UpdateAsync(id, request);
             var response = ApiResponse<string>.Success("Cập nhật thành công", "", StatusCodes.Status200OK);
@@ -132,14 +139,16 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             return Ok(response);
         }
 
+        // Dashboard EndPoint
         [HttpGet("dashboard")]
         public async Task<IActionResult> DashBoard()
         {
             var result = await _dashBoardService.GetInfoAsync();
-            var response = ApiResponse<DashboardOverviewDTO>.Success("Lấy dữ liệu thành công", result,StatusCodes.Status201Created);
+            var response = ApiResponse<DashboardOverviewDTO>.Success("Lấy dữ liệu thành công", result,StatusCodes.Status200OK);
             return Ok(response);
         }
 
+        // Notification Endpoint
         [HttpGet("notifications")]
         public async Task<IActionResult> GetUnreadNotificationByAdmin(Guid id)
         {
