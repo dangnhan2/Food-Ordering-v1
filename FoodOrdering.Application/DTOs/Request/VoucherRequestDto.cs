@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.DTOs.Request
 {
-    public class VoucherRequest
+    public class VoucherRequestDto
     {
         public string Code { get; set; }
         public string DiscountType { get; set; }

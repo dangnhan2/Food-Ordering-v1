@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.DTOs.Request
 {
-    public class CartItemRequest
+    public class CartItemRequestDto
     {
         public Guid MenuId { get; set; }
         public int Quantity { get; set; }

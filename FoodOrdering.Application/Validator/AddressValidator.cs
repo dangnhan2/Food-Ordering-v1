@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Validator
 {
-    public class AddressValidator : AbstractValidator<AddressRequest>
+    public class AddressValidator : AbstractValidator<AddressRequestDto>
     {
         public AddressValidator() {
             RuleFor(x => x.UserId)

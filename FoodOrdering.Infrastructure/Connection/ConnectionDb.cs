@@ -4,6 +4,7 @@ using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System;
@@ -18,36 +19,33 @@ namespace FoodOrdering.Infrastructure.Configuration
     {
         public static void AddConnection(this IServiceCollection services)
         {
-            try
+            Env.Load();
+            // Connect to Db
+            var cacheString = Env.GetString("REDIS");
+           
+            services.AddDbContext<FoodOrderingDbContext>(otps =>
             {
-                Log.Information("Connecting DB");
-                Env.Load();
-                // Connect to Db
-                services.AddDbContext<FoodOrderingDbContext>(otps =>
-                {
-                    otps.UseNpgsql(Env.GetString("CONNECTION_STRING"));
-                });
+                otps.UseNpgsql(Env.GetString("DefaultConnection"));
+            });
 
-                Log.Information("Connected");
+            Log.Information(Env.GetString("DefaultConnection"));
+            Log.Information(Env.GetString("REDIS"));
 
-                // Connect to HangfireDb
-                services.AddHangfire(otps => otps
-                .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
-                .UseSimpleAssemblyNameTypeSerializer()
-                .UseRecommendedSerializerSettings()
-                .UsePostgreSqlStorage(Env.GetString("CONNECTION_STRING"))
-                );
+            //Connect to HangfireDb
+            services.AddHangfire(otps => otps
+             .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
+             .UseSimpleAssemblyNameTypeSerializer()
+             .UseRecommendedSerializerSettings()
+             .UsePostgreSqlStorage(Env.GetString("DefaultConnection"))
+            );
 
-                // Connect to Redis
-                services.AddStackExchangeRedisCache(opt =>
-                {
-                    opt.Configuration = Env.GetString("REDIS");
-                });
-            }catch (ConnectionAbortedException ex)
+            //Connect to Redis
+            services.AddStackExchangeRedisCache(opt =>
             {
-                Log.Error($"{ex.InnerException.Message}");
-            }
-            
+                opt.Configuration = cacheString;
+            });
+
+            Log.Information("Connected");
         }
     }
 }

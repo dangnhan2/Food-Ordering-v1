@@ -3,6 +3,7 @@ using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Services;
 using FoodOrdering.Application.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Sprache;
@@ -10,8 +11,9 @@ using System.Collections.Generic;
 
 namespace FoodOrdering.Presentation.Controllers.Common
 {
-    [Route("api/[controller]")]
+    [Route("api/common")]
     [ApiController]
+    [Authorize (Roles = ("Admin, Customer"))]
     public class CommonController : ControllerBase
     {
         private readonly ICategoryService _categoryService;
@@ -45,7 +47,9 @@ namespace FoodOrdering.Presentation.Controllers.Common
             _ratingService = ratingService;
         }
 
+        // Category EndPoint
         [HttpGet("categories")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAllCategories()
         {
             var result = await _categoryService.GetAllAsync();
@@ -53,7 +57,9 @@ namespace FoodOrdering.Presentation.Controllers.Common
             return Ok(response);
         }
 
+        // Menu EndPoints
         [HttpGet("menus")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetMenus([FromQuery] MenuParams menuParams)
         {
             var result = await _menuService.GetAllMenusAsync(menuParams);
@@ -62,6 +68,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
         }
 
         [HttpGet("menu/{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetMenuById(Guid id)
         {
             var result = await _menuService.GetMenuByIdAsync(id);
@@ -70,6 +77,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
         }
 
         [HttpGet("menus/featured")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetFeaturedMenus()
         {
             var result = await _menuService.GetFeaturedMenusAsync();
@@ -79,6 +87,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
         }
 
         [HttpGet("menus/{id}/related")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetRelatedMenus(Guid id)
         {
             var result = await _menuService.GetRelatedMenusAsync(id);
@@ -87,6 +96,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
             return Ok(response);
         }
 
+        // Cart EndPoints
         [HttpGet("cart")]
         public async Task<IActionResult> GetCartByCustomer(Guid id)
         {          
@@ -96,15 +106,16 @@ namespace FoodOrdering.Presentation.Controllers.Common
         }
 
         [HttpPost("cart")]
-        public async Task<IActionResult> AddToCart([FromBody] CartRequest request)
+        public async Task<IActionResult> AddToCart([FromBody] CartRequestDto request)
         {
             await _cartService.AddToCartAsync(request);
             var response = ApiResponse<string>.Success("Thêm item thành công", "", StatusCodes.Status201Created);
             return Ok(response);
         }
 
+        // Order EndPoints
         [HttpPost("order/qr")]
-        public async Task<IActionResult> CreateOrderWithQR([FromBody] OrderRequest request)
+        public async Task<IActionResult> CreateOrderWithQR([FromBody] OrderRequestDto request)
         {
             var result = await _orderService.CreateOrderByQRAsync(request);
             var response = ApiResponse<dynamic>.Success("Tạo đơn thành công", result, StatusCodes.Status201Created);
@@ -112,13 +123,14 @@ namespace FoodOrdering.Presentation.Controllers.Common
         }
 
         [HttpPost("order/cod")]
-        public async Task<IActionResult> CreateOrderWithCOD([FromBody] OrderRequest request)
+        public async Task<IActionResult> CreateOrderWithCOD([FromBody] OrderRequestDto request)
         {
             var result = await _orderService.CreateOrderByCODAsync(request);
             var response = ApiResponse<int>.Success("Tạo đơn thành công", result, StatusCodes.Status201Created);
             return Ok(response);
         }
 
+        // User's Order EndPoint
         [HttpGet("user/{id}/orders")]
         public async Task<IActionResult> GetAllOrderByCustomer(Guid id, [FromQuery] OrderParams orderParams)
         {
@@ -127,27 +139,12 @@ namespace FoodOrdering.Presentation.Controllers.Common
             return Ok(response);
         }
 
-        [HttpPut("user/account/{id}")]
-        public async Task<IActionResult> UpdateUser(Guid id,[FromForm] UserRequest request)
+        // User's Account EndPoint
+        [HttpPut("user/profile/{id}")]
+        public async Task<IActionResult> UpdateUser(Guid id,[FromForm] UserRequestDto request)
         {
             await _userService.UploadProfileAsync(id, request);
             var response = ApiResponse<string>.Success("Cập nhật thành công", "", StatusCodes.Status200OK);
-            return Ok(response);
-        }
-
-        [HttpGet("user/vouchers")]
-        public async Task<IActionResult> GetAllVoucherByCustomer()
-        {
-            var result = await _voucherService.GetAllByCustomerAsync();
-            var response = ApiResponse<IEnumerable<VoucherDTO>>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
-            return Ok(response);
-        }
-
-        [HttpPost("user/voucher/validation")]
-        public async Task<IActionResult> ValidateVoucher(ValidateVoucherRequest request)
-        {
-            var result = await _voucherService.ValidateVoucherAsync(request);
-            var response = ApiResponse<dynamic>.Success("Áp dụng voucher thành công", result, StatusCodes.Status200OK);
             return Ok(response);
         }
 
@@ -160,6 +157,25 @@ namespace FoodOrdering.Presentation.Controllers.Common
             return Ok(response);
         }
 
+        // User's Voucher Endpoints
+        [HttpGet("user/vouchers")]
+        public async Task<IActionResult> GetAllVoucherByCustomer()
+        {
+            var result = await _voucherService.GetAllByCustomerAsync();
+            var response = ApiResponse<IEnumerable<VoucherDTO>>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
+            return Ok(response);
+        }
+
+        [HttpPost("user/voucher/validation")]
+        public async Task<IActionResult> ValidateVoucher(ValidateVoucherRequestDto request)
+        {
+            var result = await _voucherService.ValidateVoucherAsync(request);
+            var response = ApiResponse<dynamic>.Success("Áp dụng voucher thành công", result, StatusCodes.Status200OK);
+            return Ok(response);
+        }
+
+
+        // User's Address EndPoints
         [HttpGet("user/{id}/addresses")]
         public async Task<IActionResult> GetAddresses(Guid id)
         {
@@ -170,7 +186,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
         }
 
         [HttpPost("address")]
-        public async Task<IActionResult> AddAddress([FromBody] AddressRequest request)
+        public async Task<IActionResult> AddAddress([FromBody] AddressRequestDto request)
         {
             await _addressService.AddAsync(request);
             var response = ApiResponse<string>.Success("Thêm mới thành công", null, StatusCodes.Status201Created);
@@ -178,7 +194,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
         }
 
         [HttpPut("address/{id}")]
-        public async Task<IActionResult> UpdateAddress(Guid id, [FromBody] AddressRequest request)
+        public async Task<IActionResult> UpdateAddress(Guid id, [FromBody] AddressRequestDto request)
         {
             await _addressService.UpdateAsync(id, request);
             var response = ApiResponse<string>.Success("Cập nhật thành công", null, StatusCodes.Status200OK);
@@ -193,6 +209,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
             return Ok(response);
         }
 
+        // Notification Endpoint
         [HttpPut("notification")]
         public async Task<IActionResult> UpdateNotification(List<Guid> ids)
         {
@@ -202,6 +219,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
             return Ok(response);
         }
 
+        // Rating Endpoints
         [HttpGet("ratings/menu/{id}")]
         public async Task<IActionResult> GetAllRatingsByMenuId(Guid id,[FromQuery] RatingParams ratingParams)
         {   
@@ -213,7 +231,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
         }
 
         [HttpPost("rating")]
-        public async Task<IActionResult> RatingPaidOrder([FromForm] RatingRequest request)
+        public async Task<IActionResult> RatingPaidOrder([FromForm] RatingRequestDto request)
         {
              await _ratingService.RatingPaidOrderAsync(request);
 

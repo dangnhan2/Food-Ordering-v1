@@ -13,6 +13,6 @@ namespace FoodOrdering.Application.Services.Interface
     public interface IRatingService
     {
         public Task<PagingReponse<RatingDto>> GetAllRatingsByMenuAsync(Guid menuId, RatingParams ratingParams);
-        public Task RatingPaidOrderAsync(RatingRequest request);
+        public Task RatingPaidOrderAsync(RatingRequestDto request);
     }
 }

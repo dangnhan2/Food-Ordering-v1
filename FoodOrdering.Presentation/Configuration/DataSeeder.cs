@@ -28,7 +28,6 @@ namespace FoodOrdering.Presentation.Configuration
                     UserName = "admin",
                     Email = adminEmail,
                     EmailConfirmed = true,
-                    FullName = "Admin",
                     IsAdmin = true,
                     ImageUrl = Env.GetString("DEFAULT_AVATAR")
                 };

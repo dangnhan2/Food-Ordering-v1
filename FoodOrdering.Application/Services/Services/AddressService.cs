@@ -1,7 +1,7 @@
-﻿using FoodOrdering.Application.Caching;
-using FoodOrdering.Application.Contants;
+﻿using FoodOrdering.Application.Contants;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
+using FoodOrdering.Application.Repositories.Caching;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
@@ -21,7 +21,7 @@ namespace FoodOrdering.Application.Services.Services
             _cacheService = cacheService;
         }
 
-        public async Task AddAsync(AddressRequest request)
+        public async Task AddAsync(AddressRequestDto request)
         {   
             var result = await new AddressValidator().ValidateAsync(request);
             if (!result.IsValid)           
@@ -64,7 +64,7 @@ namespace FoodOrdering.Application.Services.Services
             return addressesToDto;
         }
 
-        public async Task UpdateAsync(Guid id, AddressRequest request)
+        public async Task UpdateAsync(Guid id, AddressRequestDto request)
         {   
             var result = await new AddressValidator().ValidateAsync(request);
             if (!result.IsValid)
@@ -85,7 +85,7 @@ namespace FoodOrdering.Application.Services.Services
             await _cacheService.RemoveAsync(CacheKeys.UserAddresses(address.UserId));
         }
 
-        private Address MappingAddress(AddressRequest request)
+        private Address MappingAddress(AddressRequestDto request)
         {
             Address address = new Address
             {

@@ -14,7 +14,7 @@ namespace FoodOrdering.Application.Services.Interface
     public interface IUserService
     {
         public Task<PagingReponse<UserDTO>> GetAllAsync(UserParams userParams);
-        public Task UploadProfileAsync(Guid id, UserRequest request);
+        public Task UploadProfileAsync(Guid id, UserRequestDto request);
         public Task<UserDTO> GetUserByIdAsync (Guid id);
     }
 }

@@ -14,7 +14,7 @@ namespace FoodOrdering.Application.Services.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task AddToCartAsync(CartRequest request)
+        public async Task AddToCartAsync(CartRequestDto request)
         {
             var user = await _unitOfWork.User.GetUserContainsCartAsync(request.UserId);
 

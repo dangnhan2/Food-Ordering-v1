@@ -1,20 +1,16 @@
 ﻿using DotNetEnv;
 using FoodOrdering.Application;
 using FoodOrdering.Application.DTOs.Response;
-using FoodOrdering.Application.Extension;
+using FoodOrdering.Application.Helper.Extensions;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using Sprache;
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace FoodOrdering.Infrastructure.Identity
 {
@@ -104,6 +100,9 @@ namespace FoodOrdering.Infrastructure.Identity
         // save refresh token to db
         private async Task<string> RefreshTokenAsync(Guid userId)
         {
+            var user = await _unitOfWork.User.GetByIdAsync(userId);
+
+            if (user == null) throw new KeyNotFoundException("Không tìm thấy người dùng");
             // refreshToken
             string refresh = Guid.NewGuid().ToString() + "-" + Guid.NewGuid().ToString();
 
@@ -115,6 +114,8 @@ namespace FoodOrdering.Infrastructure.Identity
                 CreatedAt = DateTime.UtcNow,
                 ExpriedAt = DateTime.UtcNow.AddMonths(3)
             };
+
+            user.RefreshTokens.Add(refreshToken);
             
             await _unitOfWork.RefreshToken.AddAsync(refreshToken);
             await _unitOfWork.SaveChangeAsync();

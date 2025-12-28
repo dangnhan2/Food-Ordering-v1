@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.DTOs.Request
 {
-    public class PasswordRequest
+    public class PasswordRequestDto
     {   
         public Guid Id { get; set; }
         public string CurrentPassword { get; set; }

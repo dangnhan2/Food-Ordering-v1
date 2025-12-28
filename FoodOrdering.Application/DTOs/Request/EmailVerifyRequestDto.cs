@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.DTOs.Request
 {
-    public class VoucherRedemptionRequest
+    public class EmailVerifyRequestDto
     {
-        public Guid UserId { get; set; }
-        public string Code { get; set; }
-        public int TotalAmount { get; set; }
+        public string Email { get; set; }
+        public string Otp { get; set; }
     }
 }

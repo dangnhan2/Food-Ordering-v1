@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Validator
 {
-    public class CategoryValidator : AbstractValidator<CategoryRequest>
+    public class CategoryValidator : AbstractValidator<CategoryRequestDto>
     {
         public CategoryValidator() {
             RuleFor(c => c.Name)

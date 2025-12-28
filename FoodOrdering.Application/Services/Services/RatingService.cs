@@ -1,16 +1,12 @@
 ﻿using FoodOrdering.Application.DTOs.QueryParams;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
-using FoodOrdering.Application.Extension;
+using FoodOrdering.Application.Helper.Extensions;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace FoodOrdering.Application.Services.Services
 {
@@ -32,46 +28,27 @@ namespace FoodOrdering.Application.Services.Services
         {
             var ratingsByMenu = _unitOfWork.Rating.GetAll().Where(r => r.MenuId == menuId);
 
-            IEnumerable<RatingDto> ratings;
-
-            if (ratingParams.Page == 0 && ratingParams.PageSize == 0)
-            {
-                ratings = await ratingsByMenu
+            var ratings = ratingsByMenu
                           .Select(r => new RatingDto
                           {
                               Id = r.Id,
                               MenuId = menuId,
-                              FullName = r.User.FullName,
+                              UserName = r.User.UserName,
                               Comment = r.Comment,
                               Stars = r.Stars,
-                              Images = r.Images.Select(i => i.ImageUrl).ToList(),                           
+                              Images = r.Images.Select(i => i.ImageUrl).ToList(),
                           })
-                          .AsNoTracking()
-                          .ToListAsync();
-            }
-            else
-            {
+                          .AsNoTracking();
 
-                ratings = await ratingsByMenu
-                          .Select(r => new RatingDto
-                          {
-                              Id = r.Id,
-                              MenuId = menuId,
-                              FullName = r.User.FullName,
-                              Comment = r.Comment,
-                              Stars = r.Stars,
-                              Images = r.Images.Select(i => i.ImageUrl).ToList()
-                          })
-                          .Paging(ratingParams.Page, ratingParams.PageSize)
-                          .AsNoTracking()
-                          .ToListAsync();
-            }
+            if (ratingParams.Page != 0 && ratingParams.PageSize != 0)            
+              ratings = ratings.Paging(ratingParams.Page, ratingParams.PageSize);
+            
 
-            var response = new PagingReponse<RatingDto> (ratingParams.Page, ratingParams.PageSize, ratingsByMenu.Count(), ratings);
+            var response = new PagingReponse<RatingDto> (ratingParams.Page, ratingParams.PageSize, ratingsByMenu.Count(), await ratings.ToListAsync());
             return response;
         }
 
-        public async Task RatingPaidOrderAsync(RatingRequest request)
+        public async Task RatingPaidOrderAsync(RatingRequestDto request)
         {
             var result = await new RatingValidator().ValidateAsync(request);
 
@@ -107,7 +84,7 @@ namespace FoodOrdering.Application.Services.Services
             await _unitOfWork.SaveChangeAsync();
         }
 
-        private async Task<Rating> MappingRating(RatingRequest request)
+        private async Task<Rating> MappingRating(RatingRequestDto request)
         {
             var newRating = new Rating
             {

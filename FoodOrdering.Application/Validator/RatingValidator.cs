@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Validator
 {
-    public class RatingValidator : AbstractValidator<RatingRequest>
+    public class RatingValidator : AbstractValidator<RatingRequestDto>
     {
         private const int MaxImageCount = 3;
         public RatingValidator()

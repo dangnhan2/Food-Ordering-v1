@@ -1,8 +1,7 @@
-﻿using CloudinaryDotNet;
+﻿
 using FoodOrdering.Application.DTOs.Response;
-using FoodOrdering.Application.Extension;
+using FoodOrdering.Application.Helper.LogsExtension;
 using FoodOrdering.Application.Validator;
-using Serilog;
 using System.Data;
 using System.Net;
 using System.Text.Json;
@@ -25,42 +24,42 @@ namespace FoodOrdering.Presentation.Middleware
             }
             catch (ArgumentException ex) // lỗi đầu vào
             {
-                Extensions.LogWarning(ex);
+                LogHelper.LogError(ex);
                 await HandleExceptionAsync(context, ex, HttpStatusCode.BadRequest);
             }
             catch (KeyNotFoundException ex) // lỗi không tìm thấy dữ liệu hoặc null
             {
-                Extensions.LogWarning(ex);
+                LogHelper.LogError(ex);
                 await HandleExceptionAsync(context, ex, HttpStatusCode.NotFound);
             }
             catch (UnauthorizedAccessException ex) // lỗi xác thực/ủy quyền
             {
-                Extensions.LogWarning(ex);
+                LogHelper.LogError(ex);
                 await HandleExceptionAsync(context, ex, HttpStatusCode.Unauthorized);
             }           
             catch (DuplicateNameException ex) // lỗi cùng giá trị 
             {
-                Extensions.LogWarning(ex);
+                LogHelper.LogError(ex);
                 await HandleExceptionAsync(context, ex, HttpStatusCode.BadRequest);
             }
             catch(ValidationDictionaryException ex) // lỗi validation
             {
-                Extensions.LogWarning(ex);
+                LogHelper.LogError(ex);
                 await HandleExceptionAsync(context, ex, HttpStatusCode.BadRequest);
             }
             catch(InvalidDataException ex) // lỗi dữ liệu ở db
             {
-                Extensions.LogWarning(ex);
+                LogHelper.LogError(ex);
                 await HandleExceptionAsync(context, ex, HttpStatusCode.BadRequest);
             }
             catch(InvalidOperationException ex)
             {
-                Extensions.LogWarning(ex);
+                LogHelper.LogError(ex);
                 await HandleExceptionAsync(context, ex, HttpStatusCode.BadRequest);
             }
             catch (Exception ex) // các lỗi còn lại
             {
-                Extensions.LogError(ex);
+                LogHelper.LogError(ex);
                 await HandleExceptionAsync(context, ex, HttpStatusCode.InternalServerError);
             }
         }
@@ -82,8 +81,7 @@ namespace FoodOrdering.Presentation.Middleware
                     message = invalidOperationException.Message;
                     break;
                 case ValidationDictionaryException validationEx:
-                    message = "Dữ liệu không hợp lệ";
-                    data = validationEx.Errors; // Gửi dictionary lỗi
+                    message = string.Join(Environment.NewLine, validationEx.Errors.Select(e => $"{e.Key}=[{string.Join(", ", e.Value)}]"));
                     break;
                 case ArgumentException argEx:
                     message = argEx.Message;

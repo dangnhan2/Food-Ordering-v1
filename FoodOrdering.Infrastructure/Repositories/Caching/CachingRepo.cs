@@ -1,19 +1,14 @@
-﻿using FoodOrdering.Application.Caching;
+﻿using FoodOrdering.Application.Repositories.Caching;
 using Microsoft.Extensions.Caching.Distributed;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
-namespace FoodOrdering.Infrastructure.Cache
+namespace FoodOrdering.Infrastructure.Repositories.Caching
 {
-    public class CachingService : ICachingService
+    public class CachingRepo : ICachingService
     {
         private readonly IDistributedCache _cache;
 
-        public CachingService(IDistributedCache cache)
+        public CachingRepo(IDistributedCache cache)
         {
             _cache = cache;
         }

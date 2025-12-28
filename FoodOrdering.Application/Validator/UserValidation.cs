@@ -8,13 +8,9 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Validator
 {
-    public class UserValidation : AbstractValidator<UserRequest>
+    public class UserValidation : AbstractValidator<UserRequestDto>
     {
-        public UserValidation() {
-            RuleFor(x => x.FullName)
-            .NotEmpty().WithMessage("Họ và tên không được để trống.")
-            .Length(5, 100).WithMessage("Họ và tên phải dài từ 5 đến 100 ký tự.");
-
+        public UserValidation() {           
             // Kiểm tra trường Email
             RuleFor(x => x.PhoneNumber)
                 .NotEmpty().WithMessage("Số điện thoại không được để trống.")

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Validator
 {
-    public class MenuValidatior : AbstractValidator<MenuRequest>
+    public class MenuValidatior : AbstractValidator<MenuRequestDto>
     {
         public MenuValidatior() {
             // Kiểm tra trường Name

@@ -6,8 +6,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.DTOs.Request
 {
-    public class ForgotPasswordRequest
+    public class NotificationRequestDto
     {
-        public string Email { get; set; }
     }
 }

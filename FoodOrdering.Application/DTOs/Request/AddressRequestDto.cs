@@ -1,5 +1,4 @@
-﻿using FoodOrdering.Domain.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,9 +6,11 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.DTOs.Request
 {
-    public class CartRequest
+    public class AddressRequestDto
     {
         public Guid UserId { get; set; }
-        public ICollection<CartItemRequest> CartItems { get; set; } = new List<CartItemRequest>();
+        public string Address { get; set; }
+        public string FullName { get; set; }
+        public string PhoneNumber { get; set; }
     }
 }

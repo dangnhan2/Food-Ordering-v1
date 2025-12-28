@@ -1,11 +1,13 @@
 ﻿using FoodOrdering.Application.Payment;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FoodOrdering.Presentation.Controllers.Payment
 {
-    [Route("api/[controller]")]
+    [Route("api/payment")]
     [ApiController]
+    [Authorize (Roles = "Admin")]
     public class PAYOSController : ControllerBase
     {
         private readonly IPaymentGateway _paymentGateway;

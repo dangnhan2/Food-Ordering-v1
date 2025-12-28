@@ -1,16 +1,13 @@
-﻿using CloudinaryDotNet.Actions;
-using FoodOrdering.Application.Caching;
-using FoodOrdering.Application.Contants;
+﻿using FoodOrdering.Application.Contants;
 using FoodOrdering.Application.DTOs.QueryParams;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
-using FoodOrdering.Application.Extension;
+using FoodOrdering.Application.Helper.Extensions;
+using FoodOrdering.Application.Repositories.Caching;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Serilog;
 using System.Data;
 
 namespace FoodOrdering.Application.Services.Services
@@ -29,7 +26,7 @@ namespace FoodOrdering.Application.Services.Services
             _cloudinaryService = cloudinaryService;
         }
 
-        public async Task AddMenuAsync(MenuRequest request)
+        public async Task AddMenuAsync(MenuRequestDto request)
         {                    
             var result = await new MenuValidatior().ValidateAsync(request);
 
@@ -38,6 +35,8 @@ namespace FoodOrdering.Application.Services.Services
             var menus = _unitOfWork.Menu.GetAll();
 
             if (menus.Any(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower())) throw new DuplicateNameException($"Menu {request.Name} đã tồn tại");
+
+            if (request.IsOnSale && (request.DiscountPrice == null || request.DiscountPrice == 0)) throw new ArgumentException("Món ăn đang có trạng thái giảm giá nhưng chưa cập nhật giá giảm. Hãy cập nhập giá giảm");
 
             var menu = await MappingMenu(request);
 
@@ -51,6 +50,8 @@ namespace FoodOrdering.Application.Services.Services
 
             if(menu == null) throw new KeyNotFoundException("Món ăn không tồn tại");
 
+            if (menu.IsOnSale || menu.IsAvailable) throw new InvalidOperationException("Món ăn đang được bán, hãy cập nhật lại trạng thái trước khi xóa");
+
             _unitOfWork.Menu.Remove(menu);
             await _unitOfWork.SaveChangeAsync();
         }
@@ -59,11 +60,10 @@ namespace FoodOrdering.Application.Services.Services
         {          
             var menus = _unitOfWork.Menu.GetAll();
 
-            if (!string.IsNullOrEmpty(menuParams.Name))
-                menus = menus.Where(m => m.Name.ToLower().Trim().Contains(menuParams.Name.ToLower().Trim()));
-
-            if (!string.IsNullOrEmpty(menuParams.Category))
-                menus = menus.Where(m => m.Categories.Name.ToLower().Trim().Contains(menuParams.Category.ToLower().Trim()));
+            if (!string.IsNullOrEmpty(menuParams.Search))
+                menus = menus.Where(m => m.Name.ToLower().Trim().Contains(menuParams.Search.ToLower().Trim())
+                    || m.Categories.Name.ToLower().Trim().Contains(menuParams.Search.ToLower().Trim()));
+         
 
             if (menuParams.IsAvailable.HasValue)
                 menus = menus.Where(m => m.IsAvailable == menuParams.IsAvailable.Value);
@@ -90,26 +90,15 @@ namespace FoodOrdering.Application.Services.Services
                 };
             }
 
-            IEnumerable<MenuDto> menusToDTO;
-            if (menuParams.Page == 0 && menuParams.PageSize == 0)
-            {
-                menusToDTO = await menus
+            var menusToDTO = menus
                 .Include(m => m.Categories)
                 .Select(m => new MenuDto(m, m.Ratings.Count()))
-                .AsNoTrackingWithIdentityResolution()
-                .ToListAsync();
-            }
-            else
-            {
-                menusToDTO = await menus
-                  .Include(m => m.Categories)
-                  .Select(m => new MenuDto(m, m.Ratings.Count()))
-                  .Paging(menuParams.Page, menuParams.PageSize)
-                  .AsNoTrackingWithIdentityResolution()
-                  .ToListAsync();
-            }
+                .AsNoTrackingWithIdentityResolution();
+
+            if (menuParams.Page != 0 && menuParams.PageSize != 0)           
+               menusToDTO = menusToDTO.Paging(menuParams.Page, menuParams.PageSize);            
             
-            var response = new PagingReponse<MenuDto>(menuParams.Page, menuParams.PageSize, menus.Count(), menusToDTO);
+            var response = new PagingReponse<MenuDto>(menuParams.Page, menuParams.PageSize, menus.Count(), await menusToDTO.ToArrayAsync());
             return response;
         }
 
@@ -132,7 +121,7 @@ namespace FoodOrdering.Application.Services.Services
             return new MenuDto(menu, menu.Ratings.Count());
         }
 
-        public async Task UpdateMenuAsync(Guid menuId, MenuRequest request)
+        public async Task UpdateMenuAsync(Guid menuId, MenuRequestDto request)
         {          
             var result = await new MenuValidatior().ValidateAsync(request);
 
@@ -145,12 +134,14 @@ namespace FoodOrdering.Application.Services.Services
 
             if (await menus.AnyAsync(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower() && m.Id != menuId)) throw new DuplicateNameException($"Menu {request.Name} đã tồn tại");
 
+            if (request.IsOnSale && (request.DiscountPrice == null || request.DiscountPrice == 0)) throw new ArgumentException("Món ăn đang có trạng thái giảm giá nhưng chưa cập nhật giá giảm. Hãy cập nhập giá giảm");
+
             menu.Name = request.Name;
-            menu.CategoriesId = request.CategoriesId;
+            menu.CategoriesId = request.CategoryId;
             menu.Description = request.Description;
             menu.OriginalPrice = request.OriginalPrice;
             menu.DiscountPrice = request.DiscountPrice;
-            menu.IsAvailable = request.IsAvailble;
+            menu.IsAvailable = request.IsAvailable;
             menu.IsOnSale = request.IsOnSale;
 
             if (request.Thumbnail != null)
@@ -205,17 +196,17 @@ namespace FoodOrdering.Application.Services.Services
             return menusToDto;
         }
 
-        private async Task<Menu> MappingMenu(MenuRequest request)
+        private async Task<Menu> MappingMenu(MenuRequestDto request)
         {
             var menu = new Menu
             {
                 Name = request.Name,
-                CategoriesId = request.CategoriesId,
+                CategoriesId = request.CategoryId,
                 Description = request.Description,
                 OriginalPrice = request.OriginalPrice,
                 DiscountPrice = request.DiscountPrice,
                 IsOnSale = request.IsOnSale,
-                IsAvailable = request.IsAvailble,
+                IsAvailable = request.IsAvailable,
                 SoldQuantity = 0
             };
 

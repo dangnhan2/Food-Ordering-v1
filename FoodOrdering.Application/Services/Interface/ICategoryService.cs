@@ -12,8 +12,8 @@ namespace FoodOrdering.Application.Services.Interface
     public interface ICategoryService
     {
         public Task<IEnumerable<CategoryDTO>> GetAllAsync();
-        public Task AddAsync(CategoryRequest request);
-        public Task UpdateAsync(Guid id, CategoryRequest request);
+        public Task AddAsync(CategoryRequestDto request);
+        public Task UpdateAsync(Guid id, CategoryRequestDto request);
         public Task DeleteAsync(Guid id);
     }
 }

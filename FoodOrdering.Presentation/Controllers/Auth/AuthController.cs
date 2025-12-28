@@ -1,13 +1,14 @@
 ﻿using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Sprache;
 
 namespace FoodOrdering.Presentation.Controllers.Auth
 {
-    [Route("api/[controller]")]
+    [Route("api/auth")]
     [ApiController]
     public class AuthController : ControllerBase
     {
@@ -18,7 +19,7 @@ namespace FoodOrdering.Presentation.Controllers.Auth
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
         {
             var result = await _authService.LoginAsync(request, HttpContext);
             var response = ApiResponse<AuthResponse>.Success("Đăng nhập thành công", result, StatusCodes.Status200OK);
@@ -26,7 +27,7 @@ namespace FoodOrdering.Presentation.Controllers.Auth
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
         {
             var result = await _authService.RegisterAsync(request);
             var response = ApiResponse<string>.Success("Email đã được gửi. Hãy nhập mã để xác nhận", result, StatusCodes.Status201Created);
@@ -34,6 +35,7 @@ namespace FoodOrdering.Presentation.Controllers.Auth
         }
 
         [HttpPost("refresh")]
+        [Authorize]
         public async Task<IActionResult> RefreshToken()
         {
             var result = await _authService.RefreshTokenAsync(HttpContext);
@@ -42,6 +44,7 @@ namespace FoodOrdering.Presentation.Controllers.Auth
         }
 
         [HttpPost("logout")]
+        [Authorize]
         public async Task<IActionResult> Logout()
         {
             await _authService.LogoutAsync(HttpContext);
@@ -49,8 +52,17 @@ namespace FoodOrdering.Presentation.Controllers.Auth
             return Ok(response);
         }
 
+        [HttpPost("password/change")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] PasswordRequestDto request)
+        {
+            await _authService.ChangePasswordAsync(request);
+            var response = ApiResponse<dynamic>.Success("Đổi mật khẩu thành công", null, StatusCodes.Status200OK);
+            return Ok(response);
+        }
+
         [HttpPost("email/verify")]
-        public async Task<IActionResult> VerifyEmail([FromBody] EmailVerifyRequest request)
+        public async Task<IActionResult> VerifyEmail([FromBody] EmailVerifyRequestDto request)
         {
             var result = await _authService.VerifyEmail(request);
             var response = ApiResponse<string>.Success("Xác nhận email thành công", result, StatusCodes.Status200OK);
@@ -58,16 +70,9 @@ namespace FoodOrdering.Presentation.Controllers.Auth
 
         }
 
-        [HttpPost("password/change")]
-        public async Task<IActionResult> ChangePassword([FromBody] PasswordRequest request)
-        {
-            await _authService.ChangePasswordAsync(request);
-            var response = ApiResponse<dynamic>.Success("Đổi mật khẩu thành công", null, StatusCodes.Status200OK);
-            return Ok(response);
-        }
-
         [HttpPost("password/forgot")]
-        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        [AllowAnonymous]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDto request)
         {
             await _authService.ForgotPasswordAsync(request);
             var response = ApiResponse<dynamic>.Success("Email đã được gửi. Hãy nhập mã để xác nhận", null, StatusCodes.Status200OK);
@@ -75,7 +80,7 @@ namespace FoodOrdering.Presentation.Controllers.Auth
         }
 
         [HttpPost("password/reset")]
-        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto request)
         {
             await _authService.ResetPasswordAsync(request);
             var response = ApiResponse<dynamic>.Success("Thiết lập mật khẩu mới thành công", null, StatusCodes.Status200OK);

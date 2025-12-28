@@ -33,7 +33,7 @@ namespace FoodOrdering.Application.Services.Services
             _emailService = emailService;
         }
 
-        public async Task ChangePasswordAsync(PasswordRequest request)
+        public async Task ChangePasswordAsync(PasswordRequestDto request)
         {
             var result = await new PasswordValidator().ValidateAsync(request);
             if (!result.IsValid)
@@ -52,7 +52,7 @@ namespace FoodOrdering.Application.Services.Services
             await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);           
         }
 
-        public async Task ForgotPasswordAsync(ForgotPasswordRequest request)
+        public async Task ForgotPasswordAsync(ForgotPasswordRequestDto request)
         {
             Log.Information("User enter email...");
             var user = await _userManager.FindByEmailAsync(request.Email);
@@ -71,7 +71,7 @@ namespace FoodOrdering.Application.Services.Services
             Log.Information("Send email successful");
         }
 
-        public async Task<AuthResponse> LoginAsync(LoginRequest request, HttpContext context)
+        public async Task<AuthResponse> LoginAsync(LoginRequestDto request, HttpContext context)
         {
             var result = await new LoginValidator().ValidateAsync(request);
 
@@ -95,12 +95,17 @@ namespace FoodOrdering.Application.Services.Services
             if (refreshToken == null)
                 throw new UnauthorizedAccessException(nameof(refreshToken));
 
-            var isExistToken = await _unitOfWork.RefreshToken.GetTokenByRefreshToken(refreshToken);
+            var existToken = await _unitOfWork.RefreshToken.GetTokenByRefreshToken(refreshToken);
 
-            if (isExistToken == null || isExistToken.ExpriedAt < DateTime.UtcNow)
+            if (existToken == null || existToken.ExpriedAt < DateTime.UtcNow)
                 throw new UnauthorizedAccessException(nameof(refreshToken));
 
-            _unitOfWork.RefreshToken.Remove(isExistToken);
+            var user = await _unitOfWork.User.GetByIdAsync(existToken.UserId);
+
+            user.RefreshTokens.Clear();
+
+            _unitOfWork.User.Update(user);
+            _unitOfWork.RefreshToken.Remove(existToken);
             await _unitOfWork.SaveChangeAsync();
 
             context.Response.Cookies.Delete("refreshToken",
@@ -119,7 +124,7 @@ namespace FoodOrdering.Application.Services.Services
             return response;
         }
 
-        public async Task<string> RegisterAsync(RegisterRequest request)
+        public async Task<string> RegisterAsync(RegisterRequestDto request)
         {
             var result = await new RegisterValidator().ValidateAsync(request);
 
@@ -134,8 +139,7 @@ namespace FoodOrdering.Application.Services.Services
             var newUser = new User
             {
                 Id = Guid.NewGuid(),
-                UserName = Extensions.GenerateString(10),
-                FullName = Extensions.GenerateString(10),
+                UserName = request.UserName,
                 ImageUrl = _avatar,
                 Email = request.Email,
                 NormalizedEmail = request.Email.ToUpper(),
@@ -156,7 +160,7 @@ namespace FoodOrdering.Application.Services.Services
             return request.Email;
         }
 
-        public async Task ResetPasswordAsync(ResetPasswordRequest request)
+        public async Task ResetPasswordAsync(ResetPasswordRequestDto request)
         {
             var result = await new ResetPasswordValidator().ValidateAsync(request);
 
@@ -173,7 +177,7 @@ namespace FoodOrdering.Application.Services.Services
 
         }
 
-        public async Task<string> VerifyEmail(EmailVerifyRequest request)
+        public async Task<string> VerifyEmail(EmailVerifyRequestDto request)
         {
             var existUser = await _unitOfWork.User.GetUserByEmailAsync(request.Email);
 

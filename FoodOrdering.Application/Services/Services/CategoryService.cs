@@ -1,8 +1,8 @@
-﻿using FoodOrdering.Application.Caching;
-using FoodOrdering.Application.Contants;
+﻿using FoodOrdering.Application.Contants;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Repositories;
+using FoodOrdering.Application.Repositories.Caching;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
@@ -51,7 +51,7 @@ namespace FoodOrdering.Application.Services.Services
             return categoriesToDTO;
         }
 
-        public async Task AddAsync(CategoryRequest request)
+        public async Task AddAsync(CategoryRequestDto request)
         {
             var result = await new CategoryValidator().ValidateAsync(request);
 
@@ -74,7 +74,7 @@ namespace FoodOrdering.Application.Services.Services
             await _cacheService.RemoveAsync(CacheKeys.CATEGORIES_PREFIX);
         }
 
-        public async Task UpdateAsync(Guid id, CategoryRequest request)
+        public async Task UpdateAsync(Guid id, CategoryRequestDto request)
         {
             var validator = new CategoryValidator();
             var result = await validator.ValidateAsync(request);
@@ -115,7 +115,7 @@ namespace FoodOrdering.Application.Services.Services
             await _cacheService.RemoveAsync(CacheKeys.CATEGORIES_PREFIX);
         }
 
-        private Category MappingCategory(CategoryRequest request)
+        private Category MappingCategory(CategoryRequestDto request)
         {
             Category category = new Category
             {

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Validator
 {
-    public class VoucherValidator : AbstractValidator<VoucherRequest>
+    public class VoucherValidator : AbstractValidator<VoucherRequestDto>
     {
         public VoucherValidator() {
             RuleFor(x => x.Code)
@@ -37,11 +37,11 @@ namespace FoodOrdering.Application.Validator
             When(x => x.DiscountType.ToLower() == "percent", () =>
             {
                 RuleFor(x => x.DiscountValue)
-                    .InclusiveBetween(1, 100).WithMessage("Nếu là giảm theo phần trăm, giá trị phải nằm trong khoảng từ 1 đến 100.");
+                    .InclusiveBetween(1, 100).WithMessage("Giá trị phải nằm trong khoảng từ 1 đến 100.");
 
                 // Đảm bảo MaxDiscount không thể nhỏ hơn 0
                 RuleFor(x => x.MaxDiscount)
-                    .GreaterThan(0).WithMessage("Nếu là giảm theo phần trăm, giới hạn giảm tối đa (MaxDiscount) phải lớn hơn 0.");
+                    .GreaterThan(0).WithMessage("Giới hạn giảm tối đa (MaxDiscount) phải lớn hơn 0.");
             });
 
             // 6. Kiểm tra ngày StartDate và EndDate
