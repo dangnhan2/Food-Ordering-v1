@@ -36,7 +36,7 @@ namespace FoodOrdering.Application.Services.Services
 
             if (menus.Any(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower())) throw new DuplicateNameException($"Menu {request.Name} đã tồn tại");
 
-            if (request.IsOnSale && (request.DiscountPrice == null || request.DiscountPrice == 0)) throw new ArgumentException("Món ăn đang có trạng thái giảm giá nhưng chưa cập nhật giá giảm. Hãy cập nhập giá giảm");
+            if (request.IsOnSale && (request.DiscountPrice == null || request.DiscountPrice == 0)) throw new ArgumentException("Món ăn đang có trạng thái giảm giá nhưng chưa cập nhật giá khuyến mãi. Hãy cập nhập giá khuyến mãi");
 
             var menu = await MappingMenu(request);
 
@@ -127,8 +127,11 @@ namespace FoodOrdering.Application.Services.Services
 
             if (!result.IsValid) throw new ValidationDictionaryException(result.ToDictionary());
 
-            var menu = await _unitOfWork.Menu.GetByIdAsync(menuId);
-            var menus = _unitOfWork.Menu.GetAll();
+            var menu = await _unitOfWork.Menu
+                .GetByIdAsync(menuId);
+
+            var menus = _unitOfWork.Menu
+                .GetAll();
 
             if (menu == null) throw new KeyNotFoundException("Món ăn không tồn tại");
 
@@ -157,7 +160,7 @@ namespace FoodOrdering.Application.Services.Services
         }
 
         public async Task<IEnumerable<MenuDto>> GetFeaturedMenusAsync()
-        {
+        {   
             var menus = _unitOfWork.Menu
                 .GetAll()               
                 .Where(m => m.IsAvailable)
@@ -174,11 +177,13 @@ namespace FoodOrdering.Application.Services.Services
         }
 
         public async Task<IEnumerable<MenuDto>> GetRelatedMenusAsync(Guid menuId)
-        {
+        {   
             var currentMenu = await _unitOfWork.Menu.GetMenuWithCategoryAsync(menuId);
 
             if (currentMenu == null)
                 return Enumerable.Empty<MenuDto>();
+
+            var ran = new Random();
 
             var menus = _unitOfWork.Menu
                 .GetAll()
@@ -186,6 +191,7 @@ namespace FoodOrdering.Application.Services.Services
                       m.Id != menuId
                    && m.CategoriesId == currentMenu.CategoriesId
                    && m.IsAvailable)
+                .OrderBy(m => ran.Next())
                 .Take(10);
 
             var menusToDto = await menus

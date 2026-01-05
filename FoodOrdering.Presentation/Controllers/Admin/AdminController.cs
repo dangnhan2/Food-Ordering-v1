@@ -38,6 +38,14 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         }
 
         // Category EndPoints
+        [HttpGet("categories")]
+        public async Task<IActionResult> GetAllCategories()
+        {
+            var result = await _categoryService.GetAllAsync();
+            var response = ApiResponse<IEnumerable<CategoryDTO>>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
+            return Ok(response);
+        }
+
         [HttpPost("category")]
         public async Task<IActionResult> CreateCategory(CategoryRequestDto request)
         {
@@ -64,6 +72,14 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         }
 
         // Menu EndPoints
+        [HttpGet("menus")]
+        public async Task<IActionResult> GetMenus([FromQuery] MenuParams menuParams)
+        {
+            var result = await _menuService.GetAllMenusAsync(menuParams);
+            var response = ApiResponse<PagingReponse<MenuDto>>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
+            return Ok(response);
+        }
+
         [HttpPost("menu")]
         public async Task<IActionResult> AddMenu([FromForm] MenuRequestDto request)
         {
@@ -150,10 +166,27 @@ namespace FoodOrdering.Presentation.Controllers.Admin
 
         // Notification Endpoint
         [HttpGet("notifications")]
-        public async Task<IActionResult> GetUnreadNotificationByAdmin(Guid id)
+        public async Task<IActionResult> GetNotificationsByAdmin(Guid id)
         {
-            var result = await _notificationService.GetUnreadByAdmin(id);
+            var result = await _notificationService.GetNotificationsByAdmin(id);
             var response = ApiResponse<dynamic>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
+            return Ok(response);
+        }
+
+        [HttpPut("notifications/marking")]
+        public async Task<IActionResult> MarkAsRead(MarkNotificationRequestDto dto)
+        {
+            await _notificationService.MarkAsReadAsync(dto);
+            var response = ApiResponse<dynamic>.Success("Đánh dấu thành công", "", StatusCodes.Status200OK);
+            return Ok(response);
+        }
+
+        [HttpDelete("notification")]
+        public async Task<IActionResult> DeleteNotification(Guid id)
+        {
+            await _notificationService.DeleteAsync(id);
+            var response = ApiResponse<dynamic>.Success("Xóa thông báo thành công", "", StatusCodes.Status200OK);
+
             return Ok(response);
         }
     }

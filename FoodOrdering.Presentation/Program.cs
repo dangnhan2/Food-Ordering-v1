@@ -1,7 +1,9 @@
 using Food_Ordering.Extensions;
 using FoodOrdering.Application.Repositories;
 using FoodOrdering.Infrastructure.Configuration;
+using FoodOrdering.Infrastructure.SignalR_Hub;
 using FoodOrdering.Presentation.Configuration;
+using FoodOrdering.Presentation.Extensions;
 using FoodOrdering.Presentation.Middleware;
 using Hangfire;
 using Serilog;
@@ -40,52 +42,26 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    app.ApplyMigrations();
-    app.UseHangfireServer();
-    app.UseHangfireDashboard("/dashboard");
+    app.ApplyMigrations();   
+   
     await app.SeedAsync();
 }
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication();
-app.UseAuthorization();
-app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseCors("Happy Food");
 
-RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
-    "DeleteExpiredCarts_3hours",
-    j => j.RecurringDeleteExpiredCartsJob_3hours(),
-    Cron.Hourly);
+app.UseAuthentication();
+app.UseAuthorization();
 
-RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
-    "DeleteExpiredRefreshTokens_3months",
-    j => j.RecurringDeleteExpiredRefreshTokensJob_3months(),
-    Cron.Daily());
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
-RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
-    "PublicVouchers_24hours",
-    j => j.RecurringPublicVouchersJob_24hours(),
-    Cron.Daily(),
-    TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+app.MapHub<NotificationHub>("/hubs/notification");
 
-RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
-    "RetrieveVouchers_24hours",
-    j => j.RecurringRetrieveVouchersJob_24hours(),
-    Cron.Daily(),
-    TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+app.UseHangfireServer();
+app.UseHangfireDashboard("/dashboard");
 
-RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
-    "ResetVoucherRedemptions_24hours",
-    j => j.RecurringResetVoucherRedemptionsJob_24hours(),
-    Cron.Daily(),
-    TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
-
-RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
-    "DeleteNotifications_1month",
-    j => j.RecurringDeleteNotificationsJob_1month(),
-    Cron.Monthly(),
-    TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+app.UseRecurringJobs();
 
 app.MapControllers();
 

@@ -1,14 +1,9 @@
 ﻿using DotNetEnv;
 using FoodOrdering.Application.Email;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Mail;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace FoodOrdering.Infrastructure.Email
+namespace FoodOrdering.Infrastructure.Services.Email
 {
     public class EmailService : IEmailService
     {

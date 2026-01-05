@@ -14,7 +14,7 @@ using Newtonsoft.Json.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace FoodOrdering.Infrastructure.Payment
+namespace FoodOrdering.Infrastructure.Services.Payment
 {
     public class PaymentGateway : IPaymentGateway
     {
@@ -107,7 +107,7 @@ namespace FoodOrdering.Infrastructure.Payment
             }
             
             _unitOfWork.Order.Update(order);
-            await _notificationSenderServer.NotifyAdminAsync(order.TransactionId);
+            await _notificationSenderServer.NotifyAdminAsync(order.TransactionId, order.TotalAmount);
             await _unitOfWork.SaveChangeAsync();
 
             return ApiResponse<string>.Success("Webhook processed successfully", "", StatusCodes.Status200OK);

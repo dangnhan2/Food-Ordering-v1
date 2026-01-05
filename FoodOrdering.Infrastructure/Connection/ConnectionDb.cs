@@ -44,8 +44,6 @@ namespace FoodOrdering.Infrastructure.Configuration
             {
                 opt.Configuration = cacheString;
             });
-
-            Log.Information("Connected");
         }
     }
 }

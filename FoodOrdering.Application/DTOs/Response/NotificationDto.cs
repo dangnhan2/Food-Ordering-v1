@@ -14,7 +14,7 @@ namespace FoodOrdering.Application.DTOs.Response
         public string Type { get; set; }
         public string Data { get; set; }
         public bool IsRead { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public string CreatedAt { get; set; }
 
         public NotificationDto() { }
     }

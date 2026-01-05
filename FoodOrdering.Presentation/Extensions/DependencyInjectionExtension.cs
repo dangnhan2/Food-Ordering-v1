@@ -8,12 +8,13 @@ using FoodOrdering.Application.Repositories.Caching;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Services.Services;
 using FoodOrdering.Infrastructure;
-using FoodOrdering.Infrastructure.Email;
-using FoodOrdering.Infrastructure.Identity;
-using FoodOrdering.Infrastructure.Payment;
 using FoodOrdering.Infrastructure.Repositories;
-using FoodOrdering.Infrastructure.Repositories.Caching;
 using FoodOrdering.Infrastructure.Repository;
+using FoodOrdering.Infrastructure.Services.BackgroundJob;
+using FoodOrdering.Infrastructure.Services.Caching;
+using FoodOrdering.Infrastructure.Services.Email;
+using FoodOrdering.Infrastructure.Services.Payment;
+using FoodOrdering.Infrastructure.Services.Token;
 using FoodOrdering.Infrastructure.SignalR_Hub;
 using RedLockNet.SERedis;
 using RedLockNet.SERedis.Configuration;
@@ -21,7 +22,7 @@ using StackExchange.Redis;
 
 namespace Food_Ordering.Extensions
 {
-    public static class DependencyInjection
+    public static class DependencyInjectionExtension
     {
         public static IServiceCollection AddDI(this IServiceCollection services)
         {
@@ -53,7 +54,7 @@ namespace Food_Ordering.Extensions
             services.AddScoped<IRatingRepo, RatingRepo>();
             services.AddScoped<IRatingService, RatingService>();
 
-            services.AddScoped<ICachingService, CachingRepo>();
+            services.AddScoped<ICachingService, CachingService>();
             services.AddTransient<ICloudinaryService, CLoudinaryService>();
             services.AddTransient<IPaymentGateway, PaymentGateway>();
             services.AddTransient<IEmailService, EmailService>();

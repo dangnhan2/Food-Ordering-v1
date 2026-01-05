@@ -2,7 +2,8 @@
 using System.Security.Claims;
 
 namespace FoodOrdering.Infrastructure.SignalR_Hub
-{
+{   
+    
     public sealed class NotificationHub : Hub
     {
         public override async Task OnConnectedAsync()

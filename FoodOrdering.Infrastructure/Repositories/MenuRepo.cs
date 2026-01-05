@@ -19,7 +19,9 @@ namespace FoodOrdering.Infrastructure.Repository
 
         public async Task<Menu?> GetMenuWithCategoryAsync(Guid id)
         {
-            return await _context.Menu.Include(m => m.Categories).FirstOrDefaultAsync(m => m.Id == id);
+            return await _context.Menu
+                .Include(m => m.Categories)
+                .FirstOrDefaultAsync(m => m.Id == id);
         }
     }
 }
