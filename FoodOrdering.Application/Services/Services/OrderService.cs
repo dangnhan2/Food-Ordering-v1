@@ -206,7 +206,7 @@ namespace FoodOrdering.Application.Services.Services
             await _unitOfWork.SaveChangeAsync();
 
             Log.Information("Send notification to admin");
-            await _notificationSenderServer.NotifyAdminAsync(newOrder.TransactionId);
+            await _notificationSenderServer.NotifyAdminAsync(newOrder.TransactionId, newOrder.TotalAmount);
 
             Log.Information("Order created");
             return newOrder.TransactionId;

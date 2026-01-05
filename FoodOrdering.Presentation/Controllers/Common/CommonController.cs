@@ -209,16 +209,6 @@ namespace FoodOrdering.Presentation.Controllers.Common
             return Ok(response);
         }
 
-        // Notification Endpoint
-        [HttpPut("notification")]
-        public async Task<IActionResult> UpdateNotification(List<Guid> ids)
-        {
-            await _notificationService.MarkAsReadAsync(ids);
-
-            var response = ApiResponse<dynamic>.Success("Cập nhật thành công", null, StatusCodes.Status200OK);
-            return Ok(response);
-        }
-
         // Rating Endpoints
         [HttpGet("ratings/menu/{id}")]
         public async Task<IActionResult> GetAllRatingsByMenuId(Guid id,[FromQuery] RatingParams ratingParams)

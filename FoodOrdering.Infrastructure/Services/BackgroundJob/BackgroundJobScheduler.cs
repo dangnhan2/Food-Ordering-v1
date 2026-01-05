@@ -2,7 +2,7 @@
 using FoodOrdering.Application.Repositories;
 using Serilog;
 
-namespace FoodOrdering.Infrastructure.Repositories
+namespace FoodOrdering.Infrastructure.Services.BackgroundJob
 {
     public class BackgroundJobScheduler : IBackgroundJobScheduler
     {

@@ -1,6 +1,6 @@
 ﻿namespace FoodOrdering.Presentation.Configuration
 {
-    public static class Cors
+    public static class CorsExtension
     {
         public static IServiceCollection AddCorsConfiguration(this IServiceCollection services)
         {   

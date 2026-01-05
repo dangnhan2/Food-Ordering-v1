@@ -11,7 +11,7 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FoodOrdering.Infrastructure.Storage
+namespace FoodOrdering.Infrastructure.Services.Storage
 {
     public class CLoudinaryService : ICloudinaryService
     {

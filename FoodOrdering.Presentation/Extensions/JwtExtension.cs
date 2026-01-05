@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Food_Ordering.Extensions
 {
-    public static class Jwt
+    public static class JwtExtension
     {
         public static IServiceCollection AddJwtConfig(this IServiceCollection services) {
             Env.Load();
@@ -48,6 +48,21 @@ namespace Food_Ordering.Extensions
                     ValidIssuer = Env.GetString("ISSUER"), // Chỉ chấp nhận token được phát hành bởi ISSUER
                     ValidAudience = Env.GetString("AUDIENCE"), // Chỉ chấp nhận token phát cho AUDIENCE
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Env.GetString("SECRET_KEY")))
+                };
+
+                config.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = conntext =>
+                    {
+                        var accessToken = conntext.Request.Query["access_token"];
+
+                        if (!string.IsNullOrEmpty(accessToken) && conntext.HttpContext.Request.Path.StartsWithSegments("/hubs"))
+                        {
+                            conntext.Token = accessToken;
+                        }
+
+                        return Task.CompletedTask;
+                    }
                 };
             });
             return services;

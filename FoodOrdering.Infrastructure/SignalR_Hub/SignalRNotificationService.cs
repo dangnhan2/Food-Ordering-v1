@@ -23,7 +23,7 @@ namespace FoodOrdering.Infrastructure.SignalR_Hub
             _userManager = userManager;
             _unitOfWork = unitOfWork;
         }
-        public async Task NotifyAdminAsync(int orderCode)
+        public async Task NotifyAdminAsync(int orderCode, int totalAmount)
         {
             var users = await _userManager.GetUsersInRoleAsync("Admin");
             List<Notification> notifications = new List<Notification>();
@@ -41,7 +41,7 @@ namespace FoodOrdering.Infrastructure.SignalR_Hub
                         Tiltle = "Bạn có đơn hàng mới",
                         Message = $"Đơn hàng #{orderCode} vừa được tạo",
                         Type = "Order",
-                        Data = "",
+                        Data = $"Đơn hàng #{orderCode} thanh toán thành công. Tổng giá trị ${totalAmount}",
                         IsRead = false
                     });
             }

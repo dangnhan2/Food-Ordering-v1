@@ -2,13 +2,13 @@
 using Microsoft.Extensions.Caching.Distributed;
 using System.Text.Json;
 
-namespace FoodOrdering.Infrastructure.Repositories.Caching
+namespace FoodOrdering.Infrastructure.Services.Caching
 {
-    public class CachingRepo : ICachingService
+    public class CachingService : ICachingService
     {
         private readonly IDistributedCache _cache;
 
-        public CachingRepo(IDistributedCache cache)
+        public CachingService(IDistributedCache cache)
         {
             _cache = cache;
         }

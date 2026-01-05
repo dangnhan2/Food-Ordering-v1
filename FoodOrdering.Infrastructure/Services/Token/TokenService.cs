@@ -12,7 +12,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace FoodOrdering.Infrastructure.Identity
+namespace FoodOrdering.Infrastructure.Services.Token
 {
     public class TokenService : ITokenService
     {
