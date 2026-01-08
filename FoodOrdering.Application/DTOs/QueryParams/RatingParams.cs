@@ -14,5 +14,8 @@ namespace FoodOrdering.Application.DTOs.QueryParams
 
         [JsonPropertyName("pageSize")]
         public int PageSize { get; set; }
+
+        [JsonPropertyName("stars")]
+        public int? Stars { get; set; }
     }
 }

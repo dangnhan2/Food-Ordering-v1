@@ -2,7 +2,6 @@
 using FoodOrdering.Application.DTOs.QueryParams;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
-using FoodOrdering.Application.Extension;
 using FoodOrdering.Application.Helper.Extensions;
 using FoodOrdering.Application.Repositories.Caching;
 using FoodOrdering.Application.Services.Interface;
@@ -29,6 +28,9 @@ namespace FoodOrdering.Application.Services.Services
 
             if (!result.IsValid)
                 throw new ValidationDictionaryException(result.ToDictionary());
+
+            if (request.IsActive && request.StartDate > DateTimeOffset.UtcNow)
+                throw new ArgumentException("Thời điểm bắt đầu voucher đang khác với giờ hiện tại, hãy sửa lại giờ bắt đầu phù hợp");
 
             var newVoucher = MappingVoucher(request);
           
@@ -62,32 +64,10 @@ namespace FoodOrdering.Application.Services.Services
             var vouchers = _unitOfWork.Voucher.GetAll();
 
             if (!string.IsNullOrEmpty(voucherParams.Search))
-                vouchers = vouchers.Where(v => v.Code.ToUpper() == voucherParams.Search.ToUpper());
+                vouchers = vouchers.Where(v => EF.Functions.Like(v.Code, $"%{voucherParams.Search}%"));
 
             if (voucherParams.StartDate.HasValue && voucherParams.EndDate.HasValue)
                 vouchers = vouchers.Where(v => v.StartDate == voucherParams.StartDate.Value && v.EndDate == voucherParams.EndDate.Value);            
-
-            if (!string.IsNullOrEmpty(voucherParams.SortBy))
-            {
-                var sortBy = voucherParams.SortBy.ToLower();
-                var sortOrder = voucherParams.SortOrder?.ToLower() ?? "asc";
-
-                vouchers = sortBy
-                switch
-                {
-                    "usageLimit" =>
-                    sortOrder == "desc"
-                    ? vouchers.OrderByDescending(v => v.UsageLimit)
-                    : vouchers.OrderBy(v => v.UsageLimit),
-
-                    "usedCount" =>
-                    sortOrder == "desc"
-                    ? vouchers.OrderByDescending(v => v.UsedCount)
-                    : vouchers.OrderBy(v => v.UsedCount),
-
-                    _ => vouchers.OrderByDescending(v => v.StartDate)
-                };
-            }
 
             var voucherToDTO = vouchers
                     .Select(v => new VoucherDTO(v))

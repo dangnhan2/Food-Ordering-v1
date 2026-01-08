@@ -3,6 +3,7 @@ using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Sprache;
 
@@ -76,6 +77,16 @@ namespace FoodOrdering.Presentation.Controllers.Auth
         {
             await _authService.ForgotPasswordAsync(request);
             var response = ApiResponse<dynamic>.Success("Email đã được gửi. Hãy nhập mã để xác nhận", null, StatusCodes.Status200OK);
+            return Ok(response);
+        }
+
+        [HttpPost("email/resend")]
+        public async Task<IActionResult> ResendEmail(ResendEmailRequestDto resendEmailRequest)
+        {
+            await _authService.ResendEmailAsync(resendEmailRequest);
+
+            var response = ApiResponse<string>.Success("Email đã được gửi. Hãy nhập mã để xác nhận", "", StatusCodes.Status200OK);
+
             return Ok(response);
         }
 

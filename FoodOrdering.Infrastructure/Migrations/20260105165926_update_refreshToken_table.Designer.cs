@@ -3,6 +3,7 @@ using System;
 using FoodOrdering.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FoodOrdering.Infrastructure.Migrations
 {
     [DbContext(typeof(FoodOrderingDbContext))]
-    partial class FoodOrderingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260105165926_update_refreshToken_table")]
+    partial class update_refreshToken_table
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -121,9 +124,6 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.Property<DateTime>("ExpiredAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<bool>("IsUsed")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("Otp")
                         .IsRequired()
                         .HasColumnType("text");
@@ -133,7 +133,8 @@ namespace FoodOrdering.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
                     b.ToTable("EmailOtp");
                 });
@@ -239,7 +240,7 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.Property<string>("Note")
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("OrderDate")
+                    b.Property<DateTime>("OrderDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PaymentMethod")
@@ -708,8 +709,8 @@ namespace FoodOrdering.Infrastructure.Migrations
             modelBuilder.Entity("FoodOrdering.Domain.Models.EmailOtp", b =>
                 {
                     b.HasOne("FoodOrdering.Domain.Models.User", "User")
-                        .WithMany("EmailOtps")
-                        .HasForeignKey("UserId")
+                        .WithOne("EmailOtp")
+                        .HasForeignKey("FoodOrdering.Domain.Models.EmailOtp", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -946,7 +947,8 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.Navigation("Carts")
                         .IsRequired();
 
-                    b.Navigation("EmailOtps");
+                    b.Navigation("EmailOtp")
+                        .IsRequired();
 
                     b.Navigation("Notifications");
 

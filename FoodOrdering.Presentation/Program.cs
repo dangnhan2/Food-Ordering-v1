@@ -11,17 +11,14 @@ using Serilog;
 var builder = WebApplication.CreateBuilder(args);
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", false);
-Log.Logger = new LoggerConfiguration()
-    .Enrich.FromLogContext() // meta data into log (requestId, endpoint, path)
-    .Enrich.WithThreadId() // thread id into log
-    .Enrich.WithEnvironmentName() // eviroment 
-    .WriteTo.Console() // display log to console
-    .WriteTo.Seq("http://localhost:5341") // display log to seq
-    .MinimumLevel.Information()
-    .CreateLogger();
 
 builder.Host.UseSerilog((context, services, configuration) => 
-   configuration.ReadFrom.Configuration(context.Configuration));
+   configuration
+   .ReadFrom.Configuration(context.Configuration)
+   .ReadFrom.Services(services)
+   .Enrich.FromLogContext()
+   .Enrich.WithProperty("Environment", context.HostingEnvironment.EnvironmentName)
+   );
 
 // Add extensions
 builder.Services.AddExtensions();

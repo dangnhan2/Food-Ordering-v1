@@ -21,9 +21,5 @@ namespace FoodOrdering.Application.DTOs.QueryParams
         public DateTime? StartDate { get; set; }
         [JsonPropertyName("endDate")]
         public DateTime? EndDate { get; set; }
-        [JsonPropertyName("sortBy")]
-        public string? SortBy { get; set; }
-        [JsonPropertyName("sortOrder")]
-        public string? SortOrder { get; set; }
     }
 }

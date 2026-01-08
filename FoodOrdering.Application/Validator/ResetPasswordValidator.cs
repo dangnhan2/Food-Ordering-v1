@@ -14,7 +14,7 @@ namespace FoodOrdering.Application.Validator
             // 1. Kiểm tra trường Email
             RuleFor(x => x.Email)
                 .NotEmpty().WithMessage("Địa chỉ email không được để trống.")
-                .EmailAddress().WithMessage("Địa chỉ email không hợp lệ. Vui lòng kiểm tra lại định dạng.");
+                .EmailAddress().WithMessage("Định dạng email không hợp lệ.");
 
             // 2. Kiểm tra trường Password (Thiết lập quy tắc bảo mật mạnh)
             RuleFor(x => x.NewPassword)

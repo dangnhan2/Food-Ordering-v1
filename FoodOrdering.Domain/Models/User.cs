@@ -14,7 +14,7 @@ namespace FoodOrdering.Domain.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public bool IsAdmin { get; set; } = false;
         public Cart Carts { get; set; }
-        public EmailOtp EmailOtp { get; set; }
+        public ICollection<EmailOtp> EmailOtps { get; set; } = new List<EmailOtp>();
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
         public ICollection<VoucherRedemptions> VoucherRedemptions { get; set; } = new List<VoucherRedemptions>();
         public ICollection<Order> Orders { get; set; } = new List<Order>();

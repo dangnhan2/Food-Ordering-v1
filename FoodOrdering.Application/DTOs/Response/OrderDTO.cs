@@ -12,6 +12,7 @@ namespace FoodOrdering.Application.DTOs.Response
         public string FullName { get; set; }
         public string PhoneNumber { get; set; }
         public string Address { get; set; }
+        public string Note { get; set; }
         public OrderStatus OrderStatus { get; set; }
         public int TotalAmount { get; set; }
         public int TransactionCode { get; set; }     
@@ -22,10 +23,11 @@ namespace FoodOrdering.Application.DTOs.Response
         {
             Id = order.Id;
             UserId = order.UserId;
-            OrderDate = order.OrderDate.FormatDateTime();
+            OrderDate = order.OrderDate.FormatDateTimeOffset();
             FullName = order.Address.FullName;
             PhoneNumber = order.Address.PhoneNumber;
             Address = order.Address.AddressName;
+            Note = order.Note;
             OrderStatus = order.Status;
             TotalAmount = order.TotalAmount;
             TransactionCode = order.TransactionId;

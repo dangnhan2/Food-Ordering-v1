@@ -18,7 +18,7 @@ namespace FoodOrdering.Domain.Models
         public Address Address { get; set; } 
 
         public string? Note { get; set; }
-        public DateTime OrderDate { get; set; } = DateTime.UtcNow;
+        public DateTimeOffset OrderDate { get; set; } = DateTimeOffset.UtcNow;
         public DateTime? ExpiredAt { get; set; } 
         public OrderStatus Status { get; set; }
         public int TotalAmount { get; set; }

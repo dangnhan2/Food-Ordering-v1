@@ -61,9 +61,8 @@ namespace FoodOrdering.Application.Services.Services
             var menus = _unitOfWork.Menu.GetAll();
 
             if (!string.IsNullOrEmpty(menuParams.Search))
-                menus = menus.Where(m => m.Name.ToLower().Trim().Contains(menuParams.Search.ToLower().Trim())
-                    || m.Categories.Name.ToLower().Trim().Contains(menuParams.Search.ToLower().Trim()));
-         
+                menus = menus.Where(m => EF.Functions.Like(m.Name, $"%{menuParams.Search}%")
+                || EF.Functions.Like(m.Categories.Name, $"%{menuParams.Search}%"));   
 
             if (menuParams.IsAvailable.HasValue)
                 menus = menus.Where(m => m.IsAvailable == menuParams.IsAvailable.Value);
@@ -77,8 +76,8 @@ namespace FoodOrdering.Application.Services.Services
                 menus = sortBy switch
                 {
                     "price" => sortOrder == "desc" 
-                    ? menus.OrderByDescending(m => m.OriginalPrice) 
-                    : menus.OrderBy(m => m.OriginalPrice),
+                    ? menus.OrderByDescending(m => m.IsOnSale ? m.DiscountPrice : m.OriginalPrice) 
+                    : menus.OrderBy(m => m.IsOnSale ? m.DiscountPrice : m.OriginalPrice),
 
                     "soldquantity" => sortOrder == "desc" 
                     ? menus.OrderByDescending(m => m.SoldQuantity) 
@@ -183,21 +182,32 @@ namespace FoodOrdering.Application.Services.Services
             if (currentMenu == null)
                 return Enumerable.Empty<MenuDto>();
 
-            var ran = new Random();
-
             var menus = _unitOfWork.Menu
                 .GetAll()
                 .Where(m =>
-                      m.Id != menuId
+                      m.Id != currentMenu.Id
                    && m.CategoriesId == currentMenu.CategoriesId
                    && m.IsAvailable)
-                .OrderBy(m => ran.Next())
                 .Take(10);
 
             var menusToDto = await menus
-                .Include(m => m.Categories)
-                .Select(m => new MenuDto(m, m.Ratings.Count()))
-                .AsNoTrackingWithIdentityResolution()
+                .Select(m => new MenuDto
+                {
+                    Id = m.Id,
+                    Name = m.Name,
+                    Category = m.Categories.Name,
+                    Description = m.Description,
+                    OriginalPrice = m.OriginalPrice,
+                    DiscountPrice = m.DiscountPrice,
+                    AverageRating = m.AverageRating,
+                    ImageUrl = m.ImageUrl,
+                    SoldQuantity = m.SoldQuantity,
+                    RatingCount = m.Ratings.Count(),
+                    IsAvailable = m.IsAvailable,
+                    IsOnSale = m.IsOnSale,
+                    CreatedAt = m.CreatedAt
+                })
+                .AsNoTracking()
                 .ToListAsync(); 
             return menusToDto;
         }

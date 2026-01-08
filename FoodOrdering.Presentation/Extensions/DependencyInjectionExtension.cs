@@ -1,5 +1,4 @@
-﻿using CloudinaryDotNet;
-using DotNetEnv;
+﻿using DotNetEnv;
 using FoodOrdering.Application;
 using FoodOrdering.Application.Email;
 using FoodOrdering.Application.Payment;
@@ -58,6 +57,7 @@ namespace Food_Ordering.Extensions
             services.AddTransient<ICloudinaryService, CLoudinaryService>();
             services.AddTransient<IPaymentGateway, PaymentGateway>();
             services.AddTransient<IEmailService, EmailService>();
+            services.AddScoped<ISearchService, SearchService>();
 
             services.AddSingleton<IConnectionMultiplexer>(sp =>
             {
@@ -73,7 +73,7 @@ namespace Food_Ordering.Extensions
                 new RedLockMultiplexer(multiplexer)
                 });
             });
-
+       
             return services;
         }
     }

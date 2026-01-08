@@ -20,7 +20,7 @@ namespace FoodOrdering.Application.Validator
             // 2. Kiểm tra UserName
             RuleFor(x => x.UserName)
                 .NotEmpty().WithMessage("Tên đăng nhập không được để trống.")
-                .MinimumLength(5).WithMessage("Tên đăng nhập phải có ít nhất 5 ký tự.");
+                .MinimumLength(5).WithMessage("Tên đăng nhập phải có ít nhất 6 ký tự.");
 
             // 3. Kiểm tra Password
             RuleFor(x => x.Password)
