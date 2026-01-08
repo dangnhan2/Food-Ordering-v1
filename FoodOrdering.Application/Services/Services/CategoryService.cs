@@ -60,7 +60,7 @@ namespace FoodOrdering.Application.Services.Services
              
             var categories = _unitOfWork.Category
                 .GetAll()
-                .Where(c => c.Name.Trim().ToLower() == request.Name.Trim().ToLower());
+                .Where(c => EF.Functions.Like(c.Name, $"%{request.Name}%"));
 
             if (categories.Any())
                 throw new DuplicateNameException($"{request.Name} đã tồn tại");

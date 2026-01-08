@@ -2,8 +2,6 @@
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Email;
-using FoodOrdering.Application.Extension;
-using FoodOrdering.Application.Repositories;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
@@ -78,11 +76,19 @@ namespace FoodOrdering.Application.Services.Services
             if (!result.IsValid)
                 throw new ValidationDictionaryException(result.ToDictionary());
 
-            var user = await _userManager.FindByEmailAsync(request.Email);
+            var user = await _userManager.FindByEmailAsync(request.Email);           
+
+
             var isPasswordValid = await _userManager.CheckPasswordAsync(user, request.Password);
 
             if (user == null || !isPasswordValid)
                 throw new ArgumentException("Thông tin đăng nhập không đúng");
+
+            if (await _userManager.IsLockedOutAsync(user))            
+                throw new UnauthorizedAccessException("Tài khoản của bạn đã bị khóa , vui lòng liên hệ với admin");
+            
+            if (!user.EmailConfirmed)
+                throw new ArgumentException("Tài khoản của bạn chưa được xác nhận, hãy xác nhận email để tiếp tục đăng nhập");
 
             var authResponse = await _tokenService.GenerateToken(user, context);
 
@@ -184,30 +190,58 @@ namespace FoodOrdering.Application.Services.Services
             if (existUser == null)
                 throw new KeyNotFoundException("Người dùng không tồn tại");
 
-            if (existUser.EmailOtp == null)
-                throw new ArgumentException("Không tồn tại mã OTP hoặc đã hết hạn");
 
-            if (existUser.EmailOtp.Otp != request.Otp)           
-                throw new ArgumentException("Mã otp không hợp lệ hoặc hết hạn");
-            
-                
-            existUser.EmailConfirmed = true;
-
-            _unitOfWork.EmailOtp.Remove(existUser.EmailOtp);
-            await _userManager.UpdateAsync(existUser);
+            if (existUser.EmailOtps.Any(otp => (otp.Otp == request.Otp && otp.IsUsed) || (otp.Otp == request.Otp && otp.ExpiredAt < DateTime.UtcNow)))
+                throw new ArgumentException("Mã otp đã sử dụng hoặc đã hết hạn");
+                           
+            foreach(var otp in existUser.EmailOtps)
+            {
+                if (otp.Otp == request.Otp)
+                {
+                    existUser.EmailConfirmed = true;
+                    _unitOfWork.EmailOtp.Remove(otp);
+                    await _userManager.UpdateAsync(existUser);
+                    break;
+                }
+            }
+          
             await _unitOfWork.SaveChangeAsync();
 
             return request.Email;
         }
 
-        private async Task<string> GenerateOtp(Guid id)
+        public async Task ResendEmailAsync(ResendEmailRequestDto resendEmailRequest)
+        {
+            var result = await new ResendEmailValidator().ValidateAsync(resendEmailRequest);
+
+            if (!result.IsValid)
+                throw new ValidationDictionaryException(result.ToDictionary());
+
+            var user = await _unitOfWork.User.GetUserByEmailAsync(resendEmailRequest.UserEmail);
+
+            if (user == null) 
+                throw new KeyNotFoundException("Người dùng không tồn tại");
+
+           foreach(var otp in user.EmailOtps)
+           {
+                if (!otp.IsUsed)               
+                    otp.IsUsed = true;               
+           }
+
+           var newOtp = await GenerateOtp(user.Id);
+
+           SendEmail(user.Id, user.Email, newOtp);
+        }
+
+        private async Task<string> GenerateOtp(Guid userId)
         {
             var otp = new Random().Next(100000, 999999).ToString();
 
             var emailOtp = new EmailOtp
             {
                 Id = Guid.NewGuid(),
-                UserId = id,
+                UserId = userId,
+                IsUsed = false,
                 Otp = otp
             };
 
@@ -224,17 +258,8 @@ namespace FoodOrdering.Application.Services.Services
                 $" <p class=\"otp\">{otp}</p> " +
                 $"<p>Mã sẽ hết hạn trong {5} phút. Không chia sẻ mã otp này cho bất kì ai</p>";
 
-            // schedule to delete expired otp after 5 minutes
-            ScheduleDeleteExpiredOpt_5mins(userId);
-
             BackgroundJob.Enqueue(() => _emailService.EmailSender(email, "Một email đã gửi đến email của bạn . Hãy nhập mã xác nhận", htmlBody));
         }
 
-        private void ScheduleDeleteExpiredOpt_5mins(Guid userId)
-        {
-            BackgroundJob.Schedule<IBackgroundJobScheduler>(
-                j => j.ScheduleDeleteExpiredOtpJob_5mins(userId),
-                TimeSpan.FromMinutes(5));
-        }
     }
 }

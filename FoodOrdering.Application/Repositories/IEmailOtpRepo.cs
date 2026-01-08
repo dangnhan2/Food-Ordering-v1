@@ -9,5 +9,6 @@ namespace FoodOrdering.Application.Repositories
 {
     public interface IEmailOtpRepo : IGenericRepo<EmailOtp>
     {
+        public Task<EmailOtp> GetOtp(string Otp);
     }
 }

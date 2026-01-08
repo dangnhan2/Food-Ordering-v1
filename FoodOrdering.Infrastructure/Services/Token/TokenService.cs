@@ -37,7 +37,7 @@ namespace FoodOrdering.Infrastructure.Services.Token
             // add claim
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
@@ -57,11 +57,20 @@ namespace FoodOrdering.Infrastructure.Services.Token
             var jwt = tokenHandler.CreateToken(tokenDescriptor);
             var token = tokenHandler.WriteToken(jwt);
 
-            string refresh = await RefreshTokenAsync(user.Id);
+            string refresh = await RefreshTokenAsync(user.Id, jwt.Id);
 
             var authResponse = new AuthResponse
             {
-                Data = new UserDTO(user, userRole.First()),               
+                Data = new UserDTO
+                {
+                    Id = user.Id,
+                    UserName = user.UserName,
+                    PhoneNumber = user.PhoneNumber,
+                    ImageUrl = user.ImageUrl,
+                    Email = user.Email,
+                    IsActive = user.LockoutEnd.HasValue ? false : true,
+                    Role = userRole.First()
+                },               
                 AccessToken = token
             };
 
@@ -87,7 +96,7 @@ namespace FoodOrdering.Infrastructure.Services.Token
 
             var existRefreshToken = await _unitOfWork.RefreshToken.GetTokenByRefreshToken(refreshToken);
 
-            if (existRefreshToken == null || existRefreshToken.ExpriedAt < DateTime.UtcNow)
+            if (existRefreshToken == null || existRefreshToken.ExpriedAt < DateTime.UtcNow || existRefreshToken.IsRevoked)
                 throw new UnauthorizedAccessException("Token is invalid");
 
             var user = existRefreshToken.User;
@@ -98,7 +107,7 @@ namespace FoodOrdering.Infrastructure.Services.Token
         }
 
         // save refresh token to db
-        private async Task<string> RefreshTokenAsync(Guid userId)
+        private async Task<string> RefreshTokenAsync(Guid userId, string tokenId)
         {
             var user = await _unitOfWork.User.GetByIdAsync(userId);
 
@@ -110,9 +119,11 @@ namespace FoodOrdering.Infrastructure.Services.Token
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
+                JwtId = tokenId,
+                IsRevoked = false,
                 Token = refresh.HashToken(),
                 CreatedAt = DateTime.UtcNow,
-                ExpriedAt = DateTime.UtcNow.AddMonths(3)
+                ExpriedAt = DateTime.UtcNow.AddDays(3)
             };
 
             user.RefreshTokens.Add(refreshToken);

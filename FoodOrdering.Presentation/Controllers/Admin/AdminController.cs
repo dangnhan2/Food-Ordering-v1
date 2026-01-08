@@ -122,6 +122,25 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             return Ok(response);
         }
 
+        [HttpPut("user_banning/{id}")]
+        public async Task<IActionResult> BanUser(Guid id)
+        {
+            await _userService.BanUserAsync(id);
+
+            var response = ApiResponse<dynamic>.Success("Cập nhật người dùng thành công", "", StatusCodes.Status200OK);
+
+            return Ok(response);
+        }
+
+        [HttpPut("user_unbanning/{id}")]
+        public async Task<IActionResult> UnbanUser(Guid id)
+        {
+            await _userService.UnBanUserAsync(id);
+            var response = ApiResponse<dynamic>.Success("Cập nhật người dùng thành công", "", StatusCodes.Status200OK);
+
+            return Ok(response);
+        }
+
         // Voucher EndPoints
         [HttpGet("vouchers")]
         public async Task<IActionResult> GetVoucher([FromQuery] VoucherParams voucherParams)

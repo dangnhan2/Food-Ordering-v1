@@ -11,6 +11,7 @@ namespace FoodOrdering.Application.Services.Interface
         public Task<AuthResponse> RefreshTokenAsync(HttpContext context);
         public Task LogoutAsync(HttpContext context);
         public Task<string> VerifyEmail(EmailVerifyRequestDto request);
+        public Task ResendEmailAsync(ResendEmailRequestDto resendEmailRequest);
         public Task ChangePasswordAsync(PasswordRequestDto request);
         public Task ForgotPasswordAsync(ForgotPasswordRequestDto request);
         public Task ResetPasswordAsync(ResetPasswordRequestDto request);

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FoodOrdering.Domain.Models
+﻿namespace FoodOrdering.Domain.Models
 {
     public class RefreshToken
     {
@@ -13,7 +7,9 @@ namespace FoodOrdering.Domain.Models
         public Guid UserId { get; set; }
 
         public string Token { get; set; }
+        public string JwtId { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime ExpriedAt { get; set; }
+        public bool IsRevoked { get; set; }
     }
 }

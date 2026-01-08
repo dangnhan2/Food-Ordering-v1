@@ -2,7 +2,7 @@
 {
     public interface IBackgroundJobScheduler
     {
-        public Task ScheduleDeleteExpiredOtpJob_5mins(Guid id);
+        public Task RecurringDeleteExpiredOtpJob_5mins();
         public Task ScheduleUpdateExpiredOrderJob_10mins(Guid id);
         public Task RecurringDeleteExpiredRefreshTokensJob_3months();
         public Task RecurringDeleteExpiredCartsJob_3hours();

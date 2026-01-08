@@ -25,6 +25,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
         private readonly IAddressService _addressService; 
         private readonly INotificationService _notificationService;
         private readonly IRatingService _ratingService;
+        private readonly ISearchService _searchService;
         public CommonController(
             ICategoryService categoryService, 
             IMenuService menuService, 
@@ -34,7 +35,8 @@ namespace FoodOrdering.Presentation.Controllers.Common
             IVoucherService voucherService, 
             IAddressService addressService, 
             INotificationService notificationService,
-            IRatingService ratingService)
+            IRatingService ratingService,
+            ISearchService searchService)
         {
             _categoryService = categoryService;
             _menuService = menuService;
@@ -45,6 +47,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
             _addressService = addressService;
             _notificationService = notificationService;
             _ratingService = ratingService;
+            _searchService = searchService;
         }
 
         // Category EndPoint
@@ -95,6 +98,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
 
             return Ok(response);
         }
+
 
         // Cart EndPoints
         [HttpGet("cart")]
@@ -210,6 +214,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
         }
 
         // Rating Endpoints
+        [AllowAnonymous]
         [HttpGet("ratings/menu/{id}")]
         public async Task<IActionResult> GetAllRatingsByMenuId(Guid id,[FromQuery] RatingParams ratingParams)
         {   
@@ -226,6 +231,16 @@ namespace FoodOrdering.Presentation.Controllers.Common
              await _ratingService.RatingPaidOrderAsync(request);
 
             var response = ApiResponse<dynamic>.Success("Đánh giá thành công", null, StatusCodes.Status201Created);
+            return Ok(response);
+        }
+
+        [AllowAnonymous]
+        [HttpGet("searching")]
+        public async Task<IActionResult> SearchingMenu([FromQuery] SearchRequestDto searchRequest)
+        {
+            var result = await _searchService.SearchMenuAsync(searchRequest);
+
+            var response = ApiResponse<dynamic>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
             return Ok(response);
         }
     }

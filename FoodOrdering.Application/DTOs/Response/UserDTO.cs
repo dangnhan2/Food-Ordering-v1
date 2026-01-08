@@ -14,24 +14,9 @@ namespace FoodOrdering.Application.DTOs.Response
         public string PhoneNumber { get; set; }
         public string ImageUrl { get; set; }
         public string Email { get; set; }
+        public bool IsActive { get; set; }
+        public int TotalAmountInMonth { get; set; }
+        public int TotalAmountInYear { get; set; }
         public string Role { get; set; }
-
-        public UserDTO(User user, string role) { 
-            Id = user.Id;
-            UserName = user.UserName;
-            PhoneNumber = user.PhoneNumber;
-            ImageUrl = user.ImageUrl;
-            Email = user.Email;
-            Role = role;
-        }
-
-        public UserDTO(User user)
-        {
-            Id = user.Id;
-            UserName = user.UserName;
-            PhoneNumber = user.PhoneNumber;
-            ImageUrl = user.ImageUrl;
-            Email = user.Email;
-        }
     }
 }

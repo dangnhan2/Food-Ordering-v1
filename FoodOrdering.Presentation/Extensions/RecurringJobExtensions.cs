@@ -15,7 +15,7 @@ namespace FoodOrdering.Presentation.Extensions
             RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
                 "DeleteExpiredRefreshTokens_3months",
                 j => j.RecurringDeleteExpiredRefreshTokensJob_3months(),
-                Cron.Daily());
+                Cron.Hourly());
 
             RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
                 "PublicVouchers_24hours",
@@ -40,6 +40,11 @@ namespace FoodOrdering.Presentation.Extensions
                 j => j.RecurringDeleteNotificationsJob_1month(),
                 Cron.Monthly(),
                 TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+
+            RecurringJob.AddOrUpdate<IBackgroundJobScheduler>(
+                "DeleteExpiredOtpJob",
+                j => j.RecurringDeleteExpiredOtpJob_5mins(),
+                Cron.MinuteInterval(5));
         }
     }
 }

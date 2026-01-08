@@ -3,7 +3,6 @@ using FoodOrdering.Application.Contants;
 using FoodOrdering.Application.DTOs.QueryParams;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
-using FoodOrdering.Application.Extension;
 using FoodOrdering.Application.Helper.Extensions;
 using FoodOrdering.Application.Payment;
 using FoodOrdering.Application.Repositories;
@@ -53,10 +52,11 @@ namespace FoodOrdering.Application.Services.Services
                {
                    Id = o.Id,
                    UserId = o.UserId,
-                   OrderDate = o.OrderDate.FormatDateTime(),
+                   OrderDate = o.OrderDate.FormatDateTimeOffset(),
                    FullName = o.Address.FullName,
                    PhoneNumber = o.Address.PhoneNumber,
                    Address = o.Address.AddressName,
+                   Note = o.Note,
                    OrderStatus = o.Status,
                    TotalAmount = o.TotalAmount,
                    TransactionCode = o.TransactionId,
@@ -222,7 +222,7 @@ namespace FoodOrdering.Application.Services.Services
                {
                    Id = o.Id,
                    UserId = o.UserId,
-                   OrderDate = o.OrderDate.FormatDateTime(),
+                   OrderDate = o.OrderDate.FormatDateTimeOffset(),
                    FullName = o.Address.FullName,
                    PhoneNumber = o.Address.PhoneNumber,
                    Address = o.Address.AddressName,

@@ -1,5 +1,7 @@
 ﻿using FoodOrdering.Application;
 using FoodOrdering.Application.Repositories;
+using FoodOrdering.Domain.Models;
+using Microsoft.AspNetCore.Identity;
 using Serilog;
 
 namespace FoodOrdering.Infrastructure.Services.BackgroundJob
@@ -7,21 +9,22 @@ namespace FoodOrdering.Infrastructure.Services.BackgroundJob
     public class BackgroundJobScheduler : IBackgroundJobScheduler
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly UserManager<User> _userManager;
          
-        public BackgroundJobScheduler(IUnitOfWork unitOfWork)
+        public BackgroundJobScheduler(IUnitOfWork unitOfWork, UserManager<User> userManager)
         {
             _unitOfWork = unitOfWork;
+            _userManager = userManager;
         }
 
-        public async Task ScheduleDeleteExpiredOtpJob_5mins(Guid id)
+        public async Task RecurringDeleteExpiredOtpJob_5mins()
         {
-            var user = await _unitOfWork.User.GetUserContainsOtpAsync(id);
+            var expiredOtps = _unitOfWork.EmailOtp
+                .GetAll()
+                .Where(otp => otp.ExpiredAt < DateTime.UtcNow);
       
-            if (user != null && !user.EmailConfirmed && user.EmailOtp.ExpiredAt < DateTime.UtcNow)
-            {
-                _unitOfWork.User.Remove(user);
-                await _unitOfWork.SaveChangeAsync();
-            }
+            _unitOfWork.EmailOtp.RemoveRange(expiredOtps);
+            await _unitOfWork.SaveChangeAsync();            
         }
 
         public async Task ScheduleUpdateExpiredOrderJob_10mins(Guid id)

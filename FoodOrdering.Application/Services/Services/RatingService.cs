@@ -28,6 +28,10 @@ namespace FoodOrdering.Application.Services.Services
         {
             var ratingsByMenu = _unitOfWork.Rating.GetAll().Where(r => r.MenuId == menuId);
 
+            if (ratingParams.Stars.HasValue)           
+                ratingsByMenu = ratingsByMenu.Where(r => r.Stars == ratingParams.Stars.Value);
+            
+
             var ratings = ratingsByMenu
                           .Select(r => new RatingDto
                           {

@@ -52,7 +52,7 @@ namespace FoodOrdering.Presentation.Middleware
                 LogHelper.LogError(ex);
                 await HandleExceptionAsync(context, ex, HttpStatusCode.BadRequest);
             }
-            catch(InvalidOperationException ex)
+            catch (InvalidOperationException ex)
             {
                 LogHelper.LogError(ex);
                 await HandleExceptionAsync(context, ex, HttpStatusCode.BadRequest);
@@ -90,7 +90,7 @@ namespace FoodOrdering.Presentation.Middleware
                     message = keyEx.Message;
                     break;
                 case UnauthorizedAccessException:
-                    message = "Bạn không có quyền truy cập. Vui lòng đăng nhập lại.";
+                    message = ex.Message;
                     break;
                 case DuplicateNameException dupEx:
                     message = dupEx.Message;

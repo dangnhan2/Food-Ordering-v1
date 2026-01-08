@@ -1,5 +1,4 @@
-﻿using FoodOrdering.Application.Extension;
-using FoodOrdering.Application.Helper.Extensions;
+﻿using FoodOrdering.Application.Helper.Extensions;
 using FoodOrdering.Application.Repositories;
 using FoodOrdering.Domain.Models;
 using FoodOrdering.Infrastructure.Data;

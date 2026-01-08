@@ -1,6 +1,17 @@
 ﻿version: '3.8'
 
 services:
+  seq:
+    image: datalust/seq:2024.3
+    container_name: seq
+    environment:
+      - ACCEPT_EULA=Y
+    ports:
+      - "5341:80"
+    volumes:
+      - seq_data:/data
+    restart: always
+ 
   foodordering.database:
     image: postgres:15-alpine
     container_name: foodordering.database
@@ -86,6 +97,7 @@ services:
       - PAYOS_CANCEL_URL=${PAYOS_CANCEL_URL}
       
       - DEFAULT_AVATAR=${DEFAULT_AVATAR}
+  
     ports:
       - "8080:8080"
       - "8081:8081"
@@ -100,3 +112,4 @@ volumes:
   postgres_data:
   redis_data:
   pgadmin-data:
+  seq_data:
