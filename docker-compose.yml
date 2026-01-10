@@ -12,6 +12,7 @@ services:
       - seq_data:/data
     restart: always
  
+  # --- Database ---
   foodordering.database:
     image: postgres:15-alpine
     container_name: foodordering.database
@@ -74,28 +75,28 @@ services:
       - ConnectionStrings__DefaultConnection=${DefaultConnection}
       - REDIS=${REDIS}
 
-      - API_NAME=${API_NAME}
-      - API_KEY=${API_KEY}
-      - API_SECRET=${API_SECRET}
+      - CloudinaryOptions__CloudName=${CloudinaryOptions__CloudName}
+      - CloudinaryOptions__ApiKey=${CloudinaryOptions__ApiKey}
+      - CloudinaryOptions__ApiSecret=${CloudinaryOptions__ApiSecret}
       
       - SECRET_KEY=${SECRET_KEY}
       - ISSUER=${ISSUER}
       - AUDIENCE=${AUDIENCE}
       
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_PORT=${SMTP_PORT}
-      - SMTP_ENABLE_SSL=${SMTP_ENABLE_SSL}
-      - SMTP_USERNAME=${SMTP_USERNAME}
-      - SMTP_PASSWORD=${SMTP_PASSWORD}
-      - SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL}
-      - SMTP_FROM_NAME=${SMTP_FROM_NAME}
+      - EmailOptions__SMTP_HOST=${EmailOptions__SMTP_HOST}
+      - EmailOptions__SMTP_PORT=${EmailOptions__SMTP_PORT}
+      - EmailOptions__SMTP_ENABLE_SSL=${EmailOptions__SMTP_ENABLE_SSL}
+      - EmailOptions__SMTP_USERNAME=${EmailOptions__SMTP_USERNAME}
+      - EmailOptions__SMTP_PASSWORD=${EmailOptions__SMTP_PASSWORD}
+      - EmailOptions__SMTP_FROM_EMAIL=${EmailOptions__SMTP_FROM_EMAIL}
+      - EmailOptions__SMTP_FROM_NAME=${EmailOptions__SMTP_FROM_NAME}
       
-      - PAYOS_CLIENT_ID=${PAYOS_CLIENT_ID}
-      - PAYOS_API_KEY=${PAYOS_API_KEY}
-      - PAYOS_CHECKSUM_KEY=${PAYOS_CHECKSUM_KEY}
-      - PAYOS_RETURN_URL=${PAYOS_RETURN_URL}
-      - PAYOS_CANCEL_URL=${PAYOS_CANCEL_URL}
-      
+      - PayOsOptions__ClientId=${PayOsOptions__ClientId}
+      - PayOsOptions__ApiKey=${PayOsOptions__ApiKey}
+      - PayOsOptions__ChecksumKey=${PayOsOptions__ChecksumKey}
+      - PayOsOptions__ReturnUrl=${PayOsOptions__ReturnUrl}
+      - PayOsOptions__CancelUrl=${PayOsOptions__CancelUrl}    
+
       - DEFAULT_AVATAR=${DEFAULT_AVATAR}
   
     ports:

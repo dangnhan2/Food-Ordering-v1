@@ -1,6 +1,6 @@
 using Food_Ordering.Extensions;
-using FoodOrdering.Application.Repositories;
 using FoodOrdering.Infrastructure.Configuration;
+using FoodOrdering.Infrastructure.Options;
 using FoodOrdering.Infrastructure.SignalR_Hub;
 using FoodOrdering.Presentation.Configuration;
 using FoodOrdering.Presentation.Extensions;
@@ -28,6 +28,16 @@ builder.Services.AddDistributedMemoryCache();
 // Add services to the container.
 
 builder.Services.AddControllers();
+
+builder.Services.Configure<CloudinaryOptions>(
+    builder.Configuration.GetSection("CloudinaryOptions"));
+
+builder.Services.Configure<PayOsOptions>(
+    builder.Configuration.GetSection("PayOsOptions"));
+
+builder.Services.Configure<EmailOptions>(
+    builder.Configuration.GetSection("EmailOptions"));
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

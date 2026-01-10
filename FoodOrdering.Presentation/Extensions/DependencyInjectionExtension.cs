@@ -1,12 +1,14 @@
-﻿using DotNetEnv;
+﻿using CloudinaryDotNet;
+using DotNetEnv;
 using FoodOrdering.Application;
 using FoodOrdering.Application.Email;
-using FoodOrdering.Application.Payment;
 using FoodOrdering.Application.Repositories;
 using FoodOrdering.Application.Repositories.Caching;
 using FoodOrdering.Application.Services.Interface;
+using FoodOrdering.Application.Services.Payment;
 using FoodOrdering.Application.Services.Services;
 using FoodOrdering.Infrastructure;
+using FoodOrdering.Infrastructure.Options;
 using FoodOrdering.Infrastructure.Repositories;
 using FoodOrdering.Infrastructure.Repository;
 using FoodOrdering.Infrastructure.Services.BackgroundJob;
@@ -15,6 +17,8 @@ using FoodOrdering.Infrastructure.Services.Email;
 using FoodOrdering.Infrastructure.Services.Payment;
 using FoodOrdering.Infrastructure.Services.Token;
 using FoodOrdering.Infrastructure.SignalR_Hub;
+using Microsoft.Extensions.Options;
+using Net.payOS;
 using RedLockNet.SERedis;
 using RedLockNet.SERedis.Configuration;
 using StackExchange.Redis;
@@ -55,7 +59,7 @@ namespace Food_Ordering.Extensions
 
             services.AddScoped<ICachingService, CachingService>();
             services.AddTransient<ICloudinaryService, CLoudinaryService>();
-            services.AddTransient<IPaymentGateway, PaymentGateway>();
+            services.AddTransient<IPayOsService, PayOsService>();
             services.AddTransient<IEmailService, EmailService>();
             services.AddScoped<ISearchService, SearchService>();
 
@@ -63,6 +67,32 @@ namespace Food_Ordering.Extensions
             {
                 var configuration = $"{Env.GetString("REDIS")},abortConnect=false";
                 return ConnectionMultiplexer.Connect(configuration);
+            });
+
+            services.AddSingleton<Cloudinary>(cd =>
+            {
+                var options = cd.GetRequiredService<IOptions<CloudinaryOptions>>().Value;
+
+                var account = new Account(
+                     options.CloudName,
+                     options.ApiKey,
+                     options.ApiSecret
+                    );
+
+                return new Cloudinary(account);
+            });
+
+            services.AddSingleton<PayOS>(p =>
+            {
+                var options = p.GetRequiredService<IOptions<PayOsOptions>>().Value;
+
+                var account = new PayOS(
+                     options.ClientId,
+                     options.ApiKey,
+                     options.ChecksumKey
+                    );
+
+                return account;
             });
 
             services.AddSingleton<RedLockFactory>(sp =>

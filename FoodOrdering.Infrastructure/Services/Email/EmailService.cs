@@ -1,5 +1,7 @@
 ﻿using DotNetEnv;
 using FoodOrdering.Application.Email;
+using FoodOrdering.Infrastructure.Options;
+using Microsoft.Extensions.Options;
 using System.Net;
 using System.Net.Mail;
 
@@ -7,18 +9,23 @@ namespace FoodOrdering.Infrastructure.Services.Email
 {
     public class EmailService : IEmailService
     {
+        public readonly EmailOptions _options;
+
+        public EmailService(IOptions<EmailOptions> options)
+        {
+            _options = options.Value;
+        }
         public async Task EmailSender(string toEmail, string subject, string body)
         {   
             try
             {
-                Env.Load();
-                var host = Env.GetString("SMTP_HOST");
-                var port = Env.GetInt("SMTP_PORT");
-                var enableSsl = Env.GetBool("SMTP_ENABLE_SSL");
-                var userName = Env.GetString("SMTP_USERNAME");
-                var authPassword = Env.GetString("SMTP_PASSWORD");
-                var senderEmail = Env.GetString("SMTP_FROM_EMAIL");
-                var senderName = Env.GetString("SMTP_FROM_NAME");
+                var host = _options.SMTP_HOST;
+                var port = _options.SMTP_PORT;
+                var enableSsl = _options.SMTP_ENABLE_SSL;
+                var userName = _options.SMTP_USERNAME;
+                var authPassword = _options.SMTP_PASSWORD;
+                var senderEmail = _options.SMTP_FROM_EMAIL;
+                var senderName = _options.SMTP_FROM_NAME;
 
                 var mailMessage = new MailMessage
                 {

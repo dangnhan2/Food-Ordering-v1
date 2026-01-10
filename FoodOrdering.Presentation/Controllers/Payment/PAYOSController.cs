@@ -1,26 +1,25 @@
-﻿using FoodOrdering.Application.Payment;
+﻿using FoodOrdering.Application.Services.Payment;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FoodOrdering.Presentation.Controllers.Payment
 {
+    [AllowAnonymous]
     [Route("api/payment")]
     [ApiController]
-    [Authorize (Roles = "Admin")]
     public class PAYOSController : ControllerBase
     {
-        private readonly IPaymentGateway _paymentGateway;
+        private readonly IPayOsService _payOsService;
 
-        public PAYOSController(IPaymentGateway paymentGateway)
+        public PAYOSController(IPayOsService payOsService)
         {
-            _paymentGateway = paymentGateway;
+            _payOsService = payOsService;
         }
 
-        [HttpPost("webhook")]
+        [HttpPost("webhook/confirm")]
         public async Task<IActionResult> ConfirmWebHook([FromBody] string url)
         {
-            var result = await _paymentGateway.ConfirmWebHook(url);
+            var result = await _payOsService.ConfirmWebHook(url);
 
             return Ok(result);
         }
@@ -28,17 +27,17 @@ namespace FoodOrdering.Presentation.Controllers.Payment
         [HttpPost("callback")]
         public async Task<IActionResult> CallBack()
         {
-            try
-            {
-                var result = await _paymentGateway.CallBack(Request);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            //try
+            //{
+            //    var result = await _payOsService.CallBack(Request);
+            //    return Ok(result);
+            //}
+            //catch (Exception ex)
+            //{
+            //    return BadRequest(ex.Message);
+            //}
 
-            //return Ok("Ok");
+            return Ok("Ok");
         }
     }
 }

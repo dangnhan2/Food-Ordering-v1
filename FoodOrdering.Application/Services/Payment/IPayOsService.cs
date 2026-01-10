@@ -7,9 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FoodOrdering.Application.Payment
+namespace FoodOrdering.Application.Services.Payment
 {
-    public interface IPaymentGateway
+    public interface IPayOsService
     {
         public Task<dynamic> CreatePaymentLink(int amount, int orderCode, List<ItemData> data);
         public Task<string> ConfirmWebHook(string url);
