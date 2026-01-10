@@ -1,49 +1,41 @@
 ﻿using DotNetEnv;
 using FoodOrdering.Application;
 using FoodOrdering.Application.DTOs.Response;
-using FoodOrdering.Application.Payment;
 using FoodOrdering.Application.Services.Interface;
+using FoodOrdering.Application.Services.Payment;
 using FoodOrdering.Domain.Models;
+using FoodOrdering.Infrastructure.Options;
 using FoodOrdering.Infrastructure.SignalR_Hub;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Net.payOS;
 using Net.payOS.Types;
 using Newtonsoft.Json.Linq;
+using Serilog;
+using Serilog.Core;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace FoodOrdering.Infrastructure.Services.Payment
 {
-    public class PaymentGateway : IPaymentGateway
+    public class PayOsService : IPayOsService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly PayOS _payOS;
-        private readonly string returnUrl;
-        private readonly string cancelUrl;
-        private readonly string _checksumKey;
-        private readonly IHubContext<NotificationHub> _hubContext;
-        private readonly UserManager<User> _userManager;
         private readonly INotificationSenderService _notificationSenderServer;
-        public PaymentGateway(
+        private readonly PayOsOptions _options;
+        public PayOsService(
             IUnitOfWork unitOfWork, 
-            IHubContext<NotificationHub> hubContext, 
-            UserManager<User> userManager, 
-            INotificationSenderService notificationSenderServer) {
-            Env.Load();
+            INotificationSenderService notificationSenderServer,
+            PayOS payOS,
+            IOptions<PayOsOptions> options) {
             _unitOfWork = unitOfWork;
-            _payOS = new PayOS(
-                Env.GetString("PAYOS_CLIENT_ID"),
-                Env.GetString("PAYOS_API_KEY"),
-                Env.GetString("PAYOS_CHECKSUM_KEY")
-                );
-
-            returnUrl = Env.GetString("PAYOS_RETURN_URL");
-            cancelUrl = Env.GetString("PAYOS_CANCEL_URL");
-            _checksumKey = Env.GetString("PAYOS_CHECKSUM_KEY");
-            _hubContext = hubContext;
-            _userManager = userManager;
+            _payOS = payOS;
+            _options = options.Value;         
             _notificationSenderServer = notificationSenderServer;
         }
 
@@ -77,7 +69,7 @@ namespace FoodOrdering.Infrastructure.Services.Payment
             var transactionStr = sb.ToString();
 
             // Compute HMAC SHA256
-            using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(_checksumKey));
+            using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(_options.ChecksumKey));
             var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(transactionStr));
             var signatureComputed = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
 
@@ -115,12 +107,14 @@ namespace FoodOrdering.Infrastructure.Services.Payment
 
         public async Task<string> ConfirmWebHook(string url)
         {
-            var webhookUrl = await _payOS.confirmWebhook(url);
-            return webhookUrl;
+            var result =await _payOS.confirmWebhook(url);
+            return result;
         }
 
         public async Task<dynamic> CreatePaymentLink(int amount, int orderCode, List<ItemData> data)
-        {   
+        {
+            var returnUrl = _options.ReturnUrl;
+            var cancelUrl = _options.CancelUrl;
 
             var paymentLinkRequest = new PaymentData(
                  orderCode : orderCode,

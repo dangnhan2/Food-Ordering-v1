@@ -18,16 +18,9 @@ namespace FoodOrdering.Application.Services.Services
         private readonly string[] allowedExtensions = { ".jpeg", ".gif", ".png", ".jpg" };
         private readonly Cloudinary _cloudinary;
 
-        public CLoudinaryService()
+        public CLoudinaryService(Cloudinary cloudinary)
         {
-            Env.Load();
-            Account account = new Account
-            {
-                Cloud = Env.GetString("API_NAME"),
-                ApiKey = Env.GetString("API_KEY"),
-                ApiSecret = Env.GetString("API_SECRET")
-            };
-            _cloudinary = new Cloudinary(account);
+            _cloudinary = cloudinary;
         }
         public async Task DeleteImage(string url)
         {

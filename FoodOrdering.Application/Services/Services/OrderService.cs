@@ -4,10 +4,10 @@ using FoodOrdering.Application.DTOs.QueryParams;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Helper.Extensions;
-using FoodOrdering.Application.Payment;
 using FoodOrdering.Application.Repositories;
 using FoodOrdering.Application.Repositories.Caching;
 using FoodOrdering.Application.Services.Interface;
+using FoodOrdering.Application.Services.Payment;
 using FoodOrdering.Domain.Models;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +20,7 @@ namespace FoodOrdering.Application.Services.Services
     public class OrderService : IOrderService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IPaymentGateway _paymentGateway;
+        private readonly IPayOsService _paymentGateway;
         private readonly RedLockFactory _redLockFactory;
         private readonly int orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
         private readonly ICachingService _cachingService;
@@ -28,11 +28,10 @@ namespace FoodOrdering.Application.Services.Services
    
         public OrderService(
             IUnitOfWork unitOfWork, 
-            IPaymentGateway paymentGateway, 
+            IPayOsService paymentGateway, 
             RedLockFactory redLockFactory, 
             ICachingService cachingService,
-            INotificationSenderService notificationSenderServer
-           )
+            INotificationSenderService notificationSenderServer)
         {
             _unitOfWork = unitOfWork;
             _paymentGateway = paymentGateway;
@@ -134,10 +133,11 @@ namespace FoodOrdering.Application.Services.Services
                 }
             }
 
-            Log.Information("Create payment link");          
+            Log.Information("Create payment link");
             var response = await _paymentGateway.CreatePaymentLink(totalAmount, orderCode, listItems);
+
             Log.Information("Created!!");
-           
+
             // schedule to update status after 10 minutes
             ScheduleExpiredOrder_10mins(newOrder.Id);
 
@@ -294,24 +294,6 @@ namespace FoodOrdering.Application.Services.Services
                 j => j.ScheduleUpdateExpiredOrderJob_10mins(id),
                 TimeSpan.FromMinutes(10));
         }
-
-        private void MappingMenuToOrder(ICollection<CartItem> cartItems, Order order)
-        {
-            foreach(var item in cartItems)
-            {
-                var orderItem = new OrderMenus
-                {
-                    Id = Guid.NewGuid(),
-                    OrderId = order.Id,
-                    MenuId = item.MenuId,
-                    Quantity = item.Quantity,
-                    UnitPrice = item.UnitPrice,
-                    SubTotal = item.Quantity * item.UnitPrice
-                };
-
-                order.OrderMenus.Add(orderItem);
-            }
-        }    
         
         private async Task UpdateSoldQuantity(ICollection<CartItem> cartItems)
         {
@@ -348,6 +330,24 @@ namespace FoodOrdering.Application.Services.Services
 
             subTotal = subTotal + (subTotal * TAX_RATE) / 100;
             return subTotal;
+        }
+
+        private void MappingMenuToOrder(ICollection<CartItem> cartItems, Order order)
+        {
+            foreach (var item in cartItems)
+            {
+                var orderItem = new OrderMenus
+                {
+                    Id = Guid.NewGuid(),
+                    OrderId = order.Id,
+                    MenuId = item.MenuId,
+                    Quantity = item.Quantity,
+                    UnitPrice = item.UnitPrice,
+                    SubTotal = item.Quantity * item.UnitPrice
+                };
+
+                order.OrderMenus.Add(orderItem);
+            }
         }
     }
 }
