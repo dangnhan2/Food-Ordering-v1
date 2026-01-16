@@ -107,10 +107,8 @@ namespace FoodOrdering.Application.Services.Services
             var cached = await _cacheService.GetAsync<VoucherDTO>(cacheKey);
             if (cached != null) return cached;
 
-            var voucher = await _unitOfWork.Voucher.GetByIdAsync(id);
+            var voucher = await _unitOfWork.Voucher.GetByIdAsync(id) ?? throw new KeyNotFoundException("Mã giảm giá không tồn tại");
 
-            if (voucher == null)
-                throw new KeyNotFoundException("Mã giảm giá không tồn tại");
             var voucherToDto = new VoucherDTO(voucher);
 
             await _cacheService.SetAsync(cacheKey, voucherToDto, TimeSpan.FromHours(12));
@@ -123,11 +121,8 @@ namespace FoodOrdering.Application.Services.Services
 
             if (!result.IsValid)           
                 throw new ValidationDictionaryException(result.ToDictionary());
-       
-            var existVoucher = await _unitOfWork.Voucher.GetByIdAsync(id);
 
-            if (existVoucher == null)
-                throw new KeyNotFoundException("Mã giảm giá không tồn tại");
+            var existVoucher = await _unitOfWork.Voucher.GetByIdAsync(id) ?? throw new KeyNotFoundException("Mã giảm giá không tồn tại");        
 
             existVoucher.Code = request.Code;
             existVoucher.Description = $"Hạn sử dụng {request.StartDate.FormatDateTimeOffset()} đến ngày {request.EndDate.FormatDateTimeOffset()}";
@@ -157,21 +152,20 @@ namespace FoodOrdering.Application.Services.Services
                 && v.StartDate <= DateTime.UtcNow
                 && v.EndDate >= DateTime.UtcNow
                 && v.UsedCount < v.UsageLimit
-                && v.IsActive);
+                && v.IsActive) ?? throw new KeyNotFoundException("Mã giảm giá không tồn tại");
 
-            if (voucher == null)
-                throw new KeyNotFoundException("Mã giảm giá không tồn tại");
 
             var cart = await _unitOfWork.Cart.GetCartByCustomerAsync(request.UserId);
 
             if (cart == null || cart.CartItems.Count == 0)
                 throw new KeyNotFoundException("Giỏ hàng trống / không tồn tại");
 
-            int subTotal = GetTotalAmount(cart.CartItems);
+            decimal subTotal = GetTotalAmount(cart.CartItems);
              
             // check if user already used this voucher in the same day
             var todayCount = await _unitOfWork.VoucherRedemption.TodayCountAsync(request.UserId, voucher.Id);
-            if (todayCount >= 1)
+
+            if (todayCount >= voucher.PerUserLimit)
                 throw new InvalidDataException("Bạn đã sử dụng voucher này hôm nay rồi");
 
             if (voucher.MinOrderAmount > subTotal)
@@ -180,23 +174,20 @@ namespace FoodOrdering.Application.Services.Services
             // calculate tax
             subTotal = subTotal + subTotal * TAX_RATE / 100;
 
-            // calculate discount
-            int discountAmount = subTotal * voucher.DiscountValue / 100;
+            decimal discountAmount = voucher.DiscountType == "percent" 
+                ? subTotal * voucher.DiscountValue / 100 
+                : voucher.DiscountValue;
 
-            // check if discount amount is greater than max discount or not. 
-            // Yes => assign discount amount to voucher's max discount
-            // No => keep discount amount
-            if (discountAmount > voucher.MaxDiscount)
-                discountAmount = voucher.MaxDiscount;
+            discountAmount = Math.Min(discountAmount, voucher.MaxDiscount);
 
-            int totalAmount = subTotal - discountAmount;
+            decimal totalAmount = subTotal - discountAmount;
 
             return new VoucherValidationDto(discountAmount, totalAmount);
         }
 
-        private int GetTotalAmount(ICollection<CartItem> items)
+        private decimal GetTotalAmount(ICollection<CartItem> items)
         {   
-            int subTotal = 0;
+            decimal subTotal = 0;
             foreach(var item in items)
             {
                 subTotal += item.Quantity * item.UnitPrice;
@@ -221,6 +212,11 @@ namespace FoodOrdering.Application.Services.Services
                 UsedCount = 0,
                 IsActive = request.IsActive,
             };
+
+            if (request.DiscountType != "percent")
+            {
+                voucher.MaxDiscount = request.DiscountValue;
+            }
 
             return voucher;
         }

@@ -14,6 +14,6 @@ namespace FoodOrdering.Domain.Models
         public Guid MenuId { get; set; }
         public Menu Menu { get; set; } = null!;
         public int Quantity { get; set; }
-        public int UnitPrice { get; set; }
+        public decimal UnitPrice { get; set; }
     }
 }

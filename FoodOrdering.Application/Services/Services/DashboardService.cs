@@ -20,8 +20,8 @@ namespace FoodOrdering.Application.Services.Services
 
         public async Task<DashboardOverviewDTO> GetInfoAsync()
         {
-            var today = DateTime.UtcNow.Date;
-            var month = DateTime.UtcNow.Month;
+            var today = DateTimeOffset.UtcNow.Date;
+            var month = DateTimeOffset.UtcNow.Month;
 
             var totalOrdersToday = _unitOfWork.Order
                 .GetAll()

@@ -1,5 +1,7 @@
 ﻿using DotNetEnv;
+using Food_Ordering.Models.Enum;
 using FoodOrdering.Application;
+using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Services.Payment;
@@ -14,11 +16,11 @@ using Microsoft.Extensions.Options;
 using Net.payOS;
 using Net.payOS.Types;
 using Newtonsoft.Json.Linq;
+using RedLockNet.SERedis;
 using Serilog;
 using Serilog.Core;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace FoodOrdering.Infrastructure.Services.Payment
 {
@@ -28,24 +30,27 @@ namespace FoodOrdering.Infrastructure.Services.Payment
         private readonly PayOS _payOS;
         private readonly INotificationSenderService _notificationSenderServer;
         private readonly PayOsOptions _options;
+        private readonly RedLockFactory _redLockFactory;
         public PayOsService(
             IUnitOfWork unitOfWork, 
             INotificationSenderService notificationSenderServer,
             PayOS payOS,
-            IOptions<PayOsOptions> options) {
+            IOptions<PayOsOptions> options,
+            RedLockFactory redLockFactory) {
             _unitOfWork = unitOfWork;
             _payOS = payOS;
             _options = options.Value;         
             _notificationSenderServer = notificationSenderServer;
+            _redLockFactory = redLockFactory;
         }
 
-        public async Task<ApiResponse<string>> CallBack(HttpRequest request)
+        public async Task<string> CallBack(HttpRequest request)
         {
             using var reader = new StreamReader(request.Body, Encoding.UTF8);
             var rawJson = await reader.ReadToEndAsync();
 
             if (string.IsNullOrWhiteSpace(rawJson))
-                return ApiResponse<string>.Fail("Empty body", StatusCodes.Status400BadRequest);
+                throw new ArgumentNullException("Empty body");
 
             // Parse JSON
             var root = JObject.Parse(rawJson);
@@ -53,7 +58,7 @@ namespace FoodOrdering.Infrastructure.Services.Payment
             var data = root["data"] as JObject;
 
             if (string.IsNullOrEmpty(signatureProvided) || data == null)
-                return ApiResponse<string>.Fail("Invalid payload", StatusCodes.Status400BadRequest);
+                throw new ArgumentNullException("Invalid payload");
 
             // Build transactionStr = key=value&key2=value2...
             var sorted = data.Properties().OrderBy(p => p.Name, StringComparer.Ordinal).ToList();
@@ -73,45 +78,82 @@ namespace FoodOrdering.Infrastructure.Services.Payment
             var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(transactionStr));
             var signatureComputed = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
 
-            if (!string.Equals(signatureProvided, signatureComputed, StringComparison.OrdinalIgnoreCase))            
-               return ApiResponse<string>.Fail("Invalid signature", StatusCodes.Status401Unauthorized);
+            if (!string.Equals(signatureProvided, signatureComputed, StringComparison.OrdinalIgnoreCase))
+                throw new UnauthorizedAccessException("Invalid signature");
             
             // check order if success 
-            var code = data["orderCode"].ToObject<int>();
-            if (code == null)
-                return ApiResponse<string>.Fail("Mã đơn hàng không hợp lệ", StatusCodes.Status400BadRequest);
+            var code = data["orderCode"]?.ToObject<int>() ?? throw new InvalidDataException("Mã đơn hàng không hợp lệ"); ;     
 
             var order = await _unitOfWork.Order.GetOrderByOrderCode(code);
+            if (order == null) 
+                throw new KeyNotFoundException("Không tìm thấy order");
 
-            if (order == null)            
-                return ApiResponse<string>.Fail("Không tìm thấy order", StatusCodes.Status404NotFound);
-
-            // Update status after order is paid
-            order.Status = Food_Ordering.Models.Enum.OrderStatus.Paid;
-
-            // Update sold quantity of each menu in paid order
-            foreach(var menu in order.OrderMenus)
-            {
-                var item = await _unitOfWork.Menu.GetByIdAsync(menu.MenuId);
-
-                if (item != null)
-                item.SoldQuantity = item.SoldQuantity + menu.Quantity;
-            }
             
-            _unitOfWork.Order.Update(order);
-            await _notificationSenderServer.NotifyAdminAsync(order.TransactionId, order.TotalAmount);
-            await _unitOfWork.SaveChangeAsync();
 
-            return ApiResponse<string>.Success("Webhook processed successfully", "", StatusCodes.Status200OK);
+            var voucherRedemption = await _unitOfWork.VoucherRedemption.GetVoucherRedemptionsByOrderIdAsync(order.Id);
+
+            if (voucherRedemption != null)
+            {
+                using var redLock = await _redLockFactory.CreateLockAsync(
+                                  $"lock:voucher:{voucherRedemption.VoucherID}",
+                                  TimeSpan.FromSeconds(30));
+
+                if (!redLock.IsAcquired)
+                    throw new Exception("Cannot acquire voucher lock");
+
+                await _unitOfWork.BeginTransactionAsync();
+
+                try
+                {
+                    voucherRedemption.VoucherRedemptionStatus = Domain.Enum.VoucherRedemptionStatus.Used;
+
+                    voucherRedemption.Voucher.ReservedCount--;
+                    voucherRedemption.Voucher.UsedCount++;
+
+                    if (voucherRedemption.Voucher.UsedCount >= voucherRedemption.Voucher.UsageLimit)
+                        voucherRedemption.Voucher.IsActive = false;
+
+                    // Update status after order is paid
+                    order.Status = OrderStatus.Paid;
+
+                    // Update sold quantity of each menu in paid order
+                    foreach (var menu in order.OrderMenus)
+                    {
+                        var item = await _unitOfWork.Menu.GetByIdAsync(menu.MenuId);
+
+                        if (item != null)
+                            item.SoldQuantity = item.SoldQuantity + menu.Quantity;
+                    }
+
+                    var cart = await _unitOfWork.Cart.GetCartByCustomerAsync(order.UserId);
+
+                    if (cart == null)
+                        throw new KeyNotFoundException("Giỏ hàng không tồn tại");
+
+                    _unitOfWork.Cart.Remove(cart);
+                    _unitOfWork.Order.Update(order);
+                    await _unitOfWork.SaveChangeAsync();
+
+                    await _unitOfWork.CommitTransactionAsync();
+                    await _notificationSenderServer.NotifyAdminAsync(order.OrderCode, order.TotalAmount);
+                }
+                catch
+                {
+                    await _unitOfWork.RollbackTransactionAsync();
+                    throw;
+                }
+            }
+                              
+            return "Webhook processed successfully";            
         }
 
-        public async Task<string> ConfirmWebHook(string url)
+        public async Task<string> ConfirmWebHook(WebHookUrlDto request)
         {
-            var result =await _payOS.confirmWebhook(url);
+            var result = await _payOS.confirmWebhook(request.Url);
             return result;
         }
 
-        public async Task<dynamic> CreatePaymentLink(int amount, int orderCode, List<ItemData> data)
+        public async Task<PaymentOrderInfo> CreatePaymentLink(int amount, int orderCode, List<ItemData> data)
         {
             var returnUrl = _options.ReturnUrl;
             var cancelUrl = _options.CancelUrl;
@@ -126,7 +168,13 @@ namespace FoodOrdering.Infrastructure.Services.Payment
                  cancelUrl : cancelUrl
             );
 
-            var response = await _payOS.createPaymentLink(paymentLinkRequest);
+            var paymentInfo = await _payOS.createPaymentLink(paymentLinkRequest);
+
+            var response = new PaymentOrderInfo
+            {
+                CheckoutUrl = paymentInfo.checkoutUrl,
+                OrderCode = (int)paymentInfo.orderCode
+            };
 
             return response;
         }

@@ -11,15 +11,10 @@ using System.Threading.Tasks;
 namespace FoodOrdering.Infrastructure.Repository
 {
     public class VoucherRepo : GenericRepo<Voucher>, IVoucherRepo
-    {   
-        private readonly FoodOrderingDbContext _context;
+    {        
         public VoucherRepo(FoodOrderingDbContext context) : base(context) {
-           _context = context;
+           
         }
-
-        public async Task<int> CountAsync(Guid id)
-        {
-            return await _context.Voucher.CountAsync(v => v.Id == id);
-        }
+      
     }
 }

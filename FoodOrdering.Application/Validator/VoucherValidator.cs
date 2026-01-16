@@ -44,6 +44,14 @@ namespace FoodOrdering.Application.Validator
                     .GreaterThan(0).WithMessage("Giới hạn giảm tối đa (MaxDiscount) phải lớn hơn 0.");
             });
 
+            //Logic có điều kiện: Nếu là giảm theo FIXED
+            When(x => x.DiscountType.ToLower() == "fixed", () =>
+            {
+                RuleFor(x => x.MaxDiscount)
+                    .Equal(x => x.DiscountValue)
+                    .WithMessage("Đối với loại giảm giá cố định, Giới hạn giảm tối đa (MaxDiscount) phải bằng Giá trị giảm giá (DiscountValue).");
+            });
+
             // 6. Kiểm tra ngày StartDate và EndDate
             RuleFor(x => x.StartDate)
                 .NotEmpty().WithMessage("Ngày bắt đầu không được để trống.");

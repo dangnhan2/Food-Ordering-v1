@@ -1,20 +1,22 @@
-﻿using FoodOrdering.Application;
+﻿using Food_Ordering.Models.Enum;
+using FoodOrdering.Application;
 using FoodOrdering.Application.Repositories;
 using FoodOrdering.Domain.Models;
 using Microsoft.AspNetCore.Identity;
+using RedLockNet.SERedis;
 using Serilog;
 
 namespace FoodOrdering.Infrastructure.Services.BackgroundJob
 {
-    public class BackgroundJobScheduler : IBackgroundJobScheduler
+    public class BackgroundJobsService : IBackgroundJobs
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly UserManager<User> _userManager;
-         
-        public BackgroundJobScheduler(IUnitOfWork unitOfWork, UserManager<User> userManager)
+        private readonly RedLockFactory _redLockFactory;
+
+        public BackgroundJobsService(IUnitOfWork unitOfWork, RedLockFactory redLockFactory)
         {
             _unitOfWork = unitOfWork;
-            _userManager = userManager;
+            _redLockFactory = redLockFactory;
         }
 
         public async Task RecurringDeleteExpiredOtpJob_5mins()
@@ -25,37 +27,6 @@ namespace FoodOrdering.Infrastructure.Services.BackgroundJob
       
             _unitOfWork.EmailOtp.RemoveRange(expiredOtps);
             await _unitOfWork.SaveChangeAsync();            
-        }
-
-        public async Task ScheduleUpdateExpiredOrderJob_10mins(Guid id)
-        {
-            var order = await _unitOfWork.Order.GetByIdAsync(id);
-            if (order == null)
-                throw new KeyNotFoundException(nameof(order));
-
-            var voucherRedemption = await _unitOfWork.VoucherRedemption.GetByIdAsync(v => v.OrderID == id);
-
-            if (voucherRedemption != null)
-            {
-                var voucher = await _unitOfWork.Voucher.GetByIdAsync(voucherRedemption.VoucherID);
-
-                if (voucher != null)
-                {
-                    // update order status if order not paid
-                    order.Status = Food_Ordering.Models.Enum.OrderStatus.Cancelled;
-
-                    // decrease used voucher if order not paid
-                    voucher.UsedCount -= 1; ;
-
-                    if (voucher.UsedCount - 1 < voucher.UsageLimit)
-                        voucher.IsActive = true;
-                    // delete voucher redemption
-                    _unitOfWork.VoucherRedemption.Remove(voucherRedemption);
-                    _unitOfWork.Voucher.Update(voucher);
-                }              
-            }
-            _unitOfWork.Order.Update(order);
-            await _unitOfWork.SaveChangeAsync();        
         }
 
         public async Task RecurringDeleteExpiredCartsJob_3hours()
@@ -69,17 +40,6 @@ namespace FoodOrdering.Infrastructure.Services.BackgroundJob
                 _unitOfWork.Cart.RemoveRange(carts);
                 await _unitOfWork.SaveChangeAsync();
             }
-        }
-
-        public async Task RecurringCancelledOrderJob_1month(Guid id)
-        {
-            var order = await _unitOfWork.Order.GetByIdAsync(id);
-
-            if(order != null && order.Status == Food_Ordering.Models.Enum.OrderStatus.Cancelled)
-            {
-                _unitOfWork.Order.Remove(order);
-                await _unitOfWork.SaveChangeAsync();
-            }          
         }
 
         public async Task RecurringDeleteExpiredRefreshTokensJob_3months()
@@ -206,6 +166,40 @@ namespace FoodOrdering.Infrastructure.Services.BackgroundJob
                 await _unitOfWork.SaveChangeAsync();
 
             }
+        }
+   
+        public async Task ScheduleUpdateOrderExpiredJob_10mins(Guid orderId)
+        {
+            var order = await _unitOfWork.Order.GetByIdAsync(orderId) ?? throw new KeyNotFoundException("Không tìm thấy đơn hàng");
+
+            if (order.Status != OrderStatus.Pending)
+                return;           
+
+            var voucherRedemption = await _unitOfWork.VoucherRedemption.GetVoucherRedemptionsByOrderIdAsync(order.Id);
+
+            if (voucherRedemption != null)
+            {
+                using var redLock = await _redLockFactory.CreateLockAsync($"lock:voucher:{voucherRedemption.VoucherID}", TimeSpan.FromSeconds(30));
+
+                await _unitOfWork.BeginTransactionAsync();
+
+                try
+                {
+                    voucherRedemption.Voucher.ReservedCount--;
+
+                    order.Status = OrderStatus.Cancelled;
+
+                    _unitOfWork.VoucherRedemption.Remove(voucherRedemption);
+                    _unitOfWork.Order.Update(order);
+                    await _unitOfWork.SaveChangeAsync();
+                    await _unitOfWork.CommitTransactionAsync();
+                }
+                catch
+                {
+                    await _unitOfWork.RollbackTransactionAsync();
+                    throw;
+                }
+            }                       
         }
     }
 }

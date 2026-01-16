@@ -6,6 +6,7 @@ using FoodOrdering.Presentation.Configuration;
 using FoodOrdering.Presentation.Extensions;
 using FoodOrdering.Presentation.Middleware;
 using Hangfire;
+using Microsoft.AspNetCore.HttpOverrides;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -53,6 +54,7 @@ if (app.Environment.IsDevelopment())
    
     await app.SeedAsync();
 }
+
 
 app.UseHttpsRedirection();
 

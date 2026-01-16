@@ -18,12 +18,19 @@ namespace FoodOrdering.Infrastructure.Repositories
            _context = context;
         }
 
+        public async Task<VoucherRedemptions?> GetVoucherRedemptionsByOrderIdAsync(Guid orderId)
+        {
+            return await _context.VoucherRedemption
+                .Include(vr => vr.Voucher)
+                .FirstOrDefaultAsync(vr => vr.OrderID == orderId);
+        }
+
         public async Task<int> TodayCountAsync(Guid userId, Guid voucherId)
         {
             return await _context.VoucherRedemption.CountAsync(
                 v => v.UserID == userId 
                 && v.VoucherID == voucherId 
-                && v.RedeemedAt.Date == DateTime.UtcNow.Date);
+                && v.RedeemedAt.Date == DateTimeOffset.UtcNow.Date);
         }
     }
 }

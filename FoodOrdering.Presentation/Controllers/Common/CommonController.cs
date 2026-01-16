@@ -135,6 +135,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
         }
 
         // User's Order EndPoint
+        [AllowAnonymous]
         [HttpGet("user/{id}/orders")]
         public async Task<IActionResult> GetAllOrderByCustomer(Guid id, [FromQuery] OrderParams orderParams)
         {

@@ -15,8 +15,8 @@ namespace FoodOrdering.Application.DTOs.Response
         public string ImageUrl { get; set; }
         public string Email { get; set; }
         public bool IsActive { get; set; }
-        public int TotalAmountInMonth { get; set; }
-        public int TotalAmountInYear { get; set; }
+        public decimal TotalAmountInMonth { get; set; }
+        public decimal TotalAmountInYear { get; set; }
         public string Role { get; set; }
     }
 }

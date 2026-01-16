@@ -23,7 +23,7 @@ namespace FoodOrdering.Infrastructure.SignalR_Hub
             _userManager = userManager;
             _unitOfWork = unitOfWork;
         }
-        public async Task NotifyAdminAsync(int orderCode, int totalAmount)
+        public async Task NotifyAdminAsync(int orderCode, decimal totalAmount)
         {
             var users = await _userManager.GetUsersInRoleAsync("Admin");
             List<Notification> notifications = new List<Notification>();

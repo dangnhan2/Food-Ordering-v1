@@ -91,8 +91,23 @@ namespace FoodOrdering.Application.Services.Services
 
             var menusToDTO = menus
                 .Include(m => m.Categories)
-                .Select(m => new MenuDto(m, m.Ratings.Count()))
-                .AsNoTrackingWithIdentityResolution();
+                .Select(m => new MenuDto
+                {
+                    Id = m.Id,
+                    Name = m.Name,
+                    Category = m.Categories.Name,
+                    Description = m.Description,
+                    OriginalPrice = m.OriginalPrice,
+                    AverageRating = m.AverageRating,
+                    DiscountPrice = m.DiscountPrice,
+                    ImageUrl = m.ImageUrl,
+                    SoldQuantity = m.SoldQuantity,
+                    RatingCount = m.Ratings.Count(),
+                    IsAvailable = m.IsAvailable,
+                    IsOnSale = m.IsOnSale,
+                    CreatedAt = m.CreatedAt
+                })
+                .AsNoTracking();
 
             if (menuParams.Page != 0 && menuParams.PageSize != 0)           
                menusToDTO = menusToDTO.Paging(menuParams.Page, menuParams.PageSize);            
@@ -115,9 +130,26 @@ namespace FoodOrdering.Application.Services.Services
 
             if (menu == null) throw new KeyNotFoundException("Món ăn không tồn tại");
 
-            await _cacheService.SetAsync(cacheKey, new MenuDto(menu, menu.Ratings.Count()), TimeSpan.FromMinutes(10));
+            var menuToDto = new MenuDto
+            {
+                Id = menu.Id,
+                Name = menu.Name,
+                Category = menu.Categories.Name,
+                Description = menu.Description,
+                OriginalPrice = menu.OriginalPrice,
+                AverageRating = menu.AverageRating,
+                DiscountPrice = menu.DiscountPrice,
+                ImageUrl = menu.ImageUrl,
+                SoldQuantity = menu.SoldQuantity,
+                RatingCount = menu.Ratings.Count(),
+                IsAvailable = menu.IsAvailable,
+                IsOnSale = menu.IsOnSale,
+                CreatedAt = menu.CreatedAt
+            };
 
-            return new MenuDto(menu, menu.Ratings.Count());
+            await _cacheService.SetAsync(cacheKey, menuToDto, TimeSpan.FromMinutes(10));
+
+            return menuToDto;
         }
 
         public async Task UpdateMenuAsync(Guid menuId, MenuRequestDto request)
@@ -167,9 +199,23 @@ namespace FoodOrdering.Application.Services.Services
                 .Take(10);
 
             var menusToDto = await menus
-                .Include(m => m.Categories)
-                .Select(x => new MenuDto(x, x.Ratings.Count()))
-                .AsNoTrackingWithIdentityResolution()
+                .Select(m => new MenuDto
+                {
+                    Id = m.Id,
+                    Name = m.Name,
+                    Category = m.Categories.Name,
+                    Description = m.Description,
+                    OriginalPrice = m.OriginalPrice,
+                    AverageRating = m.AverageRating,
+                    DiscountPrice = m.DiscountPrice,
+                    ImageUrl = m.ImageUrl,
+                    SoldQuantity = m.SoldQuantity,
+                    RatingCount = m.Ratings.Count(),
+                    IsAvailable = m.IsAvailable,
+                    IsOnSale = m.IsOnSale,
+                    CreatedAt = m.CreatedAt
+                })
+                .AsNoTracking()
                 .ToListAsync();
 
             return menusToDto;
