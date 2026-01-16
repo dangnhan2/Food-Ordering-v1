@@ -16,6 +16,7 @@ namespace FoodOrdering.Domain.Models
         public int Stars { get; set; }
         public string? Comment { get; set; }
 
+        public DateTimeOffset RatingAt { get; set; } = DateTimeOffset.UtcNow;
         public ICollection<RatingImage> Images { get; set; } = new List<RatingImage>();
     }
 }

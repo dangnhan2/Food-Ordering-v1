@@ -3,6 +3,7 @@ using FoodOrdering.Application.Repositories;
 using FoodOrdering.Infrastructure.Data;
 using FoodOrdering.Infrastructure.Repositories;
 using FoodOrdering.Infrastructure.Repository;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -68,6 +69,21 @@ namespace FoodOrdering.Infrastructure
         public async Task SaveChangeAsync()
         {
             await _context.SaveChangesAsync();
+        }
+
+        public async Task BeginTransactionAsync()
+        {
+            await _context.Database.BeginTransactionAsync();
+        }
+
+        public async Task CommitTransactionAsync()
+        {
+            await _context.Database.CommitTransactionAsync();
+        }
+
+        public async Task RollbackTransactionAsync()
+        {
+            await _context.Database.RollbackTransactionAsync();
         }
     }
 }

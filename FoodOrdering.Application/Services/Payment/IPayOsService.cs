@@ -1,4 +1,5 @@
-﻿using FoodOrdering.Application.DTOs.Response;
+﻿using FoodOrdering.Application.DTOs.Request;
+using FoodOrdering.Application.DTOs.Response;
 using Microsoft.AspNetCore.Http;
 using Net.payOS.Types;
 using System;
@@ -11,8 +12,8 @@ namespace FoodOrdering.Application.Services.Payment
 {
     public interface IPayOsService
     {
-        public Task<dynamic> CreatePaymentLink(int amount, int orderCode, List<ItemData> data);
-        public Task<string> ConfirmWebHook(string url);
-        public Task<ApiResponse<string>> CallBack(HttpRequest request);
+        public Task<PaymentOrderInfo> CreatePaymentLink(int amount, int orderCode, List<ItemData> data);
+        public Task<string> ConfirmWebHook(WebHookUrlDto request);
+        public Task<string> CallBack(HttpRequest request);
     }
 }

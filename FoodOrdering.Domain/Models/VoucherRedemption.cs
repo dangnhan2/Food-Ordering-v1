@@ -1,4 +1,5 @@
 ﻿using Food_Ordering.Models;
+using FoodOrdering.Domain.Enum;
 
 namespace FoodOrdering.Domain.Models
 {
@@ -11,6 +12,7 @@ namespace FoodOrdering.Domain.Models
         public User User { get; set; } = null!;
         public Guid OrderID { get; set; }
         public Order Order { get; set; } = null!;
-        public DateTime RedeemedAt { get; set; }     
+        public DateTimeOffset RedeemedAt { get; set; }     
+        public VoucherRedemptionStatus VoucherRedemptionStatus { get; set; }
     }
 }

@@ -13,6 +13,6 @@ namespace FoodOrdering.Application.Services.Interface
 
     public interface INotificationSenderService
     {
-        public Task NotifyAdminAsync(int orderCode, int totalAmount);
+        public Task NotifyAdminAsync(int orderCode, decimal totalAmount);
     }
 }

@@ -9,6 +9,5 @@ namespace FoodOrdering.Application.Repositories
 {
     public interface IVoucherRepo : IGenericRepo<Voucher>
     {
-        public Task<int> CountAsync(Guid id);
     }
 }

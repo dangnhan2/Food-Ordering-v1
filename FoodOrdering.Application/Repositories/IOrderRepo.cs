@@ -9,6 +9,6 @@ namespace FoodOrdering.Application.Repositories
 {
     public interface IOrderRepo : IGenericRepo<Order>
     {
-        public Task<Order?> GetOrderByOrderCode(int code);
+        public Task<Order> GetOrderByOrderCode(int code);
     }
 }

@@ -17,9 +17,11 @@ namespace FoodOrdering.Infrastructure.Repository
            _context = context;
         }
 
-        public async Task<Order?> GetOrderByOrderCode(int code)
+        public async Task<Order> GetOrderByOrderCode(int code)
         {
-            return await _context.Order.Include(o => o.OrderMenus).FirstOrDefaultAsync(o => o.TransactionId == code);
+            return await _context.Order
+                .Include(o => o.OrderMenus)
+                .FirstOrDefaultAsync(o => o.OrderCode == code);
         }
     }
 }

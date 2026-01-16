@@ -11,10 +11,10 @@ namespace FoodOrdering.Application.DTOs.Response
         public int TotalOrdersToday { get; set; }
         public int PaidOrdersToday { get; set; }
         public int CancelledOrdersToday { get; set; }
-        public int RevenueToday { get; set; }
+        public decimal RevenueToday { get; set; }
         public int TotalCustomers { get; set; }
         public int TotalMenuItems { get; set; }
-        public int RevenueMonthly { get; set; }
+        public decimal RevenueMonthly { get; set; }
         public int TotalPaidOrdersMontly { get; set; }
         public ICollection<TopDishDto> TopSellingDishes { get; set; } = new List<TopDishDto>();
         public ICollection<TopBuyerDto> TopBuyers { get; set; } = new List<TopBuyerDto>();

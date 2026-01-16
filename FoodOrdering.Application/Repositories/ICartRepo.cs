@@ -9,7 +9,7 @@ namespace FoodOrdering.Application.Repositories
 {
     public interface ICartRepo : IGenericRepo<Cart>
     {
-        public Task<Cart?> GetCartByCustomerAsync(Guid id);
+        public Task<Cart?> GetCartByCustomerAsync(Guid userId);
         public Task<Cart?> GetCartWithCartItemAsync(Guid id);
         public void DeleteExpiredCart(IEnumerable<Cart> carts);
     }

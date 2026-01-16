@@ -10,6 +10,7 @@ namespace FoodOrdering.Application.DTOs.Response
 
         public int Stars { get; set; }
         public string? Comment { get; set; }
+        public string  RatingAt { get; set; }
         public ICollection<string> Images { get; set; } = new List<string>();
     }
 }

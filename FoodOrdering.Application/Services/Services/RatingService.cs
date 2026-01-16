@@ -40,6 +40,7 @@ namespace FoodOrdering.Application.Services.Services
                               UserName = r.User.UserName,
                               Comment = r.Comment,
                               Stars = r.Stars,
+                              RatingAt = r.RatingAt.FormatDateTimeOffset(),
                               Images = r.Images.Select(i => i.ImageUrl).ToList(),
                           })
                           .AsNoTracking();

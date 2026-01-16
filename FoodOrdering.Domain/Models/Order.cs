@@ -21,9 +21,9 @@ namespace FoodOrdering.Domain.Models
         public DateTimeOffset OrderDate { get; set; } = DateTimeOffset.UtcNow;
         public DateTime? ExpiredAt { get; set; } 
         public OrderStatus Status { get; set; }
-        public int TotalAmount { get; set; }
+        public decimal TotalAmount { get; set; }
         public string PaymentMethod { get; set; }
-        public int TransactionId { get; set; }
+        public int OrderCode { get; set; }
 
         public ICollection<OrderMenus> OrderMenus { get; set; } = new List<OrderMenus>();
         public ICollection<Rating> Ratings { get; set; } = new List<Rating>();

@@ -1,10 +1,10 @@
-﻿using FoodOrdering.Application.Services.Payment;
-using Microsoft.AspNetCore.Authorization;
+﻿using FoodOrdering.Application.DTOs.Request;
+using FoodOrdering.Application.DTOs.Response;
+using FoodOrdering.Application.Services.Payment;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FoodOrdering.Presentation.Controllers.Payment
 {
-    [AllowAnonymous]
     [Route("api/payment")]
     [ApiController]
     public class PAYOSController : ControllerBase
@@ -17,9 +17,9 @@ namespace FoodOrdering.Presentation.Controllers.Payment
         }
 
         [HttpPost("webhook/confirm")]
-        public async Task<IActionResult> ConfirmWebHook([FromBody] string url)
+        public async Task<IActionResult> ConfirmWebHook([FromBody] WebHookUrlDto request)
         {
-            var result = await _payOsService.ConfirmWebHook(url);
+            var result = await _payOsService.ConfirmWebHook(request);
 
             return Ok(result);
         }
@@ -27,17 +27,16 @@ namespace FoodOrdering.Presentation.Controllers.Payment
         [HttpPost("callback")]
         public async Task<IActionResult> CallBack()
         {
-            //try
-            //{
-            //    var result = await _payOsService.CallBack(Request);
-            //    return Ok(result);
-            //}
-            //catch (Exception ex)
-            //{
-            //    return BadRequest(ex.Message);
-            //}
 
-            return Ok("Ok");
+            var result = await _payOsService.CallBack(Request);
+
+            var response = ApiResponse<dynamic>.Success("Thanh toán thành công", result, StatusCodes.Status200OK);
+
+            return Ok(response);
+
+            //return new JsonResult(new { }) { StatusCode = 200 };
         }
+
+
     }
 }

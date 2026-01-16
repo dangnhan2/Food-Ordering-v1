@@ -8,11 +8,11 @@ namespace FoodOrdering.Application.DTOs.Response
 {
     public class VoucherValidationDto
     {
-        public int DiscountAmount { get; set; }
-        public int TotalAmount { get; set; }
+        public decimal DiscountAmount { get; set; }
+        public decimal TotalAmount { get; set; }
 
         public VoucherValidationDto() { }
-        public VoucherValidationDto(int discountAmount, int totalAmount)
+        public VoucherValidationDto(decimal discountAmount, decimal totalAmount)
         {
             DiscountAmount = discountAmount;
             TotalAmount = totalAmount;

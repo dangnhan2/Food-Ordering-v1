@@ -14,24 +14,11 @@ namespace FoodOrdering.Application.DTOs.Response
         public string Address { get; set; }
         public string Note { get; set; }
         public OrderStatus OrderStatus { get; set; }
-        public int TotalAmount { get; set; }
-        public int TransactionCode { get; set; }     
+        public decimal TotalAmount { get; set; }
+        public int OrderCode { get; set; }     
+        public string PaymentMethod { get; set; }
         public ICollection<OrderMenuDTO> Menus { get; set; } = new List<OrderMenuDTO>();
 
         public OrderDTO() { }
-        public OrderDTO(Order order, List<OrderMenuDTO> menus) 
-        {
-            Id = order.Id;
-            UserId = order.UserId;
-            OrderDate = order.OrderDate.FormatDateTimeOffset();
-            FullName = order.Address.FullName;
-            PhoneNumber = order.Address.PhoneNumber;
-            Address = order.Address.AddressName;
-            Note = order.Note;
-            OrderStatus = order.Status;
-            TotalAmount = order.TotalAmount;
-            TransactionCode = order.TransactionId;
-            Menus = menus;
-        }
     }
 }

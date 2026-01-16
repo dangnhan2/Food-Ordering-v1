@@ -21,6 +21,7 @@ namespace FoodOrdering.Infrastructure.Repository
         {
             return await _context.Menu
                 .Include(m => m.Categories)
+                .Include(m => m.Ratings)
                 .FirstOrDefaultAsync(m => m.Id == id);
         }
     }

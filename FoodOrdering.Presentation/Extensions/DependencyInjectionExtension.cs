@@ -47,7 +47,7 @@ namespace Food_Ordering.Extensions
             services.AddScoped<IVoucherRepo, VoucherRepo>();
             services.AddScoped<IVoucherService, VoucherService>();
             services.AddScoped<IVoucherRedemptionRepo, VoucherRedemptionRepo>();
-            services.AddScoped<IBackgroundJobScheduler, BackgroundJobScheduler>();
+            services.AddScoped<IBackgroundJobs, BackgroundJobsService>();
             services.AddScoped<IDashboardService, DashboardService>();
             services.AddScoped<IAddressRepo, AddressRepo>();
             services.AddScoped<IAddressService, AddressService>();

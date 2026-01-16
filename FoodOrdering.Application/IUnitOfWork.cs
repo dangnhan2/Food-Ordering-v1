@@ -21,7 +21,10 @@ namespace FoodOrdering.Application
        IAddressRepo Address { get; }
        INotificationRepo Notification { get; }
        IOrderMenuRepo OrderMenu { get; }
-       IRatingRepo Rating { get; }
+       IRatingRepo Rating { get; }             
        Task SaveChangeAsync();
+       Task BeginTransactionAsync();
+       Task CommitTransactionAsync();
+       Task RollbackTransactionAsync();
     }
 }
