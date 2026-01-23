@@ -20,7 +20,7 @@ namespace FoodOrdering.Application.Services.Services
 
             if (user == null) throw new KeyNotFoundException("Người dùng không tồn tại");
 
-            if (user.Carts == null)
+            if (user.Cart == null)
             {
                 var cart = new Cart
                 {
@@ -87,13 +87,26 @@ namespace FoodOrdering.Application.Services.Services
             await _unitOfWork.SaveChangeAsync();
         }
 
-        public async Task<CartDTO> GetCartByCustomer(Guid id)
+        public async Task<CartDTO> GetCartByCustomer(Guid userId)
         {
-            var cart = await _unitOfWork.Cart.GetCartByCustomerAsync(id);
+            var cart = await _unitOfWork.Cart.GetCartByCustomerAsync(userId);
 
             if (cart == null) return new CartDTO();
-                    
-            var cartToDTO = new CartDTO(cart, cart.CartItems.Select(ct => new CartItemDTO(ct)).ToList());
+
+            var cartToDTO = new CartDTO
+            {
+                Id = cart.Id,
+                UserId = cart.UserId,
+                Items = cart.CartItems.Select(ct => new CartItemDTO
+                {
+                    Id = ct.Id,
+                    MenuId = ct.MenuId,
+                    MenuName = ct.Menu.Name,
+                    ImageUrl = ct.Menu.ImageUrl,
+                    Quantity = ct.Quantity,
+                    UnitPrice = ct.UnitPrice
+                }).ToList()
+            };
             
             return cartToDTO;
         }

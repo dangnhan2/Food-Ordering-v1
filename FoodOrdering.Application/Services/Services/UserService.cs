@@ -25,8 +25,7 @@ namespace FoodOrdering.Application.Services.Services
             IUnitOfWork unitOfWork, 
             ICloudinaryService cloudinaryService, 
             ICachingService cachingService, 
-            UserManager<User> userManager,
-            ITokenService tokenService)
+            UserManager<User> userManager)
         {
             Env.Load();
             _unitOfWork = unitOfWork;
@@ -43,7 +42,7 @@ namespace FoodOrdering.Application.Services.Services
             if (!string.IsNullOrEmpty(userParams.Search))
             {
                 users = users.Where(u => 
-                EF.Functions.Like(u.UserName, $"%{userParams.Search}")
+                u.UserName.Trim().ToLower().Contains(userParams.Search.Trim().ToLower())
                 || u.PhoneNumber ==  userParams.Search
                 || u.Email ==  userParams.Search);
             }
@@ -145,7 +144,7 @@ namespace FoodOrdering.Application.Services.Services
                         .Sum(o => o.TotalAmount)
             };
 
-            await _cachingService.SetAsync(cacheKey, response, TimeSpan.FromHours(12));
+            await _cachingService.SetAsync(cacheKey, response, TimeSpan.FromMinutes(10));
             return response;
         }
 

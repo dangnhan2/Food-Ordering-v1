@@ -12,15 +12,16 @@ namespace FoodOrdering.Application.DTOs.QueryParams
     {
         [JsonProperty("page")]           
         public int Page { get; set; }
+
         [JsonProperty("pageSize")]
         public int PageSize { get; set; }
+
         [JsonProperty("search")]
         public string? Search { get; set; }
-   
-        [JsonProperty("isAvailable ")]
-        public bool? IsAvailable { get; set; }
+  
         [JsonProperty("sortBy")]
         public string? SortBy { get; set; }
+
         [JsonProperty("sortOrder")]
         public string? SortOrder { get; set; }
     }

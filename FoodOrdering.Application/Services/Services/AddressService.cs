@@ -35,9 +35,9 @@ namespace FoodOrdering.Application.Services.Services
             await _cacheService.RemoveAsync(CacheKeys.UserAddresses(newAddress.UserId));
         }
 
-        public async Task DeleteAsync(Guid id)
+        public async Task DeleteAsync(Guid addressId)
         {
-            var address = await _unitOfWork.Address.GetByIdAsync(id);
+            var address = await _unitOfWork.Address.GetByIdAsync(addressId);
             if (address == null)
                 throw new KeyNotFoundException("Địa chỉ không tồn tại");
             _unitOfWork.Address.Remove(address);
@@ -64,12 +64,12 @@ namespace FoodOrdering.Application.Services.Services
             return addressesToDto;
         }
 
-        public async Task UpdateAsync(Guid id, AddressRequestDto request)
+        public async Task UpdateAsync(Guid addressId, AddressRequestDto request)
         {   
             var result = await new AddressValidator().ValidateAsync(request);
             if (!result.IsValid)
                 throw new ValidationDictionaryException(result.ToDictionary());
-            var address = await _unitOfWork.Address.GetByIdAsync(id);
+            var address = await _unitOfWork.Address.GetByIdAsync(addressId);
 
             if (address == null)
                 throw new KeyNotFoundException("Địa chỉ không tồn tại");

@@ -17,13 +17,5 @@ namespace FoodOrdering.Application.DTOs.Response
         public decimal UnitPrice { get; set; }
 
         public CartItemDTO() { }
-        public CartItemDTO(CartItem item) {
-            Id = item.Id;
-            MenuId = item.MenuId;
-            MenuName = item.Menu.Name;
-            ImageUrl = item.Menu.ImageUrl;
-            Quantity = item.Quantity;
-            UnitPrice = item.UnitPrice;
-        }
     }
 }

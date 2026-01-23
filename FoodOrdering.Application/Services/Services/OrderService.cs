@@ -71,6 +71,7 @@ namespace FoodOrdering.Application.Services.Services
                        MenuName = m.Menus.Name,
                        MenuImage = m.Menus.ImageUrl,
                        Quantity = m.Quantity,
+                       UnitPrice = m.UnitPrice,
                        SubPrice = m.UnitPrice * m.Quantity
                    }).ToList()
                })

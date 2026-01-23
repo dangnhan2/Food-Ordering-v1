@@ -8,6 +8,7 @@ using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Data;
 
 namespace FoodOrdering.Application.Services.Services
@@ -32,9 +33,11 @@ namespace FoodOrdering.Application.Services.Services
 
             if (!result.IsValid) throw new ValidationDictionaryException(result.ToDictionary());
 
-            var menus = _unitOfWork.Menu.GetAll();
+            var isMenuExist = _unitOfWork.Menu
+                .GetAll()
+                .Any(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower());
 
-            if (menus.Any(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower())) throw new DuplicateNameException($"Menu {request.Name} đã tồn tại");
+            if (isMenuExist) throw new DuplicateNameException($"Menu {request.Name} đã tồn tại");
 
             if (request.IsOnSale && (request.DiscountPrice == null || request.DiscountPrice == 0)) throw new ArgumentException("Món ăn đang có trạng thái giảm giá nhưng chưa cập nhật giá khuyến mãi. Hãy cập nhập giá khuyến mãi");
 
@@ -61,11 +64,8 @@ namespace FoodOrdering.Application.Services.Services
             var menus = _unitOfWork.Menu.GetAll();
 
             if (!string.IsNullOrEmpty(menuParams.Search))
-                menus = menus.Where(m => EF.Functions.Like(m.Name, $"%{menuParams.Search}%")
-                || EF.Functions.Like(m.Categories.Name, $"%{menuParams.Search}%"));   
-
-            if (menuParams.IsAvailable.HasValue)
-                menus = menus.Where(m => m.IsAvailable == menuParams.IsAvailable.Value);
+                menus = menus.Where(m => m.Name.Trim().ToLower().Contains(menuParams.Search.Trim().ToLower())
+                || m.Category.Name.Trim().ToLower().Contains(menuParams.Search.Trim().ToLower()));   
 
             //sort
             if (!string.IsNullOrEmpty(menuParams.SortBy))
@@ -89,13 +89,12 @@ namespace FoodOrdering.Application.Services.Services
                 };
             }
 
-            var menusToDTO = menus
-                .Include(m => m.Categories)
+            var menusToDTO = menus               
                 .Select(m => new MenuDto
                 {
                     Id = m.Id,
                     Name = m.Name,
-                    Category = m.Categories.Name,
+                    Category = m.Category.Name,
                     Description = m.Description,
                     OriginalPrice = m.OriginalPrice,
                     AverageRating = m.AverageRating,
@@ -130,26 +129,9 @@ namespace FoodOrdering.Application.Services.Services
 
             if (menu == null) throw new KeyNotFoundException("Món ăn không tồn tại");
 
-            var menuToDto = new MenuDto
-            {
-                Id = menu.Id,
-                Name = menu.Name,
-                Category = menu.Categories.Name,
-                Description = menu.Description,
-                OriginalPrice = menu.OriginalPrice,
-                AverageRating = menu.AverageRating,
-                DiscountPrice = menu.DiscountPrice,
-                ImageUrl = menu.ImageUrl,
-                SoldQuantity = menu.SoldQuantity,
-                RatingCount = menu.Ratings.Count(),
-                IsAvailable = menu.IsAvailable,
-                IsOnSale = menu.IsOnSale,
-                CreatedAt = menu.CreatedAt
-            };
+            await _cacheService.SetAsync(cacheKey, menu, TimeSpan.FromMinutes(10));
 
-            await _cacheService.SetAsync(cacheKey, menuToDto, TimeSpan.FromMinutes(10));
-
-            return menuToDto;
+            return menu;
         }
 
         public async Task UpdateMenuAsync(Guid menuId, MenuRequestDto request)
@@ -161,12 +143,12 @@ namespace FoodOrdering.Application.Services.Services
             var menu = await _unitOfWork.Menu
                 .GetByIdAsync(menuId);
 
-            var menus = _unitOfWork.Menu
-                .GetAll();
-
             if (menu == null) throw new KeyNotFoundException("Món ăn không tồn tại");
 
-            if (await menus.AnyAsync(m => m.Name.Trim().ToLower() == request.Name.Trim().ToLower() && m.Id != menuId)) throw new DuplicateNameException($"Menu {request.Name} đã tồn tại");
+            var isMenuExist = _unitOfWork.Menu
+                .GetAll().Any(m => m.Name.Replace(" ", "") == request.Name.Replace(" ", "") && m.Id != menuId);       
+
+            if (isMenuExist) throw new DuplicateNameException($"Menu {request.Name} đã tồn tại");
 
             if (request.IsOnSale && (request.DiscountPrice == null || request.DiscountPrice == 0)) throw new ArgumentException("Món ăn đang có trạng thái giảm giá nhưng chưa cập nhật giá giảm. Hãy cập nhập giá giảm");
 
@@ -203,7 +185,7 @@ namespace FoodOrdering.Application.Services.Services
                 {
                     Id = m.Id,
                     Name = m.Name,
-                    Category = m.Categories.Name,
+                    Category = m.Category.Name,
                     Description = m.Description,
                     OriginalPrice = m.OriginalPrice,
                     AverageRating = m.AverageRating,
@@ -223,7 +205,7 @@ namespace FoodOrdering.Application.Services.Services
 
         public async Task<IEnumerable<MenuDto>> GetRelatedMenusAsync(Guid menuId)
         {   
-            var currentMenu = await _unitOfWork.Menu.GetMenuWithCategoryAsync(menuId);
+            var currentMenu = await _unitOfWork.Menu.GetByIdAsync(menuId);
 
             if (currentMenu == null)
                 return Enumerable.Empty<MenuDto>();
@@ -241,7 +223,7 @@ namespace FoodOrdering.Application.Services.Services
                 {
                     Id = m.Id,
                     Name = m.Name,
-                    Category = m.Categories.Name,
+                    Category = m.Category.Name,
                     Description = m.Description,
                     OriginalPrice = m.OriginalPrice,
                     DiscountPrice = m.DiscountPrice,

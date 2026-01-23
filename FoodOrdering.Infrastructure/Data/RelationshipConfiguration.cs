@@ -47,6 +47,14 @@ namespace FoodOrdering.Infrastructure.Data
                 .WithMany(vr => vr.VoucherRedemptions)
                 .HasForeignKey(vr => vr.VoucherID);
 
+            builder.Entity<VoucherRedemptions>()
+                .Property(x => x.VoucherRedemptionStatus)
+                .HasConversion<string>();
+
+            builder.Entity<Order>()
+                .Property(x => x.Status)
+                .HasConversion<string>();
+
             builder.Entity<OrderMenus>()
                 .HasOne(om => om.Menus)
                 .WithMany(om => om.OrderMenus)
@@ -59,7 +67,7 @@ namespace FoodOrdering.Infrastructure.Data
 
             builder.Entity<Category>()
                 .HasMany(c => c.Menus)
-                .WithOne(c => c.Categories)
+                .WithOne(c => c.Category)
                 .HasForeignKey(c => c.CategoriesId)
                 .OnDelete(DeleteBehavior.Restrict);
 

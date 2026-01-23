@@ -13,7 +13,7 @@ namespace FoodOrdering.Domain.Models
         public string ImageUrl { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public bool IsAdmin { get; set; } = false;
-        public Cart Carts { get; set; }
+        public Cart Cart { get; set; }
         public ICollection<EmailOtp> EmailOtps { get; set; } = new List<EmailOtp>();
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
         public ICollection<VoucherRedemptions> VoucherRedemptions { get; set; } = new List<VoucherRedemptions>();
