@@ -58,11 +58,11 @@ namespace FoodOrdering.Application.Services.Services
             if (!result.IsValid)
                 throw new ValidationDictionaryException(result.ToDictionary());
              
-            var categories = _unitOfWork.Category
+            var isCategoryExist = _unitOfWork.Category
                 .GetAll()
-                .Where(c => EF.Functions.Like(c.Name, $"%{request.Name}%"));
+                .Any(c => c.Name.Contains(request.Name));
 
-            if (categories.Any())
+            if (isCategoryExist)
                 throw new DuplicateNameException($"{request.Name} đã tồn tại");
 
             var newCategory = MappingCategory(request);
@@ -74,24 +74,23 @@ namespace FoodOrdering.Application.Services.Services
             await _cacheService.RemoveAsync(CacheKeys.CATEGORIES_PREFIX);
         }
 
-        public async Task UpdateAsync(Guid id, CategoryRequestDto request)
+        public async Task UpdateAsync(Guid categoryId, CategoryRequestDto request)
         {
-            var validator = new CategoryValidator();
-            var result = await validator.ValidateAsync(request);
+            var result = await new CategoryValidator().ValidateAsync(request);
 
             if (!result.IsValid)
                 throw new ValidationDictionaryException(result.ToDictionary());
 
-            var categories = _unitOfWork.Category
-                .GetAll()
-                .Where(c => c.Name.Trim().ToLower() ==  request.Name.Trim().ToLower() && c.Id != id);
-
-            var category = await _unitOfWork.Category.GetByIdAsync(id);
+            var category = await _unitOfWork.Category.GetByIdAsync(categoryId);
 
             if (category == null)
                 throw new KeyNotFoundException("Danh mục không tồn tại");
 
-            if (categories.Any())
+            var isCategoryExist = _unitOfWork.Category
+                .GetAll()
+                .Any(c => c.Name.Contains(request.Name) && c.Id != categoryId);       
+         
+            if (isCategoryExist)
                 throw new DuplicateNameException($"{request.Name} đã tồn tại");
 
             category.Name = request.Name;
@@ -102,9 +101,9 @@ namespace FoodOrdering.Application.Services.Services
             await _cacheService.RemoveAsync(CacheKeys.CATEGORIES_PREFIX);
         }
 
-        public async Task DeleteAsync(Guid id)
+        public async Task DeleteAsync(Guid categoryId)
         {
-            var category = await _unitOfWork.Category.GetByIdAsync(id);
+            var category = await _unitOfWork.Category.GetByIdAsync(categoryId);
 
             if (category == null)           
                throw new KeyNotFoundException("Danh mục không tồn tại");

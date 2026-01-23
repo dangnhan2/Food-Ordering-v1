@@ -5,7 +5,7 @@
         public Guid Id { get; set; }
         public string Name { get; set; }
         public Guid CategoriesId { get; set; }
-        public Category Categories { get; set; } 
+        public Category Category { get; set; } 
 
         public string? Description { get; set; }
         public decimal OriginalPrice { get; set; }

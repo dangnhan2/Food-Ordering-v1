@@ -23,7 +23,7 @@ namespace FoodOrdering.Application.Services.Services
         {
             var menus = _unitOfWork.Menu.GetAll();
 
-            menus = menus.Where(m => EF.Functions.Like(m.Name.Replace(" ", ""), $"%{requestDto.Keyword.Replace(" ", "")}%"));
+            menus = menus.Where(m => m.Name.Replace(" ", "").Contains(requestDto.Keyword.Replace(" ", "")));
 
             var menusToDto = menus.Select(m => new MenuSearchDto
             {

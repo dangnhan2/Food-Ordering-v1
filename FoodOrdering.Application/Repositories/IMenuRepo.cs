@@ -1,4 +1,5 @@
-﻿using FoodOrdering.Domain.Models;
+﻿using FoodOrdering.Application.DTOs.Response;
+using FoodOrdering.Domain.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,6 @@ namespace FoodOrdering.Application.Repositories
 {
     public interface IMenuRepo : IGenericRepo<Menu>
     {
-        public Task<Menu?> GetMenuWithCategoryAsync(Guid id);
+        public Task<MenuDto?> GetMenuWithCategoryAsync(Guid id);
     }
 }

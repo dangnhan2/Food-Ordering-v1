@@ -13,7 +13,7 @@ namespace FoodOrdering.Application.Services.Interface
     {
         public Task<IEnumerable<CategoryDTO>> GetAllAsync();
         public Task AddAsync(CategoryRequestDto request);
-        public Task UpdateAsync(Guid id, CategoryRequestDto request);
-        public Task DeleteAsync(Guid id);
+        public Task UpdateAsync(Guid categoryId, CategoryRequestDto request);
+        public Task DeleteAsync(Guid categoryId);
     }
 }

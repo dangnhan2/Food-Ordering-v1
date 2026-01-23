@@ -30,8 +30,7 @@ namespace FoodOrdering.Application.Services.Services
 
             if (ratingParams.Stars.HasValue)           
                 ratingsByMenu = ratingsByMenu.Where(r => r.Stars == ratingParams.Stars.Value);
-            
-
+           
             var ratings = ratingsByMenu
                           .Select(r => new RatingDto
                           {
@@ -48,7 +47,6 @@ namespace FoodOrdering.Application.Services.Services
             if (ratingParams.Page != 0 && ratingParams.PageSize != 0)            
               ratings = ratings.Paging(ratingParams.Page, ratingParams.PageSize);
             
-
             var response = new PagingReponse<RatingDto> (ratingParams.Page, ratingParams.PageSize, ratingsByMenu.Count(), await ratings.ToListAsync());
             return response;
         }
@@ -59,21 +57,22 @@ namespace FoodOrdering.Application.Services.Services
 
             if (!result.IsValid) throw new ValidationDictionaryException(result.ToDictionary());
 
-            var orders = _unitOfWork.OrderMenu
+            var hasPurchased = await _unitOfWork.OrderMenu
                 .GetAll()
-                .Where(o => o.OrderId == request.OrderId
+                .AnyAsync(o => o.OrderId == request.OrderId
                             && o.Orders.Status == Food_Ordering.Models.Enum.OrderStatus.Paid
                             && o.MenuId == request.MenuId
                             && o.Orders.UserId == request.UserId);
 
-            if (!orders.Any()) throw new InvalidDataException("Bạn chưa đặt món này");
+            if (!hasPurchased) throw new InvalidDataException("Bạn chưa đặt món này");
 
-            var ratings = _unitOfWork.Rating
+            var hasRated = await _unitOfWork.Rating
                 .GetAll()
-                .Where(r => r.OrderId == request.OrderId 
-                            && r.MenuId == request.MenuId);
+                .AnyAsync(r => r.OrderId == request.OrderId 
+                            && r.MenuId == request.MenuId
+                            && r.UserId == request.UserId);
 
-            if (await ratings.AnyAsync()) throw new InvalidOperationException("Bạn đã đánh giá món ăn trong đơn hàng này rồi");
+            if (hasRated) throw new InvalidOperationException("Bạn đã đánh giá món ăn trong đơn hàng này rồi");
 
             var newRating = await MappingRating(request);
 

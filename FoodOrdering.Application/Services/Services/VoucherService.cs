@@ -54,9 +54,6 @@ namespace FoodOrdering.Application.Services.Services
             _unitOfWork.Voucher.Remove(existVoucher);
             await _unitOfWork.SaveChangeAsync();
             await _cacheService.RemoveAsync(CacheKeys.VoucherDetail(existVoucher.Id));
-
-            if(existVoucher.IsActive)
-              await _cacheService.RemoveAsync(CacheKeys.VOUCHER_ACTIVE);
         }
 
         public async Task<PagingReponse<VoucherDTO>> GetAllByAdminAsync(VoucherParams voucherParams)
@@ -64,8 +61,8 @@ namespace FoodOrdering.Application.Services.Services
             var vouchers = _unitOfWork.Voucher.GetAll();
 
             if (!string.IsNullOrEmpty(voucherParams.Search))
-                vouchers = vouchers.Where(v => EF.Functions.Like(v.Code, $"%{voucherParams.Search}%"));
-
+                vouchers = vouchers.Where(v => v.Code.Contains(voucherParams.Search.ToUpper()));
+            
             if (voucherParams.StartDate.HasValue && voucherParams.EndDate.HasValue)
                 vouchers = vouchers.Where(v => v.StartDate == voucherParams.StartDate.Value && v.EndDate == voucherParams.EndDate.Value);            
 
@@ -76,7 +73,6 @@ namespace FoodOrdering.Application.Services.Services
             if (voucherParams.Page != 0 && voucherParams.PageSize != 0)           
               voucherToDTO = voucherToDTO.Paging(voucherParams.Page, voucherParams.PageSize);
                       
-
             var response = new PagingReponse<VoucherDTO>(voucherParams.Page, voucherParams.PageSize, vouchers.Count(), await voucherToDTO.ToListAsync());
             return response; 
         }
@@ -116,15 +112,20 @@ namespace FoodOrdering.Application.Services.Services
         }
 
         public async Task UpdateAsync(Guid id, VoucherRequestDto request)
-        {
+        {   
             var result = await new VoucherValidator().ValidateAsync(request);
 
             if (!result.IsValid)           
                 throw new ValidationDictionaryException(result.ToDictionary());
 
-            var existVoucher = await _unitOfWork.Voucher.GetByIdAsync(id) ?? throw new KeyNotFoundException("Mã giảm giá không tồn tại");        
+            if (request.IsActive && request.StartDate > DateTimeOffset.UtcNow)
+                throw new ArgumentException("Thời điểm bắt đầu voucher đang khác với giờ hiện tại, hãy sửa lại giờ bắt đầu phù hợp");
 
-            existVoucher.Code = request.Code;
+            var existVoucher = await _unitOfWork.Voucher.GetByIdAsync(id) ?? throw new KeyNotFoundException("Mã giảm giá không tồn tại");
+
+            var oldIsActive = existVoucher.IsActive;
+
+            existVoucher.Code = request.Code.ToUpper();
             existVoucher.Description = $"Hạn sử dụng {request.StartDate.FormatDateTimeOffset()} đến ngày {request.EndDate.FormatDateTimeOffset()}";
             existVoucher.DiscountType = request.DiscountType;
             existVoucher.DiscountValue = request.DiscountValue;
@@ -137,12 +138,12 @@ namespace FoodOrdering.Application.Services.Services
             existVoucher.UsageLimit = request.UsageLimit;
             existVoucher.IsActive = request.IsActive;
 
+            if (oldIsActive != request.IsActive)
+                await _cacheService.RemoveAsync(CacheKeys.VOUCHER_ACTIVE);
+
             _unitOfWork.Voucher.Update(existVoucher);
             await _cacheService.RemoveAsync(CacheKeys.VoucherDetail(existVoucher.Id));
-            await _unitOfWork.SaveChangeAsync();
-
-            if (existVoucher.IsActive)
-                await _cacheService.RemoveAsync(CacheKeys.VOUCHER_ACTIVE);
+            await _unitOfWork.SaveChangeAsync();         
         }
 
         public async Task<VoucherValidationDto> ValidateVoucherAsync(ValidateVoucherRequestDto request)
@@ -199,7 +200,7 @@ namespace FoodOrdering.Application.Services.Services
         {              
             var voucher = new Voucher
             {
-                Code = request.Code,
+                Code = request.Code.ToUpper(),
                 Description = $"Hạn sử dụng {request.StartDate.FormatDateTimeOffset()} đến ngày {request.EndDate.FormatDateTimeOffset()}",
                 DiscountType = request.DiscountType,
                 DiscountValue = request.DiscountValue,
