@@ -26,6 +26,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
         private readonly INotificationService _notificationService;
         private readonly IRatingService _ratingService;
         private readonly ISearchService _searchService;
+        private readonly IAdvertisementService _advertisementService;
         public CommonController(
             ICategoryService categoryService, 
             IMenuService menuService, 
@@ -36,7 +37,8 @@ namespace FoodOrdering.Presentation.Controllers.Common
             IAddressService addressService, 
             INotificationService notificationService,
             IRatingService ratingService,
-            ISearchService searchService)
+            ISearchService searchService,
+            IAdvertisementService advertisementService)
         {
             _categoryService = categoryService;
             _menuService = menuService;
@@ -48,6 +50,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
             _notificationService = notificationService;
             _ratingService = ratingService;
             _searchService = searchService;
+            _advertisementService = advertisementService;
         }
 
         // Category EndPoint
@@ -99,6 +102,24 @@ namespace FoodOrdering.Presentation.Controllers.Common
             return Ok(response);
         }
 
+        [HttpGet("menus/onsale")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetMenusOnSale([FromQuery] MenuParams menuParams)
+        {
+            var result = await _menuService.GetAllMenusOnSaleAsync(menuParams);
+            var response = ApiResponse<PagingReponse<MenuDto>>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
+            return Ok(response);
+        }
+
+        [HttpGet("advertisements")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAdvertisement()
+        {
+            var result = await _advertisementService.GetAdvertisementsAsync();
+            var response = ApiResponse<dynamic>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
+
+            return Ok(response);
+        }
 
         // Cart EndPoints
         [HttpGet("cart")]

@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FoodOrdering.Infrastructure.Migrations
 {
     [DbContext(typeof(FoodOrderingDbContext))]
-    [Migration("20250928132700_AddTableCartNCartItem")]
-    partial class AddTableCartNCartItem
+    [Migration("20260126101135_AddAdvertisementTable")]
+    partial class AddAdvertisementTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,7 +25,92 @@ namespace FoodOrdering.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("FoodOrdering.Domain.Models.CartItems", b =>
+            modelBuilder.Entity("FoodOrdering.Domain.Models.Address", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AddressName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Address");
+                });
+
+            modelBuilder.Entity("FoodOrdering.Domain.Models.Advertisement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AdTargetType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("BannerUrl")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("EndAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("StartAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TargetKey")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Advertisement");
+                });
+
+            modelBuilder.Entity("FoodOrdering.Domain.Models.Cart", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("Cart");
+                });
+
+            modelBuilder.Entity("FoodOrdering.Domain.Models.CartItem", b =>
                 {
                     b.Property<Guid>("MenuId")
                         .HasColumnType("uuid");
@@ -39,34 +124,17 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
-                    b.Property<int>("UnitPrice")
-                        .HasColumnType("integer");
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("numeric");
 
                     b.HasKey("MenuId", "CartId");
 
                     b.HasIndex("CartId");
 
-                    b.ToTable("CartItems");
+                    b.ToTable("CartItem");
                 });
 
-            modelBuilder.Entity("FoodOrdering.Domain.Models.Carts", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.ToTable("Carts");
-                });
-
-            modelBuilder.Entity("FoodOrdering.Domain.Models.Categories", b =>
+            modelBuilder.Entity("FoodOrdering.Domain.Models.Category", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -78,14 +146,43 @@ namespace FoodOrdering.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Category");
                 });
 
-            modelBuilder.Entity("FoodOrdering.Domain.Models.Menus", b =>
+            modelBuilder.Entity("FoodOrdering.Domain.Models.EmailOtp", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<DateTime>("ExpiredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Otp")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("EmailOtp");
+                });
+
+            modelBuilder.Entity("FoodOrdering.Domain.Models.Menu", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("AverageRating")
+                        .HasColumnType("double precision");
 
                     b.Property<Guid>("CategoriesId")
                         .HasColumnType("uuid");
@@ -96,6 +193,9 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
+                    b.Property<decimal?>("DiscountPrice")
+                        .HasColumnType("numeric");
+
                     b.Property<string>("ImageUrl")
                         .IsRequired()
                         .HasColumnType("text");
@@ -103,24 +203,106 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsOnSale")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("Price")
-                        .HasColumnType("integer");
+                    b.Property<decimal>("OriginalPrice")
+                        .HasColumnType("numeric");
 
                     b.Property<int>("SoldQuantity")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("StockQuantity")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CategoriesId");
 
-                    b.ToTable("Menus");
+                    b.ToTable("Menu");
+                });
+
+            modelBuilder.Entity("FoodOrdering.Domain.Models.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Data")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Tiltle")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Notification");
+                });
+
+            modelBuilder.Entity("FoodOrdering.Domain.Models.Order", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AddressId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ExpiredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("text");
+
+                    b.Property<int>("OrderCode")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("OrderDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AddressId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Order");
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.OrderMenus", b =>
@@ -137,65 +319,79 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
-                    b.Property<int>("SubTotal")
-                        .HasColumnType("integer");
+                    b.Property<decimal>("SubTotal")
+                        .HasColumnType("numeric");
 
-                    b.Property<int>("UnitPrice")
-                        .HasColumnType("integer");
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("numeric");
 
                     b.HasKey("OrderId", "MenuId");
 
                     b.HasIndex("MenuId");
 
-                    b.ToTable("OrderMenus");
+                    b.ToTable("OrderMenu");
                 });
 
-            modelBuilder.Entity("FoodOrdering.Domain.Models.Orders", b =>
+            modelBuilder.Entity("FoodOrdering.Domain.Models.Rating", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Address")
-                        .IsRequired()
+                    b.Property<string>("Comment")
                         .HasColumnType("text");
 
-                    b.Property<string>("CustomerName")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("MenuId")
+                        .HasColumnType("uuid");
 
-                    b.Property<DateTime>("ExpiredAt")
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("RatingAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Note")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("OrderDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("PaymentMethod")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("PhoneNumber")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Status")
+                    b.Property<int>("Stars")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ToTalAmount")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TransactionId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Orders");
+                    b.HasIndex("MenuId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("OrderId", "MenuId")
+                        .IsUnique();
+
+                    b.ToTable("Rating");
                 });
 
-            modelBuilder.Entity("FoodOrdering.Domain.Models.RefreshTokens", b =>
+            modelBuilder.Entity("FoodOrdering.Domain.Models.RatingImage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("RatingId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RatingId");
+
+                    b.ToTable("RatingImage");
+                });
+
+            modelBuilder.Entity("FoodOrdering.Domain.Models.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -207,6 +403,13 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.Property<DateTime>("ExpriedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("JwtId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Token")
                         .IsRequired()
                         .HasColumnType("text");
@@ -216,10 +419,38 @@ namespace FoodOrdering.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId")
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshToken");
+                });
+
+            modelBuilder.Entity("FoodOrdering.Domain.Models.ResponseRating", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("RatingId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ResponseAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RatingId")
                         .IsUnique();
 
-                    b.ToTable("RefreshTokens");
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ResponseRating");
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.User", b =>
@@ -245,13 +476,12 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("ImageUrl")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean");
@@ -319,22 +549,25 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.Property<decimal>("DiscountValue")
                         .HasColumnType("numeric");
 
-                    b.Property<DateTime>("EndDate")
+                    b.Property<DateTimeOffset>("EndDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<decimal?>("MaxDiscount")
+                    b.Property<decimal>("MaxDiscount")
                         .HasColumnType("numeric");
 
-                    b.Property<decimal?>("MinOrderAmount")
+                    b.Property<decimal>("MinOrderAmount")
                         .HasColumnType("numeric");
 
                     b.Property<int?>("PerUserLimit")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("StartDate")
+                    b.Property<int>("ReservedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("StartDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("UsageLimit")
@@ -356,17 +589,18 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.Property<Guid>("VoucherID")
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("AmountDiscount")
-                        .HasColumnType("numeric");
-
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("OrderID")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("RedeemedAt")
+                    b.Property<DateTimeOffset>("RedeemedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("VoucherRedemptionStatus")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("UserID", "VoucherID");
 
@@ -374,7 +608,7 @@ namespace FoodOrdering.Infrastructure.Migrations
 
                     b.HasIndex("VoucherID");
 
-                    b.ToTable("VoucherRedemptions");
+                    b.ToTable("VoucherRedemption");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
@@ -402,20 +636,6 @@ namespace FoodOrdering.Infrastructure.Migrations
                         .HasDatabaseName("RoleNameIndex");
 
                     b.ToTable("AspNetRoles", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("13e06384-021b-402b-8c12-c4607189b626"),
-                            Name = "Customer",
-                            NormalizedName = "CUSTOMER"
-                        },
-                        new
-                        {
-                            Id = new Guid("bff4375f-b678-493e-86c8-3a663ec0d769"),
-                            Name = "Admin",
-                            NormalizedName = "ADMIN"
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -521,15 +741,37 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("FoodOrdering.Domain.Models.CartItems", b =>
+            modelBuilder.Entity("FoodOrdering.Domain.Models.Address", b =>
                 {
-                    b.HasOne("FoodOrdering.Domain.Models.Carts", "Cart")
+                    b.HasOne("FoodOrdering.Domain.Models.User", "User")
+                        .WithMany("Addresses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("FoodOrdering.Domain.Models.Cart", b =>
+                {
+                    b.HasOne("FoodOrdering.Domain.Models.User", "User")
+                        .WithOne("Cart")
+                        .HasForeignKey("FoodOrdering.Domain.Models.Cart", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("FoodOrdering.Domain.Models.CartItem", b =>
+                {
+                    b.HasOne("FoodOrdering.Domain.Models.Cart", "Cart")
                         .WithMany("CartItems")
                         .HasForeignKey("CartId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FoodOrdering.Domain.Models.Menus", "Menu")
+                    b.HasOne("FoodOrdering.Domain.Models.Menu", "Menu")
                         .WithMany("CartItems")
                         .HasForeignKey("MenuId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -540,37 +782,67 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.Navigation("Menu");
                 });
 
-            modelBuilder.Entity("FoodOrdering.Domain.Models.Carts", b =>
+            modelBuilder.Entity("FoodOrdering.Domain.Models.EmailOtp", b =>
                 {
                     b.HasOne("FoodOrdering.Domain.Models.User", "User")
-                        .WithOne("Carts")
-                        .HasForeignKey("FoodOrdering.Domain.Models.Carts", "UserId")
+                        .WithMany("EmailOtps")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("FoodOrdering.Domain.Models.Menus", b =>
+            modelBuilder.Entity("FoodOrdering.Domain.Models.Menu", b =>
                 {
-                    b.HasOne("FoodOrdering.Domain.Models.Categories", "Categories")
+                    b.HasOne("FoodOrdering.Domain.Models.Category", "Category")
                         .WithMany("Menus")
                         .HasForeignKey("CategoriesId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Categories");
+                    b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("FoodOrdering.Domain.Models.Notification", b =>
+                {
+                    b.HasOne("FoodOrdering.Domain.Models.User", "User")
+                        .WithMany("Notifications")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("FoodOrdering.Domain.Models.Order", b =>
+                {
+                    b.HasOne("FoodOrdering.Domain.Models.Address", "Address")
+                        .WithMany("Orders")
+                        .HasForeignKey("AddressId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FoodOrdering.Domain.Models.User", "User")
+                        .WithMany("Orders")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Address");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.OrderMenus", b =>
                 {
-                    b.HasOne("FoodOrdering.Domain.Models.Menus", "Menus")
+                    b.HasOne("FoodOrdering.Domain.Models.Menu", "Menus")
                         .WithMany("OrderMenus")
                         .HasForeignKey("MenuId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FoodOrdering.Domain.Models.Orders", "Orders")
+                    b.HasOne("FoodOrdering.Domain.Models.Order", "Orders")
                         .WithMany("OrderMenus")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -581,20 +853,77 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.Navigation("Orders");
                 });
 
-            modelBuilder.Entity("FoodOrdering.Domain.Models.RefreshTokens", b =>
+            modelBuilder.Entity("FoodOrdering.Domain.Models.Rating", b =>
+                {
+                    b.HasOne("FoodOrdering.Domain.Models.Menu", "Menu")
+                        .WithMany("Ratings")
+                        .HasForeignKey("MenuId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FoodOrdering.Domain.Models.Order", "Order")
+                        .WithMany("Ratings")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FoodOrdering.Domain.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Menu");
+
+                    b.Navigation("Order");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("FoodOrdering.Domain.Models.RatingImage", b =>
+                {
+                    b.HasOne("FoodOrdering.Domain.Models.Rating", "Rating")
+                        .WithMany("Images")
+                        .HasForeignKey("RatingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Rating");
+                });
+
+            modelBuilder.Entity("FoodOrdering.Domain.Models.RefreshToken", b =>
                 {
                     b.HasOne("FoodOrdering.Domain.Models.User", "User")
-                        .WithOne("RefreshTokens")
-                        .HasForeignKey("FoodOrdering.Domain.Models.RefreshTokens", "UserId")
+                        .WithMany("RefreshTokens")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("FoodOrdering.Domain.Models.ResponseRating", b =>
+                {
+                    b.HasOne("FoodOrdering.Domain.Models.Rating", "Rating")
+                        .WithOne("ResponseRating")
+                        .HasForeignKey("FoodOrdering.Domain.Models.ResponseRating", "RatingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FoodOrdering.Domain.Models.User", "User")
+                        .WithMany("ResponseRatings")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Rating");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("FoodOrdering.Domain.Models.VoucherRedemptions", b =>
                 {
-                    b.HasOne("FoodOrdering.Domain.Models.Orders", "Order")
+                    b.HasOne("FoodOrdering.Domain.Models.Order", "Order")
                         .WithMany()
                         .HasForeignKey("OrderID")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -670,35 +999,60 @@ namespace FoodOrdering.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("FoodOrdering.Domain.Models.Carts", b =>
+            modelBuilder.Entity("FoodOrdering.Domain.Models.Address", b =>
+                {
+                    b.Navigation("Orders");
+                });
+
+            modelBuilder.Entity("FoodOrdering.Domain.Models.Cart", b =>
                 {
                     b.Navigation("CartItems");
                 });
 
-            modelBuilder.Entity("FoodOrdering.Domain.Models.Categories", b =>
+            modelBuilder.Entity("FoodOrdering.Domain.Models.Category", b =>
                 {
                     b.Navigation("Menus");
                 });
 
-            modelBuilder.Entity("FoodOrdering.Domain.Models.Menus", b =>
+            modelBuilder.Entity("FoodOrdering.Domain.Models.Menu", b =>
                 {
                     b.Navigation("CartItems");
 
                     b.Navigation("OrderMenus");
+
+                    b.Navigation("Ratings");
                 });
 
-            modelBuilder.Entity("FoodOrdering.Domain.Models.Orders", b =>
+            modelBuilder.Entity("FoodOrdering.Domain.Models.Order", b =>
                 {
                     b.Navigation("OrderMenus");
+
+                    b.Navigation("Ratings");
+                });
+
+            modelBuilder.Entity("FoodOrdering.Domain.Models.Rating", b =>
+                {
+                    b.Navigation("Images");
+
+                    b.Navigation("ResponseRating")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.User", b =>
                 {
-                    b.Navigation("Carts")
-                        .IsRequired();
+                    b.Navigation("Addresses");
 
-                    b.Navigation("RefreshTokens")
-                        .IsRequired();
+                    b.Navigation("Cart");
+
+                    b.Navigation("EmailOtps");
+
+                    b.Navigation("Notifications");
+
+                    b.Navigation("Orders");
+
+                    b.Navigation("RefreshTokens");
+
+                    b.Navigation("ResponseRatings");
 
                     b.Navigation("VoucherRedemptions");
                 });

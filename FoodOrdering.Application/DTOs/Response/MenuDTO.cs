@@ -17,6 +17,7 @@ namespace FoodOrdering.Application.DTOs.Response
         public bool IsAvailable { get; set; }
         public bool IsOnSale { get; set; }
         public DateTime CreatedAt { get; set; }
+        public int DiscountPercent { get; set; }
 
         public MenuDto() { }
     }

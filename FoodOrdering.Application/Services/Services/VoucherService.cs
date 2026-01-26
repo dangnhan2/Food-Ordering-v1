@@ -15,9 +15,9 @@ namespace FoodOrdering.Application.Services.Services
     public class VoucherService : IVoucherService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly ICachingService _cacheService;
+        private readonly ICachingRepo _cacheService;
         private int TAX_RATE = 8;
-        public VoucherService(IUnitOfWork unitOfWork, ICachingService cacheService)
+        public VoucherService(IUnitOfWork unitOfWork, ICachingRepo cacheService)
         {
             _unitOfWork = unitOfWork;           
             _cacheService = cacheService;            

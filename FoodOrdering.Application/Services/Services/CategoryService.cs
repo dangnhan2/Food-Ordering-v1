@@ -22,9 +22,9 @@ namespace FoodOrdering.Application.Services.Services
     public class CategoryService : ICategoryService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly ICachingService _cacheService;
+        private readonly ICachingRepo _cacheService;
 
-        public CategoryService(IUnitOfWork unitOfWork, ICachingService cacheService)
+        public CategoryService(IUnitOfWork unitOfWork, ICachingRepo cacheService)
         {
             _unitOfWork = unitOfWork;
             _cacheService = cacheService;

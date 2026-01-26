@@ -22,7 +22,8 @@ namespace FoodOrdering.Infrastructure.Repository
         public async Task<MenuDto?> GetMenuWithCategoryAsync(Guid id)
         {
             var menuDto = from m in _context.Menu
-                          join c in _context.Category on m.CategoriesId equals c.Id
+                          join c in _context.Category on m.CategoriesId equals c.Id into mc
+                          from c in mc.DefaultIfEmpty()
                           where m.Id == id
                           select new MenuDto
                           {
@@ -38,7 +39,8 @@ namespace FoodOrdering.Infrastructure.Repository
                               SoldQuantity = m.SoldQuantity,
                               RatingCount = m.Ratings.Count(),
                               IsAvailable = m.IsAvailable,
-                              IsOnSale = m.IsOnSale
+                              IsOnSale = m.IsOnSale,
+                              DiscountPercent = m.IsOnSale && m.DiscountPrice.HasValue ? (int)(((m.OriginalPrice - m.DiscountPrice) / m.OriginalPrice) * 100) : 0
                           };
 
             return await menuDto.FirstOrDefaultAsync();

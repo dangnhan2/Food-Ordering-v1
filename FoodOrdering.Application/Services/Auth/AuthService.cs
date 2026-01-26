@@ -1,7 +1,7 @@
 ﻿using DotNetEnv;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
-using FoodOrdering.Application.Email;
+using FoodOrdering.Application.Repositories.Email;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using Serilog;
 
 
-namespace FoodOrdering.Application.Services.Services
+namespace FoodOrdering.Application.Services.Auth
 {
     public class AuthService : IAuthService
     {
@@ -19,9 +19,9 @@ namespace FoodOrdering.Application.Services.Services
         private readonly ITokenService _tokenService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly string _avatar;
-        private readonly IEmailService _emailService;
+        private readonly IEmailRepo _emailService;
 
-        public AuthService(UserManager<User> userManager, ITokenService tokenService, IUnitOfWork unitOfWork, IEmailService emailService)
+        public AuthService(UserManager<User> userManager, ITokenService tokenService, IUnitOfWork unitOfWork, IEmailRepo emailService)
         {
             Env.Load();
             _userManager = userManager;
@@ -191,7 +191,7 @@ namespace FoodOrdering.Application.Services.Services
                 throw new KeyNotFoundException("Người dùng không tồn tại");
 
 
-            if (existUser.EmailOtps.Any(otp => (otp.Otp == request.Otp && otp.IsUsed) || (otp.Otp == request.Otp && otp.ExpiredAt < DateTime.UtcNow)))
+            if (existUser.EmailOtps.Any(otp => otp.Otp == request.Otp && otp.IsUsed || otp.Otp == request.Otp && otp.ExpiredAt < DateTime.UtcNow))
                 throw new ArgumentException("Mã otp đã sử dụng hoặc đã hết hạn");
                            
             foreach(var otp in existUser.EmailOtps)

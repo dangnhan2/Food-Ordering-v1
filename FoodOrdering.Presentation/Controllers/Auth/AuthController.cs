@@ -1,6 +1,6 @@
 ﻿using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
-using FoodOrdering.Application.Services.Interface;
+using FoodOrdering.Application.Services.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;

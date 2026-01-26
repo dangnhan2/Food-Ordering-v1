@@ -7,6 +7,7 @@ namespace FoodOrdering.Application.Services.Interface
     public interface IMenuService
     {
         public Task<PagingReponse<MenuDto>> GetAllMenusAsync(MenuParams menuParams);
+        public Task<PagingReponse<MenuDto>> GetAllMenusOnSaleAsync(MenuParams menuParams);
         public Task<IEnumerable<MenuDto>> GetFeaturedMenusAsync();
         public Task<IEnumerable<MenuDto>> GetRelatedMenusAsync(Guid menuId);
         public Task<MenuDto> GetMenuByIdAsync(Guid menuId);

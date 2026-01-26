@@ -1,4 +1,5 @@
-﻿using FoodOrdering.Domain.Models;
+﻿using FoodOrdering.Application.DTOs.Response;
+using FoodOrdering.Domain.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,7 @@ namespace FoodOrdering.Application.Repositories
     {
         public Task<User?> GetUserByEmailAsync(string email);
         public Task<User?> GetUserContainsCartAsync(Guid id);
+        public Task<IEnumerable<TopBuyerDto>> GetTop5BuyersMonthly();
 
     }
 }

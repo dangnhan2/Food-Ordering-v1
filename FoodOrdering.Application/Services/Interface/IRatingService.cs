@@ -14,5 +14,6 @@ namespace FoodOrdering.Application.Services.Interface
     {
         public Task<PagingReponse<RatingDto>> GetAllRatingsByMenuAsync(Guid menuId, RatingParams ratingParams);
         public Task RatingPaidOrderAsync(RatingRequestDto request);
+        public Task ResponseRatingAsync(ResponseRatingRequestDto responseRatingRequest);
     }
 }

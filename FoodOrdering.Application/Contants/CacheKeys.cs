@@ -10,6 +10,7 @@ namespace FoodOrdering.Application.Contants
     {
         public static string UserAddresses(Guid userId)        
             => $"user:address:{userId}:";
+
         public const string USER_ADDRESS_PREFIX = "user:address:";
 
         public const string CATEGORIES_PREFIX = "category:all";
@@ -24,6 +25,10 @@ namespace FoodOrdering.Application.Contants
 
         public static string UserDetail(Guid userId)
             => $"user:detail:{userId}";
+
+        public static string ADVERTISEMENT_ACTIVE = "advertisement:active";
+
+        public static string ADVERTISEMENT_PREFIX = "advertisement";
 
     }
 }

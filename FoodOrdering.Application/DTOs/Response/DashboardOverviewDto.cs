@@ -17,6 +17,6 @@ namespace FoodOrdering.Application.DTOs.Response
         public decimal RevenueMonthly { get; set; }
         public int TotalPaidOrdersMontly { get; set; }
         public ICollection<TopDishDto> TopSellingDishes { get; set; } = new List<TopDishDto>();
-        public ICollection<TopBuyerDto> TopBuyers { get; set; } = new List<TopBuyerDto>();
+        public IEnumerable<TopBuyerDto> TopBuyers { get; set; } = new List<TopBuyerDto>();
     }
 }

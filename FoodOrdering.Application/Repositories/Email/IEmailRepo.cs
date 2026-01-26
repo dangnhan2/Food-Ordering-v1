@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FoodOrdering.Application.Email
+namespace FoodOrdering.Application.Repositories.Email
 {
-    public interface IEmailService
+    public interface IEmailRepo
     {
         public Task EmailSender(string toEmail, string subject, string body);
     }

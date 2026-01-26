@@ -1,5 +1,5 @@
 ﻿using DotNetEnv;
-using FoodOrdering.Application.Email;
+using FoodOrdering.Application.Repositories.Email;
 using FoodOrdering.Infrastructure.Options;
 using Microsoft.Extensions.Options;
 using System.Net;
@@ -7,7 +7,7 @@ using System.Net.Mail;
 
 namespace FoodOrdering.Infrastructure.Services.Email
 {
-    public class EmailService : IEmailService
+    public class EmailService : IEmailRepo
     {
         public readonly EmailOptions _options;
 

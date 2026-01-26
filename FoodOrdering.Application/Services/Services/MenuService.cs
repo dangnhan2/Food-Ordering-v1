@@ -16,11 +16,11 @@ namespace FoodOrdering.Application.Services.Services
     public class MenuService : IMenuService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly ICachingService _cacheService;
+        private readonly ICachingRepo _cacheService;
         private const string folder = "Thumbnail";
         private readonly ICloudinaryService _cloudinaryService;
 
-        public MenuService(IUnitOfWork unitOfWork, ICachingService cacheService, ICloudinaryService cloudinaryService)
+        public MenuService(IUnitOfWork unitOfWork, ICachingRepo cacheService, ICloudinaryService cloudinaryService)
         {
             _unitOfWork = unitOfWork;
             _cacheService = cacheService;
@@ -89,7 +89,7 @@ namespace FoodOrdering.Application.Services.Services
                 };
             }
 
-            var menusToDTO = menus               
+            var menusToDTO = menus
                 .Select(m => new MenuDto
                 {
                     Id = m.Id,
@@ -104,7 +104,8 @@ namespace FoodOrdering.Application.Services.Services
                     RatingCount = m.Ratings.Count(),
                     IsAvailable = m.IsAvailable,
                     IsOnSale = m.IsOnSale,
-                    CreatedAt = m.CreatedAt
+                    CreatedAt = m.CreatedAt,
+                    DiscountPercent = m.IsOnSale && m.DiscountPrice.HasValue ? (int)(((m.OriginalPrice - m.DiscountPrice) / m.OriginalPrice) * 100): 0
                 })
                 .AsNoTracking();
 
@@ -195,7 +196,8 @@ namespace FoodOrdering.Application.Services.Services
                     RatingCount = m.Ratings.Count(),
                     IsAvailable = m.IsAvailable,
                     IsOnSale = m.IsOnSale,
-                    CreatedAt = m.CreatedAt
+                    CreatedAt = m.CreatedAt,
+                    DiscountPercent = m.IsOnSale && m.DiscountPrice.HasValue ? (int)(((m.OriginalPrice - m.DiscountPrice) / m.OriginalPrice) * 100) : 0
                 })
                 .AsNoTracking()
                 .ToListAsync();
@@ -233,11 +235,43 @@ namespace FoodOrdering.Application.Services.Services
                     RatingCount = m.Ratings.Count(),
                     IsAvailable = m.IsAvailable,
                     IsOnSale = m.IsOnSale,
-                    CreatedAt = m.CreatedAt
+                    CreatedAt = m.CreatedAt,
+                    DiscountPercent = m.IsOnSale && m.DiscountPrice.HasValue ? (int)(((m.OriginalPrice - m.DiscountPrice) / m.OriginalPrice) * 100) : 0
                 })
                 .AsNoTracking()
                 .ToListAsync(); 
             return menusToDto;
+        }
+
+        public async Task<PagingReponse<MenuDto>> GetAllMenusOnSaleAsync(MenuParams menuParams)
+        {
+            var menus = _unitOfWork.Menu.GetAll().Where(m => m.IsAvailable && m.IsOnSale);
+
+            var menusToDTO = menus
+                .Select(m => new MenuDto
+                {
+                    Id = m.Id,
+                    Name = m.Name,
+                    Category = m.Category.Name,
+                    Description = m.Description,
+                    OriginalPrice = m.OriginalPrice,
+                    AverageRating = m.AverageRating,
+                    DiscountPrice = m.DiscountPrice,
+                    ImageUrl = m.ImageUrl,
+                    SoldQuantity = m.SoldQuantity,
+                    RatingCount = m.Ratings.Count(),
+                    IsAvailable = m.IsAvailable,
+                    IsOnSale = m.IsOnSale,
+                    CreatedAt = m.CreatedAt,
+                    DiscountPercent = m.IsOnSale && m.DiscountPrice.HasValue ? (int)(((m.OriginalPrice - m.DiscountPrice) / m.OriginalPrice) * 100) : 0
+                })
+                .AsNoTracking();
+
+            if (menuParams.Page != 0 && menuParams.PageSize != 0)
+                menusToDTO = menusToDTO.Paging(menuParams.Page, menuParams.PageSize);
+
+            var response = new PagingReponse<MenuDto>(menuParams.Page, menuParams.PageSize, menus.Count(), await menusToDTO.ToListAsync());
+            return response;
         }
 
         private async Task<Menu> MappingMenu(MenuRequestDto request)
@@ -262,5 +296,7 @@ namespace FoodOrdering.Application.Services.Services
 
             return menu;
         }
+
+        
     }
 }

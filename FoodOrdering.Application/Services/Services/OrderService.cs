@@ -25,7 +25,7 @@ namespace FoodOrdering.Application.Services.Services
         private readonly IPayOsService _paymentGateway;
         private readonly RedLockFactory _redLockFactory;
         private readonly int orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
-        private readonly ICachingService _cachingService;
+        private readonly ICachingRepo _cachingService;
         private readonly INotificationSenderService _notificationSenderServer;
         private readonly IBackgroundJobs _backgroundJobs;
    
@@ -33,7 +33,7 @@ namespace FoodOrdering.Application.Services.Services
             IUnitOfWork unitOfWork, 
             IPayOsService paymentGateway, 
             RedLockFactory redLockFactory, 
-            ICachingService cachingService,
+            ICachingRepo cachingService,
             INotificationSenderService notificationSenderServer,
             IBackgroundJobs backgroundJobs)
         {
@@ -321,7 +321,7 @@ namespace FoodOrdering.Application.Services.Services
 
             if (type == "QR")
             {
-                newOrder.ExpiredAt = DateTime.UtcNow.AddMinutes(10);
+                newOrder.ExpiredAt = DateTimeOffset.UtcNow.AddMinutes(10);
                 newOrder.Status = OrderStatus.Pending;
             }else if (type == "COD")
             {
