@@ -36,11 +36,14 @@ namespace FoodOrdering.Application.Services.Services
                           {
                               Id = r.Id,
                               MenuId = menuId,
-                              UserName = r.User.UserName,
+                              CustomerUserName = r.User.UserName,
                               Comment = r.Comment,
                               Stars = r.Stars,
                               RatingAt = r.RatingAt.FormatDateTimeOffset(),
                               Images = r.Images.Select(i => i.ImageUrl).ToList(),
+                              ResponseComment = r.ResponseRating != null ? r.ResponseRating.Comment : null,
+                              AdminUserName = r.ResponseRating != null ? r.ResponseRating.User.UserName : null,
+                              ResponseAt = r.ResponseRating != null ? r.ResponseRating.ResponseAt.FormatDateTimeOffset() : null
                           })
                           .AsNoTracking();
 
@@ -88,6 +91,22 @@ namespace FoodOrdering.Application.Services.Services
             await _unitOfWork.SaveChangeAsync();
         }
 
+        public async Task ResponseRatingAsync(ResponseRatingRequestDto responseRatingRequest)
+        {
+            var result = await new ReponseRatingValidator().ValidateAsync(responseRatingRequest);
+
+            if (!result.IsValid) throw new ValidationDictionaryException(result.ToDictionary());
+
+            var existRating = await _unitOfWork.Rating.GetByIdAsync(responseRatingRequest.RatingId) ?? throw new KeyNotFoundException("Không tìm thấy đánh giá");
+
+            var existUser = await _unitOfWork.User.GetByIdAsync(responseRatingRequest.UserId) ?? throw new KeyNotFoundException("Không tìm thấy người dùng");
+
+            var responseRating = MappingResponseRating(responseRatingRequest);
+
+            _unitOfWork.ResponseRating.Update(responseRating);
+            await _unitOfWork.SaveChangeAsync();
+        }
+
         private async Task<Rating> MappingRating(RatingRequestDto request)
         {
             var newRating = new Rating
@@ -118,5 +137,18 @@ namespace FoodOrdering.Application.Services.Services
 
             return newRating;
         }
+
+        private ResponseRating MappingResponseRating(ResponseRatingRequestDto responseRatingRequest)
+        {
+            var responseRating = new ResponseRating
+            {
+                UserId = responseRatingRequest.UserId,
+                RatingId = responseRatingRequest.RatingId,
+                Comment = responseRatingRequest.Comment,
+            };
+
+            return responseRating;
+        }
+        
     }
 }

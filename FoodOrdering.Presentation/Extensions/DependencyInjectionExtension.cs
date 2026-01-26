@@ -1,9 +1,10 @@
 ﻿using CloudinaryDotNet;
 using DotNetEnv;
 using FoodOrdering.Application;
-using FoodOrdering.Application.Email;
 using FoodOrdering.Application.Repositories;
 using FoodOrdering.Application.Repositories.Caching;
+using FoodOrdering.Application.Repositories.Email;
+using FoodOrdering.Application.Services.Auth;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Services.Payment;
 using FoodOrdering.Application.Services.Services;
@@ -56,11 +57,13 @@ namespace Food_Ordering.Extensions
             services.AddScoped<INotificationSenderService, SignalRNotificationService>();
             services.AddScoped<IRatingRepo, RatingRepo>();
             services.AddScoped<IRatingService, RatingService>();
+            services.AddScoped<IAdvertisementRepo, AdvertisementRepo>();
+            services.AddScoped<IAdvertisementService, AdvertisementService>();
 
-            services.AddScoped<ICachingService, CachingService>();
+            services.AddScoped<ICachingRepo, CachingService>();
             services.AddTransient<ICloudinaryService, CLoudinaryService>();
             services.AddTransient<IPayOsService, PayOsService>();
-            services.AddTransient<IEmailService, EmailService>();
+            services.AddTransient<IEmailRepo, EmailService>();
             services.AddScoped<ISearchService, SearchService>();
 
             services.AddSingleton<IConnectionMultiplexer>(sp =>

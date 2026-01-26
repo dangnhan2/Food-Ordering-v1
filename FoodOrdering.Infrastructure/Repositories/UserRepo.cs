@@ -1,4 +1,5 @@
-﻿using FoodOrdering.Application.Repositories;
+﻿using FoodOrdering.Application.DTOs.Response;
+using FoodOrdering.Application.Repositories;
 using FoodOrdering.Domain.Models;
 using FoodOrdering.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,28 @@ namespace FoodOrdering.Infrastructure.Repository
         private readonly FoodOrderingDbContext _context;
         public UserRepo(FoodOrderingDbContext context) : base(context) {
             _context = context;
+        }
+
+        public async Task<IEnumerable<TopBuyerDto>> GetTop5BuyersMonthly()
+        {
+            var month = DateTimeOffset.UtcNow.Month;
+
+            var topBuyers = await _context.Order
+                            .Where(o => o.OrderDate.Month == month)
+                            .GroupBy(o => o.User)
+                            .Select(g => new TopBuyerDto
+                            {
+                                Id = g.Key.Id,
+                                Email = g.Key.Email,
+                                PhoneNumber = g.Key.PhoneNumber,
+                                UserName = g.Key.UserName,
+                                TotalAmountInAMonth = g.Sum(o => o.TotalAmount)
+                            })
+                            .OrderByDescending(o => o.TotalAmountInAMonth)
+                            .Take(5)
+                            .ToListAsync();
+                            
+            return topBuyers;
         }
 
         public async Task<User?> GetUserByEmailAsync(string email)

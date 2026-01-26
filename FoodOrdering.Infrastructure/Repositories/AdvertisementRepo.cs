@@ -10,11 +10,8 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Infrastructure.Repositories
 {
-    public class EmailOtpRepo : GenericRepo<EmailOtp>, IEmailOtpRepo
+    public class AdvertisementRepo : GenericRepo<Advertisement>, IAdvertisementRepo
     {
-        private readonly FoodOrderingDbContext _context;
-        public EmailOtpRepo(FoodOrderingDbContext context) : base(context) {
-           _context = context;
-        }
+        public AdvertisementRepo (FoodOrderingDbContext context) : base (context) { }
     }
 }

@@ -19,6 +19,8 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         private readonly IVoucherService _voucherService;
         private readonly IDashboardService _dashBoardService;
         private readonly INotificationService _notificationService;
+        private readonly IRatingService _ratingService;
+        private readonly IAdvertisementService _advertisementService;
         public AdminController(
             ICategoryService categoryService, 
             IMenuService menuService, 
@@ -26,7 +28,9 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             IUserService userService, 
             IVoucherService voucherService, 
             IDashboardService dashboardService, 
-            INotificationService notificationService)
+            INotificationService notificationService,
+            IRatingService ratingService,
+            IAdvertisementService advertisementService)
         {
             _categoryService = categoryService;
             _menuService = menuService;
@@ -35,6 +39,8 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             _voucherService = voucherService;
             _dashBoardService = dashboardService;
             _notificationService = notificationService;
+            _ratingService = ratingService; 
+            _advertisementService = advertisementService;
         }
 
         // Category EndPoints
@@ -207,6 +213,47 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             var response = ApiResponse<dynamic>.Success("Xóa thông báo thành công", "", StatusCodes.Status200OK);
 
             return Ok(response);
+        }
+
+        [HttpPost("rating/responsing")]
+        public async Task<IActionResult> ResponseRating([FromBody] ResponseRatingRequestDto responseRatingRequest)
+        {
+            await _ratingService.ResponseRatingAsync(responseRatingRequest);
+            var result = ApiResponse<dynamic>.Success("Phản hồi đánh giá thành công", "", StatusCodes.Status201Created);
+            return Ok(result);
+        }
+
+        [HttpGet("advertisements")]
+        public async Task<IActionResult> GetAllAdvertisements()
+        {
+            var result = await _advertisementService.GetAdvertisementsByAdminAsync();
+
+            var response = ApiResponse<dynamic>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
+            return Ok(response);
+        }
+
+        [HttpPost("advertisement")]
+        public async Task<IActionResult> CreateAdvertisement([FromForm] AdvertisementRequestDto advertisementRequest)
+        {
+            await _advertisementService.AddAdvertisementAsync(advertisementRequest);
+            var reponse = ApiResponse<dynamic>.Success("Thêm quảng cáo mới thành công", "", StatusCodes.Status201Created);
+            return Ok(reponse);
+        }
+
+        [HttpPut("advertisement/{id}")]
+        public async Task<IActionResult> CreateAdvertisement(Guid id, [FromForm] AdvertisementRequestDto advertisementRequest)
+        {
+            await _advertisementService.UpdateAdvertisementAsync(id, advertisementRequest);
+            var reponse = ApiResponse<dynamic>.Success("Cập nhật quảng cáo thành công", "", StatusCodes.Status200OK);
+            return Ok(reponse);
+        }
+
+        [HttpDelete("advertisement/{id}")]
+        public async Task<IActionResult> DeleteAdvertisement(Guid id)
+        {
+            await _advertisementService.RemoveAdvertisementAsync(id);
+            var reponse = ApiResponse<dynamic>.Success("Xóa quảng cáo thành công", "", StatusCodes.Status200OK);
+            return Ok(reponse);
         }
     }
 }

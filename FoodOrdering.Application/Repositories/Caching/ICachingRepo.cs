@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Repositories.Caching
 {
-    public interface ICachingService
+    public interface ICachingRepo
     {
         public Task<T?> GetAsync<T>(string cacheKey);
         public Task SetAsync<T>(string cacheKey, T value, TimeSpan? expiry = null);

@@ -25,7 +25,8 @@ namespace FoodOrdering.Infrastructure.Data
         public DbSet<Address> Address { get; set; }
         public DbSet<Notification> Notification { get; set; }
         public DbSet<Rating> Rating { get; set; }
-
+        public DbSet<Advertisement> Advertisement { get; set; }
+        public DbSet<ResponseRating> ResponseRating { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);

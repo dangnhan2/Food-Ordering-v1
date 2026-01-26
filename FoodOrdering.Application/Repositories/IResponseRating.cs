@@ -7,8 +7,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Repositories
 {
-    public interface IOrderRepo : IGenericRepo<Order>
+    public interface IResponseRating : IGenericRepo<ResponseRating>
     {
-        public Task<Order?> GetOrderByOrderCode(int code);
     }
 }

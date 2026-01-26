@@ -2,7 +2,7 @@
 using FoodOrdering.Application.DTOs.Response;
 using Microsoft.AspNetCore.Http;
 
-namespace FoodOrdering.Application.Services.Interface
+namespace FoodOrdering.Application.Services.Auth
 {
     public interface IAuthService
     {

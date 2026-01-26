@@ -53,6 +53,40 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.ToTable("Address");
                 });
 
+            modelBuilder.Entity("FoodOrdering.Domain.Models.Advertisement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AdTargetType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("BannerUrl")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("EndAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("StartAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TargetKey")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Advertisement");
+                });
+
             modelBuilder.Entity("FoodOrdering.Domain.Models.Cart", b =>
                 {
                     b.Property<Guid>("Id")
@@ -233,7 +267,7 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.Property<Guid>("AddressId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime?>("ExpiredAt")
+                    b.Property<DateTimeOffset?>("ExpiredAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Note")
@@ -385,6 +419,35 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("RefreshToken");
+                });
+
+            modelBuilder.Entity("FoodOrdering.Domain.Models.ResponseRating", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("RatingId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ResponseAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RatingId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ResponseRating");
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.User", b =>
@@ -836,6 +899,25 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("FoodOrdering.Domain.Models.ResponseRating", b =>
+                {
+                    b.HasOne("FoodOrdering.Domain.Models.Rating", "Rating")
+                        .WithOne("ResponseRating")
+                        .HasForeignKey("FoodOrdering.Domain.Models.ResponseRating", "RatingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FoodOrdering.Domain.Models.User", "User")
+                        .WithMany("ResponseRatings")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Rating");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("FoodOrdering.Domain.Models.VoucherRedemptions", b =>
                 {
                     b.HasOne("FoodOrdering.Domain.Models.Order", "Order")
@@ -948,14 +1030,16 @@ namespace FoodOrdering.Infrastructure.Migrations
             modelBuilder.Entity("FoodOrdering.Domain.Models.Rating", b =>
                 {
                     b.Navigation("Images");
+
+                    b.Navigation("ResponseRating")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.User", b =>
                 {
                     b.Navigation("Addresses");
 
-                    b.Navigation("Cart")
-                        .IsRequired();
+                    b.Navigation("Cart");
 
                     b.Navigation("EmailOtps");
 
@@ -964,6 +1048,8 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.Navigation("Orders");
 
                     b.Navigation("RefreshTokens");
+
+                    b.Navigation("ResponseRatings");
 
                     b.Navigation("VoucherRedemptions");
                 });

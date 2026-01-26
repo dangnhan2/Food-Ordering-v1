@@ -13,9 +13,9 @@ namespace FoodOrdering.Application.Services.Services
     public class AddressService : IAddressService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly ICachingService _cacheService;
+        private readonly ICachingRepo _cacheService;
         
-        public AddressService(IUnitOfWork unitOfWork, ICachingService cacheService)
+        public AddressService(IUnitOfWork unitOfWork, ICachingRepo cacheService)
         {
             _unitOfWork = unitOfWork;
             _cacheService = cacheService;

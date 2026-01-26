@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Validator
 {
-    public class UserValidation : AbstractValidator<UserRequestDto>
+    public class UserValidator : AbstractValidator<UserRequestDto>
     {
-        public UserValidation() {           
+        public UserValidator() {           
             // Kiểm tra trường Email
             RuleFor(x => x.PhoneNumber)
                 .NotEmpty().WithMessage("Số điện thoại không được để trống.")

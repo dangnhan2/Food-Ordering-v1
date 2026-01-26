@@ -18,13 +18,13 @@ namespace FoodOrdering.Application.Services.Services
         private readonly ICloudinaryService _cloudinaryService;
         private readonly string _defaultAvatar;
         private const string folder = "Avatar";
-        private readonly ICachingService _cachingService;
+        private readonly ICachingRepo _cachingService;
         private readonly UserManager<User> _userManager;
  
         public UserService(
             IUnitOfWork unitOfWork, 
             ICloudinaryService cloudinaryService, 
-            ICachingService cachingService, 
+            ICachingRepo cachingService, 
             UserManager<User> userManager)
         {
             Env.Load();
@@ -77,7 +77,7 @@ namespace FoodOrdering.Application.Services.Services
 
         public async Task UploadProfileAsync(Guid userId, UserRequestDto request)
         {
-            var result = await new UserValidation().ValidateAsync(request);
+            var result = await new UserValidator().ValidateAsync(request);
   
             if (!result.IsValid)           
                throw new ValidationDictionaryException(result.ToDictionary());

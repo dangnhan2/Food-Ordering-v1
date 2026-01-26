@@ -55,6 +55,10 @@ namespace FoodOrdering.Infrastructure.Data
                 .Property(x => x.Status)
                 .HasConversion<string>();
 
+            builder.Entity<Advertisement>()
+                .Property(a => a.AdTargetType)
+                .HasConversion<string>();
+
             builder.Entity<OrderMenus>()
                 .HasOne(om => om.Menus)
                 .WithMany(om => om.OrderMenus)

@@ -75,20 +75,7 @@ namespace FoodOrdering.Application.Services.Services
 
             // Get 5 the most spenders monthly
             var topBuyers = await _unitOfWork.User
-                .GetAll()
-                .Take(5)
-                .Where(u => !u.IsAdmin)
-                .OrderByDescending(u => u.Orders.Sum(o => o.TotalAmount))
-                .Select(u => new TopBuyerDto
-                {
-                    Id = u.Id,
-                    UserName = u.UserName,
-                    Email = u.Email,
-                    PhoneNumber = u.PhoneNumber,
-                    TotalAmountInAMonth = u.Orders.Sum(o => o.TotalAmount)
-                })
-                .AsNoTracking()
-                .ToListAsync();
+                .GetTop5BuyersMonthly();
 
             var dashboardToDTO = new DashboardOverviewDTO
             {

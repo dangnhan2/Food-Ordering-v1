@@ -6,11 +6,16 @@ namespace FoodOrdering.Application.DTOs.Response
         public Guid Id { get; set; }
         public Guid MenuId { get; set; }
 
-        public string UserName { get; set; }
+        public string CustomerUserName { get; set; }
 
         public int Stars { get; set; }
         public string? Comment { get; set; }
-        public string  RatingAt { get; set; }
+        public string RatingAt { get; set; }
         public ICollection<string> Images { get; set; } = new List<string>();
+
+        public string? ResponseComment { get; set; }
+        public string? ResponseAt { get; set; }
+        public string? AdminUserName { get; set; }
+        
     }
 }

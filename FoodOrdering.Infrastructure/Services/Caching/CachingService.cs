@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace FoodOrdering.Infrastructure.Services.Caching
 {
-    public class CachingService : ICachingService
+    public class CachingService : ICachingRepo
     {
         private readonly IDistributedCache _cache;
 

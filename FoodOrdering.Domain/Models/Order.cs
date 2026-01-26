@@ -19,7 +19,7 @@ namespace FoodOrdering.Domain.Models
 
         public string? Note { get; set; }
         public DateTimeOffset OrderDate { get; set; } = DateTimeOffset.UtcNow;
-        public DateTime? ExpiredAt { get; set; } 
+        public DateTimeOffset? ExpiredAt { get; set; } 
         public OrderStatus Status { get; set; }
         public decimal TotalAmount { get; set; }
         public string PaymentMethod { get; set; }

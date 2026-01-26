@@ -17,12 +17,7 @@ namespace FoodOrdering.Infrastructure.Repositories
         public CartRepo(FoodOrderingDbContext context) : base(context) {
            _context = context;
         }
-
-        public void DeleteExpiredCart(IEnumerable<Cart> carts)
-        {
-            _context.Cart.RemoveRange(carts);
-        }
-
+      
         public async Task<Cart?> GetCartByCustomerAsync(Guid userId)
         {
             return await _context.Cart
@@ -31,9 +26,5 @@ namespace FoodOrdering.Infrastructure.Repositories
                 .FirstOrDefaultAsync(c => c.UserId == userId);
         }
 
-        public async Task<Cart?> GetCartWithCartItemAsync(Guid id)
-        {
-            return await _context.Cart.Include(c => c.CartItems).FirstOrDefaultAsync(c => c.Id == id);
-        }
     }
 }

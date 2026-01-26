@@ -33,6 +33,8 @@ namespace FoodOrdering.Infrastructure
             Notification = new NotificationRepo(_context);
             OrderMenu = new OrderMenuRepo(_context);
             Rating = new RatingRepo(_context);
+            ResponseRating = new ResponseRatingRepo(_context);
+            Advertisement = new AdvertisementRepo(_context);
         }
 
         public IOrderRepo Order { get; }
@@ -60,6 +62,10 @@ namespace FoodOrdering.Infrastructure
         public IOrderMenuRepo OrderMenu { get; }
 
         public IRatingRepo Rating { get; }
+
+        public IResponseRating ResponseRating { get; }
+
+        public IAdvertisementRepo Advertisement { get; }
 
         public void Dispose()
         {

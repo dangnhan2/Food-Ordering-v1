@@ -13,6 +13,8 @@ namespace FoodOrdering.Domain.Models
         public Guid OrderId { get; set; }
         public Order Order { get; set; }
 
+        public ResponseRating ResponseRating { get; set; } 
+
         public int Stars { get; set; }
         public string? Comment { get; set; }
 
