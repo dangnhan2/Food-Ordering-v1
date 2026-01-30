@@ -5,6 +5,7 @@ using FoodOrdering.Application.Repositories;
 using FoodOrdering.Application.Repositories.Caching;
 using FoodOrdering.Application.Repositories.Email;
 using FoodOrdering.Application.Services.Auth;
+using FoodOrdering.Application.Services.Hangfire;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Services.Payment;
 using FoodOrdering.Application.Services.Services;
@@ -20,6 +21,7 @@ using FoodOrdering.Infrastructure.Services.Token;
 using FoodOrdering.Infrastructure.SignalR_Hub;
 using Microsoft.Extensions.Options;
 using Net.payOS;
+using RedLockNet;
 using RedLockNet.SERedis;
 using RedLockNet.SERedis.Configuration;
 using StackExchange.Redis;
@@ -65,6 +67,7 @@ namespace Food_Ordering.Extensions
             services.AddTransient<IPayOsService, PayOsService>();
             services.AddTransient<IEmailRepo, EmailService>();
             services.AddScoped<ISearchService, SearchService>();
+            services.AddTransient<IBackgroundJobService, HangfireJobService>();
 
             services.AddSingleton<IConnectionMultiplexer>(sp =>
             {
@@ -98,12 +101,12 @@ namespace Food_Ordering.Extensions
                 return account;
             });
 
-            services.AddSingleton<RedLockFactory>(sp =>
+            services.AddSingleton<IDistributedLockFactory>(sp =>
             {
                 var multiplexer = sp.GetRequiredService<IConnectionMultiplexer>();
                 return RedLockFactory.Create(new List<RedLockMultiplexer>
-            {
-                new RedLockMultiplexer(multiplexer)
+                {
+                    new RedLockMultiplexer(multiplexer)
                 });
             });
        

@@ -7,6 +7,7 @@ using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Helper.Extensions;
 using FoodOrdering.Application.Repositories;
 using FoodOrdering.Application.Repositories.Caching;
+using FoodOrdering.Application.Services.Hangfire;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Services.Payment;
 using FoodOrdering.Domain.Enum;
@@ -14,7 +15,7 @@ using FoodOrdering.Domain.Models;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Net.payOS.Types;
-using RedLockNet.SERedis;
+using RedLockNet;
 using Serilog;
 
 namespace FoodOrdering.Application.Services.Services
@@ -23,26 +24,29 @@ namespace FoodOrdering.Application.Services.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IPayOsService _paymentGateway;
-        private readonly RedLockFactory _redLockFactory;
+        private readonly IDistributedLockFactory _redLockFactory;
         private readonly int orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
         private readonly ICachingRepo _cachingService;
         private readonly INotificationSenderService _notificationSenderServer;
         private readonly IBackgroundJobs _backgroundJobs;
+        private readonly IBackgroundJobService _backgroundJobService;
    
         public OrderService(
             IUnitOfWork unitOfWork, 
-            IPayOsService paymentGateway, 
-            RedLockFactory redLockFactory, 
+            IPayOsService paymentGateway,
+            IDistributedLockFactory redLockFactory, 
             ICachingRepo cachingService,
             INotificationSenderService notificationSenderServer,
-            IBackgroundJobs backgroundJobs)
+            IBackgroundJobs backgroundJobs,
+            IBackgroundJobService backgroundJobService)
         {
             _unitOfWork = unitOfWork;
             _paymentGateway = paymentGateway;
             _redLockFactory = redLockFactory;
             _cachingService = cachingService;
             _notificationSenderServer = notificationSenderServer;
-           _backgroundJobs = backgroundJobs;
+            _backgroundJobs = backgroundJobs;
+            _backgroundJobService = backgroundJobService;
         }
 
         public async Task<PagingReponse<OrderDTO>> GetAllAsync(OrderParams orderParams)
@@ -107,47 +111,49 @@ namespace FoodOrdering.Application.Services.Services
                 var resource = $"lock:voucher:{request.VoucherId.Value}";
                 var expiry = TimeSpan.FromSeconds(30);
 
-                using var redLock = await _redLockFactory.CreateLockAsync(resource, expiry);
-                if (!redLock.IsAcquired)
-                    throw new InvalidDataException("Hệ thống đang xử lý voucher này, vui lòng thử lại sau.");
-
-                await _unitOfWork.BeginTransactionAsync();
-
-                try
-                {                   
-                    var voucher = await _unitOfWork.Voucher.GetByIdAsync(request.VoucherId.Value);
-
-                    if (voucher == null || !voucher.IsActive)
-                        throw new KeyNotFoundException("Voucher không hợp lệ");
-
-                    if (voucher.UsedCount + voucher.ReservedCount >= voucher.UsageLimit)
-                        throw new InvalidDataException("Voucher đã sử dụng hết");
-
-                    voucher.ReservedCount += 1;
-
-                    decimal discountValue = voucher.DiscountType == "percent"
-                        ? totalAmount * voucher.DiscountValue / 100
-                        : voucher.DiscountValue;
-
-                    discountValue = Math.Min(discountValue, voucher.MaxDiscount);
-
-                    totalAmount -= discountValue;
-
-                    _unitOfWork.Voucher.Update(voucher);
-
-                    newOrder.TotalAmount = totalAmount;
-
-                    //create voucher redemption
-                    await CreateVouherRedemption(request.VoucherId.Value, request.UserId, newOrder.Id, VoucherRedemptionStatus.Pending);
-                    await _unitOfWork.Order.AddAsync(newOrder);
-                    await _unitOfWork.SaveChangeAsync();
-                    await _unitOfWork.CommitTransactionAsync();
-                }
-                catch
+                await using (var redLock = await _redLockFactory.CreateLockAsync(resource, expiry))
                 {
-                    await _unitOfWork.RollbackTransactionAsync();
-                    throw;
-                }
+                    if (!redLock.IsAcquired)
+                        throw new InvalidDataException("Hệ thống đang xử lý voucher này, vui lòng thử lại sau.");
+
+                    await _unitOfWork.BeginTransactionAsync();
+
+                    try
+                    {
+                        var voucher = await _unitOfWork.Voucher.GetByIdAsync(request.VoucherId.Value);
+
+                        if (voucher == null || !voucher.IsActive)
+                            throw new KeyNotFoundException("Voucher không hợp lệ");
+
+                        if (voucher.UsedCount + voucher.ReservedCount >= voucher.UsageLimit)
+                            throw new InvalidDataException("Voucher đã sử dụng hết");
+
+                        voucher.ReservedCount += 1;
+
+                        decimal discountValue = voucher.DiscountType == "percent"
+                            ? totalAmount * voucher.DiscountValue / 100
+                            : voucher.DiscountValue;
+
+                        discountValue = Math.Min(discountValue, voucher.MaxDiscount);
+
+                        totalAmount -= discountValue;
+
+                        _unitOfWork.Voucher.Update(voucher);
+
+                        newOrder.TotalAmount = totalAmount;
+
+                        //create voucher redemption
+                        await CreateVouherRedemption(request.VoucherId.Value, request.UserId, newOrder.Id, VoucherRedemptionStatus.Pending);
+                        await _unitOfWork.Order.AddAsync(newOrder);
+                        await _unitOfWork.SaveChangeAsync();
+                        await _unitOfWork.CommitTransactionAsync();
+                    }
+                    catch
+                    {
+                        await _unitOfWork.RollbackTransactionAsync();
+                        throw;
+                    }
+                }                               
             }
             else
             {
@@ -158,8 +164,11 @@ namespace FoodOrdering.Application.Services.Services
             Log.Information("Create payment link");
             var response = await _paymentGateway.CreatePaymentLink((int)totalAmount, orderCode, listItems);
 
-            BackgroundJob.Schedule(() => _backgroundJobs.ScheduleUpdateOrderExpiredJob_10mins(newOrder.Id),
-                   TimeSpan.FromMinutes(10));
+            //BackgroundJob.Schedule(() => _backgroundJobs.ScheduleUpdateOrderExpiredJob_10mins(newOrder.Id),
+            //       TimeSpan.FromMinutes(10));
+
+            _backgroundJobService.Schedule<IBackgroundJobs>(x => x.ScheduleUpdateOrderExpiredJob_10mins(newOrder.Id), 
+                TimeSpan.FromMinutes(10));
 
             return response;
         }
@@ -183,60 +192,61 @@ namespace FoodOrdering.Application.Services.Services
 
                 Log.Information("Checking voucher running out of slot");
 
-                using var redLock = await _redLockFactory.CreateLockAsync(resource, expiry);
-
-                if (!redLock.IsAcquired)
-                    throw new InvalidDataException("Hệ thống đang xử lý voucher này, vui lòng thử lại sau.");
-
-                await _unitOfWork.BeginTransactionAsync();
-
-                try
+                await using (var redLock = await _redLockFactory.CreateLockAsync(resource, expiry))
                 {
-                    var voucher = await _unitOfWork.Voucher.GetByIdAsync(request.VoucherId.Value);
+                    if (!redLock.IsAcquired)
+                        throw new InvalidDataException("Hệ thống đang xử lý voucher này, vui lòng thử lại sau.");
 
-                    if (voucher == null || !voucher.IsActive)
-                        throw new KeyNotFoundException("Voucher không hợp lệ");
+                    await _unitOfWork.BeginTransactionAsync();
 
-                    if (voucher.UsedCount >= voucher.UsageLimit)
-                        throw new InvalidDataException("Voucher đã sử dụng hết");
+                    try
+                    {
+                        var voucher = await _unitOfWork.Voucher.GetByIdAsync(request.VoucherId.Value);
 
-                    decimal discountValue = voucher.DiscountType == "percent"
-                        ? totalAmount * voucher.DiscountValue / 100
-                        : voucher.DiscountValue;
+                        if (voucher == null || !voucher.IsActive)
+                            throw new KeyNotFoundException("Voucher không hợp lệ");
 
-                    discountValue = Math.Min(discountValue, voucher.MaxDiscount);
+                        if (voucher.UsedCount >= voucher.UsageLimit)
+                            throw new InvalidDataException("Voucher đã sử dụng hết");
 
-                    totalAmount -= discountValue;
+                        decimal discountValue = voucher.DiscountType == "percent"
+                            ? totalAmount * voucher.DiscountValue / 100
+                            : voucher.DiscountValue;
 
-                    // update voucher used count if it reached limit
-                    if (voucher.UsedCount >= voucher.UsageLimit)
-                        voucher.IsActive = false;
+                        discountValue = Math.Min(discountValue, voucher.MaxDiscount);
 
-                    voucher.UsedCount++;
+                        totalAmount -= discountValue;                    
 
-                    //create voucher redemption
-                    await CreateVouherRedemption(request.VoucherId.Value, request.UserId, newOrder.Id, VoucherRedemptionStatus.Used);
+                        voucher.UsedCount++;
 
-                    newOrder.TotalAmount = totalAmount;
+                        // update voucher used count if it reached limit
+                        if (voucher.UsedCount >= voucher.UsageLimit)
+                            voucher.IsActive = false;
 
-                    // update voucher after increase voucher used count
-                    _unitOfWork.Voucher.Update(voucher);
+                        //create voucher redemption
+                        await CreateVouherRedemption(request.VoucherId.Value, request.UserId, newOrder.Id, VoucherRedemptionStatus.Used);
 
-                    // update sold quantity 
-                    await UpdateSoldQuantity(cart.CartItems);
+                        newOrder.TotalAmount = totalAmount;
 
-                    _unitOfWork.Cart.Remove(cart);
+                        // update voucher after increase voucher used count
+                        _unitOfWork.Voucher.Update(voucher);
 
-                    await _unitOfWork.Order.AddAsync(newOrder);
+                        // update sold quantity 
+                        await UpdateSoldQuantity(cart.CartItems);
 
-                    await _unitOfWork.SaveChangeAsync();
-                    await _unitOfWork.CommitTransactionAsync();
-                }
-                catch
-                {
-                    await _unitOfWork.RollbackTransactionAsync();
-                    throw;
-                }
+                        _unitOfWork.Cart.Remove(cart);
+
+                        await _unitOfWork.Order.AddAsync(newOrder);
+
+                        await _unitOfWork.SaveChangeAsync();
+                        await _unitOfWork.CommitTransactionAsync();
+                    }
+                    catch
+                    {
+                        await _unitOfWork.RollbackTransactionAsync();
+                        throw;
+                    }
+                }                                              
             }
             else
             {

@@ -16,6 +16,7 @@ using Microsoft.Extensions.Options;
 using Net.payOS;
 using Net.payOS.Types;
 using Newtonsoft.Json.Linq;
+using RedLockNet;
 using RedLockNet.SERedis;
 using Serilog;
 using Serilog.Core;
@@ -30,13 +31,13 @@ namespace FoodOrdering.Infrastructure.Services.Payment
         private readonly PayOS _payOS;
         private readonly INotificationSenderService _notificationSenderServer;
         private readonly PayOsOptions _options;
-        private readonly RedLockFactory _redLockFactory;
+        private readonly IDistributedLockFactory _redLockFactory;
         public PayOsService(
             IUnitOfWork unitOfWork, 
             INotificationSenderService notificationSenderServer,
             PayOS payOS,
             IOptions<PayOsOptions> options,
-            RedLockFactory redLockFactory) {
+            IDistributedLockFactory redLockFactory) {
             _unitOfWork = unitOfWork;
             _payOS = payOS;
             _options = options.Value;         

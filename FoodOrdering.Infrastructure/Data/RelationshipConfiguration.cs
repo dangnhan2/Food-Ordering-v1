@@ -79,6 +79,13 @@ namespace FoodOrdering.Infrastructure.Data
                 .HasIndex(r => new { r.OrderId, r.MenuId })
                 .IsUnique();
 
+            builder.Entity<Menu>(m =>
+            {
+                m.Property(m => m.Description)
+                .HasColumnType("jsonb")
+                .IsRequired(false);
+            });
+
             return builder;
         }
     }
