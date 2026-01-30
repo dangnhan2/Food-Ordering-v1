@@ -10,6 +10,7 @@ using FoodOrdering.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Data;
+using System.Text.Json;
 
 namespace FoodOrdering.Application.Services.Services
 {
@@ -174,31 +175,31 @@ namespace FoodOrdering.Application.Services.Services
         }
 
         public async Task<IEnumerable<MenuDto>> GetFeaturedMenusAsync()
-        {   
-            var menus = _unitOfWork.Menu
-                .GetAll()               
-                .Where(m => m.IsAvailable)
-                .OrderByDescending(x => x.SoldQuantity)
-                .Take(10);
-
-            var menusToDto = await menus
-                .Select(m => new MenuDto
-                {
-                    Id = m.Id,
-                    Name = m.Name,
-                    Category = m.Category.Name,
-                    Description = m.Description,
-                    OriginalPrice = m.OriginalPrice,
-                    AverageRating = m.AverageRating,
-                    DiscountPrice = m.DiscountPrice,
-                    ImageUrl = m.ImageUrl,
-                    SoldQuantity = m.SoldQuantity,
-                    RatingCount = m.Ratings.Count(),
-                    IsAvailable = m.IsAvailable,
-                    IsOnSale = m.IsOnSale,
-                    CreatedAt = m.CreatedAt,
-                    DiscountPercent = m.IsOnSale && m.DiscountPrice.HasValue ? (int)(((m.OriginalPrice - m.DiscountPrice) / m.OriginalPrice) * 100) : 0
-                })
+        {
+            var menusToDto = await _unitOfWork.Menu
+                 .GetAll()
+                 .Where(m => m.IsAvailable)
+                 .OrderByDescending(x => x.SoldQuantity)
+                 .Take(10)
+                 .Select(m => new MenuDto
+                 {
+                     Id = m.Id,
+                     Name = m.Name,
+                     Category = m.Category.Name,
+                     Description = m.Description,
+                     OriginalPrice = m.OriginalPrice,
+                     AverageRating = m.AverageRating,
+                     DiscountPrice = m.DiscountPrice,
+                     ImageUrl = m.ImageUrl,
+                     SoldQuantity = m.SoldQuantity,
+                     RatingCount = m.Ratings.Count(),
+                     IsAvailable = m.IsAvailable,
+                     IsOnSale = m.IsOnSale,
+                     CreatedAt = m.CreatedAt,
+                     DiscountPercent = m.IsOnSale && m.DiscountPrice.HasValue
+                       ? (int)(((m.OriginalPrice - m.DiscountPrice.Value) / m.OriginalPrice) * 100)
+                      : 0
+                 })
                 .AsNoTracking()
                 .ToListAsync();
 
@@ -245,37 +246,40 @@ namespace FoodOrdering.Application.Services.Services
 
         public async Task<PagingReponse<MenuDto>> GetAllMenusOnSaleAsync(MenuParams menuParams)
         {
-            var menus = _unitOfWork.Menu.GetAll().Where(m => m.IsAvailable && m.IsOnSale);
+            var menus = _unitOfWork.Menu
+                .GetAll()
+                .Where(m => m.IsAvailable && m.IsOnSale); 
 
-            var menusToDTO = menus
-                .Select(m => new MenuDto
-                {
-                    Id = m.Id,
-                    Name = m.Name,
-                    Category = m.Category.Name,
-                    Description = m.Description,
-                    OriginalPrice = m.OriginalPrice,
-                    AverageRating = m.AverageRating,
-                    DiscountPrice = m.DiscountPrice,
-                    ImageUrl = m.ImageUrl,
-                    SoldQuantity = m.SoldQuantity,
-                    RatingCount = m.Ratings.Count(),
-                    IsAvailable = m.IsAvailable,
-                    IsOnSale = m.IsOnSale,
-                    CreatedAt = m.CreatedAt,
-                    DiscountPercent = m.IsOnSale && m.DiscountPrice.HasValue ? (int)(((m.OriginalPrice - m.DiscountPrice) / m.OriginalPrice) * 100) : 0
-                })
-                .AsNoTracking();
-
-            if (menuParams.Page != 0 && menuParams.PageSize != 0)
-                menusToDTO = menusToDTO.Paging(menuParams.Page, menuParams.PageSize);
-
-            var response = new PagingReponse<MenuDto>(menuParams.Page, menuParams.PageSize, menus.Count(), await menusToDTO.ToListAsync());
+            var menusToDTO = menus.Select(m => new MenuDto 
+            { 
+                Id = m.Id, 
+                Name = m.Name, 
+                Category = m.Category.Name, 
+                Description = m.Description,              
+                OriginalPrice = m.OriginalPrice, 
+                AverageRating = m.AverageRating, 
+                DiscountPrice = m.DiscountPrice, 
+                ImageUrl = m.ImageUrl, 
+                SoldQuantity = m.SoldQuantity, 
+                RatingCount = m.Ratings.Count(), 
+                IsAvailable = m.IsAvailable, 
+                IsOnSale = m.IsOnSale, 
+                CreatedAt = m.CreatedAt, 
+                DiscountPercent = m.IsOnSale && m.DiscountPrice.HasValue ? (int)(((m.OriginalPrice - m.DiscountPrice) / m.OriginalPrice) * 100) : 0 }
+            )
+                .AsNoTracking(); 
+            
+            if (menuParams.Page != 0 && menuParams.PageSize != 0) 
+                menusToDTO = menusToDTO.Paging(menuParams.Page, menuParams.PageSize); 
+            
+            var response = new PagingReponse<MenuDto>(menuParams.Page, menuParams.PageSize, menus.Count(), 
+                await menusToDTO.ToListAsync()); 
+            
             return response;
         }
 
         private async Task<Menu> MappingMenu(MenuRequestDto request)
-        {
+        {      
             var menu = new Menu
             {
                 Name = request.Name,

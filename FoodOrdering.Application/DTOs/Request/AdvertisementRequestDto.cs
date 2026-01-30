@@ -14,7 +14,6 @@ namespace FoodOrdering.Application.DTOs.Request
         public IFormFile? BannerUrl { get; set; }
         public AdTargetType AdTargetType { get; set; }
         public string? TargetKey { get; set; }
-        public int Priority { get; set; }
         public DateTimeOffset StartAt { get; set; }
         public DateTimeOffset? EndAt { get; set; }
         public bool IsActive { get; set; }

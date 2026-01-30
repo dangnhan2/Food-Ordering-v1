@@ -1,4 +1,6 @@
-﻿namespace FoodOrdering.Domain.Models
+﻿using System.Text.Json;
+
+namespace FoodOrdering.Domain.Models
 {
     public class Menu
     {

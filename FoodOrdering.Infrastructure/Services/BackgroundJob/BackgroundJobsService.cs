@@ -1,9 +1,7 @@
 ﻿using Food_Ordering.Models.Enum;
 using FoodOrdering.Application;
 using FoodOrdering.Application.Repositories;
-using FoodOrdering.Domain.Models;
-using Microsoft.AspNetCore.Identity;
-using RedLockNet.SERedis;
+using RedLockNet;
 using Serilog;
 
 namespace FoodOrdering.Infrastructure.Services.BackgroundJob
@@ -11,9 +9,9 @@ namespace FoodOrdering.Infrastructure.Services.BackgroundJob
     public class BackgroundJobsService : IBackgroundJobs
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly RedLockFactory _redLockFactory;
+        private readonly IDistributedLockFactory _redLockFactory;
 
-        public BackgroundJobsService(IUnitOfWork unitOfWork, RedLockFactory redLockFactory)
+        public BackgroundJobsService(IUnitOfWork unitOfWork, IDistributedLockFactory redLockFactory)
         {
             _unitOfWork = unitOfWork;
             _redLockFactory = redLockFactory;
@@ -179,26 +177,28 @@ namespace FoodOrdering.Infrastructure.Services.BackgroundJob
 
             if (voucherRedemption != null)
             {
-                using var redLock = await _redLockFactory.CreateLockAsync($"lock:voucher:{voucherRedemption.VoucherID}", TimeSpan.FromSeconds(30));
-
-                await _unitOfWork.BeginTransactionAsync();
-
-                try
+                await using (var redLock = await _redLockFactory.CreateLockAsync($"lock:voucher:{voucherRedemption.VoucherID}", TimeSpan.FromSeconds(30)))
                 {
-                    voucherRedemption.Voucher.ReservedCount--;
+                    await _unitOfWork.BeginTransactionAsync();
 
-                    order.Status = OrderStatus.Cancelled;
+                    try
+                    {
+                        voucherRedemption.Voucher.ReservedCount--;
 
-                    _unitOfWork.VoucherRedemption.Remove(voucherRedemption);
-                    _unitOfWork.Order.Update(order);
-                    await _unitOfWork.SaveChangeAsync();
-                    await _unitOfWork.CommitTransactionAsync();
+                        order.Status = OrderStatus.Cancelled;
+
+                        _unitOfWork.VoucherRedemption.Remove(voucherRedemption);
+                        _unitOfWork.Order.Update(order);
+                        await _unitOfWork.SaveChangeAsync();
+                        await _unitOfWork.CommitTransactionAsync();
+                    }
+                    catch
+                    {
+                        await _unitOfWork.RollbackTransactionAsync();
+                        throw;
+                    }
                 }
-                catch
-                {
-                    await _unitOfWork.RollbackTransactionAsync();
-                    throw;
-                }
+                                
             }                       
         }
     }

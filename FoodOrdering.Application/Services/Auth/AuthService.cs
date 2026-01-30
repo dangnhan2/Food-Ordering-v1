@@ -2,6 +2,7 @@
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Repositories.Email;
+using FoodOrdering.Application.Services.Hangfire;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
@@ -20,8 +21,9 @@ namespace FoodOrdering.Application.Services.Auth
         private readonly IUnitOfWork _unitOfWork;
         private readonly string _avatar;
         private readonly IEmailRepo _emailService;
+        private readonly IBackgroundJobService _backgroundJobService;
 
-        public AuthService(UserManager<User> userManager, ITokenService tokenService, IUnitOfWork unitOfWork, IEmailRepo emailService)
+        public AuthService(UserManager<User> userManager, ITokenService tokenService, IUnitOfWork unitOfWork, IEmailRepo emailService, IBackgroundJobService backgroundJobService)
         {
             Env.Load();
             _userManager = userManager;
@@ -29,6 +31,7 @@ namespace FoodOrdering.Application.Services.Auth
             _unitOfWork = unitOfWork;
             _avatar = Env.GetString("DEFAULT_AVATAR");
             _emailService = emailService;
+            _backgroundJobService = backgroundJobService;
         }
 
         public async Task ChangePasswordAsync(PasswordRequestDto request)
@@ -258,7 +261,7 @@ namespace FoodOrdering.Application.Services.Auth
                 $" <p class=\"otp\">{otp}</p> " +
                 $"<p>Mã sẽ hết hạn trong {5} phút. Không chia sẻ mã otp này cho bất kì ai</p>";
 
-            BackgroundJob.Enqueue(() => _emailService.EmailSender(email, "Một email đã gửi đến email của bạn . Hãy nhập mã xác nhận", htmlBody));
+            _backgroundJobService.Enqueue<IEmailRepo>(x => x.EmailSender(email, "Một email đã gửi đến email của bạn . Hãy nhập mã xác nhận", htmlBody));
         }
 
     }
