@@ -50,12 +50,10 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    app.ApplyMigrations();   
-   
-    await app.SeedAsync();
 }
 
-
+await app.ApplyMigrationsAsync();
+await app.SeedAsync();
 app.UseHttpsRedirection();
 
 app.UseCors("Happy Food");
@@ -67,7 +65,6 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.MapHub<NotificationHub>("/hubs/notification");
 
-app.UseHangfireServer();
 app.UseHangfireDashboard("/dashboard");
 
 app.UseRecurringJobs();

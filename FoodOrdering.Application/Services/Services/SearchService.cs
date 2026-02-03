@@ -21,9 +21,9 @@ namespace FoodOrdering.Application.Services.Services
 
         public async Task<IEnumerable<MenuSearchDto>> SearchMenuAsync(SearchRequestDto requestDto)
         {
-            var menus = _unitOfWork.Menu.GetAll();
-
-            menus = menus.Where(m => m.Name.Replace(" ", "").Contains(requestDto.Keyword.Replace(" ", "")));
+            var menus = _unitOfWork.Menu
+                .GetAll()
+                .Where(m => EF.Functions.ILike(EF.Functions.Unaccent(m.Name), "%" + EF.Functions.Unaccent(requestDto.Keyword) + "%"));
 
             var menusToDto = menus.Select(m => new MenuSearchDto
             {

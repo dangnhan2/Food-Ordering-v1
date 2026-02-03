@@ -61,7 +61,7 @@ namespace FoodOrdering.Application.Services.Services
             var vouchers = _unitOfWork.Voucher.GetAll();
 
             if (!string.IsNullOrEmpty(voucherParams.Search))
-                vouchers = vouchers.Where(v => v.Code.Contains(voucherParams.Search.ToUpper()));
+                vouchers = vouchers.Where(v => EF.Functions.ILike(EF.Functions.Unaccent(v.Code), "%" + EF.Functions.Unaccent(voucherParams.Search) + "%"));
             
             if (voucherParams.StartDate.HasValue && voucherParams.EndDate.HasValue)
                 vouchers = vouchers.Where(v => v.StartDate == voucherParams.StartDate.Value && v.EndDate == voucherParams.EndDate.Value);            

@@ -46,5 +46,6 @@ namespace FoodOrdering.Infrastructure.Repository
 
             return await menuDto.FirstOrDefaultAsync();
         }
+
     }
 }

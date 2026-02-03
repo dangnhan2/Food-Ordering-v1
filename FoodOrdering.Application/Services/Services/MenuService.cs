@@ -65,7 +65,7 @@ namespace FoodOrdering.Application.Services.Services
             var menus = _unitOfWork.Menu.GetAll();
 
             if (!string.IsNullOrEmpty(menuParams.Search))
-                menus = menus.Where(m => m.Name.Trim().ToLower().Contains(menuParams.Search.Trim().ToLower())
+                menus = menus.Where(m => EF.Functions.ILike(EF.Functions.Unaccent(m.Name), "%" + EF.Functions.Unaccent(menuParams.Search) + "%")
                 || m.Category.Name.Trim().ToLower().Contains(menuParams.Search.Trim().ToLower()));   
 
             //sort
@@ -91,6 +91,7 @@ namespace FoodOrdering.Application.Services.Services
             }
 
             var menusToDTO = menus
+                .OrderByDescending(m => m.UpdatedAt)
                 .Select(m => new MenuDto
                 {
                     Id = m.Id,
@@ -155,12 +156,13 @@ namespace FoodOrdering.Application.Services.Services
             if (request.IsOnSale && (request.DiscountPrice == null || request.DiscountPrice == 0)) throw new ArgumentException("Món ăn đang có trạng thái giảm giá nhưng chưa cập nhật giá giảm. Hãy cập nhập giá giảm");
 
             menu.Name = request.Name;
-            menu.CategoriesId = request.CategoryId;
-            menu.Description = request.Description;
+            menu.CategoriesId = request.CategoryId;         
             menu.OriginalPrice = request.OriginalPrice;
             menu.DiscountPrice = request.DiscountPrice;
             menu.IsAvailable = request.IsAvailable;
             menu.IsOnSale = request.IsOnSale;
+            menu.Description = request.Description;
+            menu.UpdatedAt = DateTime.UtcNow;
 
             if (request.Thumbnail != null)
             {
@@ -227,7 +229,7 @@ namespace FoodOrdering.Application.Services.Services
                     Id = m.Id,
                     Name = m.Name,
                     Category = m.Category.Name,
-                    Description = m.Description,
+                    Description = m.Description ,
                     OriginalPrice = m.OriginalPrice,
                     DiscountPrice = m.DiscountPrice,
                     AverageRating = m.AverageRating,
@@ -248,7 +250,32 @@ namespace FoodOrdering.Application.Services.Services
         {
             var menus = _unitOfWork.Menu
                 .GetAll()
-                .Where(m => m.IsAvailable && m.IsOnSale); 
+                .Where(m => m.IsAvailable && m.IsOnSale);
+
+            if (!string.IsNullOrEmpty(menuParams.Search))
+                menus = menus.Where(m => EF.Functions.ILike(EF.Functions.Unaccent(m.Name), "%" + EF.Functions.Unaccent(menuParams.Search) + "%")
+                || m.Category.Name.Trim().ToLower().Contains(menuParams.Search.Trim().ToLower()));
+
+            if (!string.IsNullOrEmpty(menuParams.SortBy))
+            {
+                var sortBy = menuParams.SortBy.ToLower();
+                var sortOrder = menuParams.SortOrder?.ToLower() ?? "asc";
+
+                menus = sortBy switch
+                {
+                    "price" => sortOrder == "desc"
+                    ? menus.OrderByDescending(m => m.IsOnSale ? m.DiscountPrice : m.OriginalPrice)
+                    : menus.OrderBy(m => m.IsOnSale ? m.DiscountPrice : m.OriginalPrice),
+
+                    "soldquantity" => sortOrder == "desc"
+                    ? menus.OrderByDescending(m => m.SoldQuantity)
+                    : menus.OrderBy(m => m.SoldQuantity),
+
+                    _ => sortOrder == "desc"
+                    ? menus.OrderByDescending(m => m.CreatedAt)
+                    : menus.OrderBy(m => m.CreatedAt)
+                };
+            }
 
             var menusToDTO = menus.Select(m => new MenuDto 
             { 
@@ -283,13 +310,13 @@ namespace FoodOrdering.Application.Services.Services
             var menu = new Menu
             {
                 Name = request.Name,
-                CategoriesId = request.CategoryId,
-                Description = request.Description,
+                CategoriesId = request.CategoryId,               
                 OriginalPrice = request.OriginalPrice,
                 DiscountPrice = request.DiscountPrice,
                 IsOnSale = request.IsOnSale,
                 IsAvailable = request.IsAvailable,
-                SoldQuantity = 0
+                SoldQuantity = 0,
+                Description = request.Description
             };
 
             if (request.Thumbnail != null)

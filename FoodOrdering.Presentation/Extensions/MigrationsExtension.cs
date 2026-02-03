@@ -7,7 +7,7 @@ namespace FoodOrdering.Presentation.Configuration
 {
     public static class MigrationsExtension
     {
-        public static void ApplyMigrations(this IApplicationBuilder app)
+        public static async Task ApplyMigrationsAsync(this IApplicationBuilder app)
         {
             try
             {
@@ -15,10 +15,11 @@ namespace FoodOrdering.Presentation.Configuration
 
                 using FoodOrderingDbContext dbContext = scope.ServiceProvider.GetRequiredService<FoodOrderingDbContext>();
 
-                dbContext.Database.Migrate();
+                await dbContext.Database.MigrateAsync();
             }catch(Exception ex)
             {
                 Log.Error(ex.Message);
+                throw;
             }
             
         }
