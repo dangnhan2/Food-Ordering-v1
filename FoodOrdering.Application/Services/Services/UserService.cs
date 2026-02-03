@@ -42,9 +42,9 @@ namespace FoodOrdering.Application.Services.Services
             if (!string.IsNullOrEmpty(userParams.Search))
             {
                 users = users.Where(u => 
-                u.UserName.Trim().ToLower().Contains(userParams.Search.Trim().ToLower())
-                || u.PhoneNumber ==  userParams.Search
-                || u.Email ==  userParams.Search);
+                EF.Functions.ILike(EF.Functions.Unaccent(u.UserName), "%" + EF.Functions.Unaccent(userParams.Search) + "%")
+                || EF.Functions.ILike(EF.Functions.Unaccent(u.PhoneNumber), "%" + EF.Functions.Unaccent(userParams.Search) + "%")
+                || EF.Functions.ILike(EF.Functions.Unaccent(u.Email), "%" + EF.Functions.Unaccent(userParams.Search) + "%"));
             }
 
             var usersToDTO = users

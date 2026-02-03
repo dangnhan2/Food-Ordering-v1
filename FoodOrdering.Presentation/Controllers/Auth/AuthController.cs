@@ -36,7 +36,7 @@ namespace FoodOrdering.Presentation.Controllers.Auth
         }
 
         [HttpPost("refresh")]
-        [Authorize]
+        [AllowAnonymous]
         public async Task<IActionResult> RefreshToken()
         {
             var result = await _authService.RefreshTokenAsync(HttpContext);

@@ -18,6 +18,7 @@ namespace FoodOrdering.Domain.Models
         public double AverageRating { get; set; }
         public int SoldQuantity { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; }
 
         public ICollection<OrderMenus> OrderMenus { get; set; } = new List<OrderMenus>();
         public ICollection<CartItem> CartItems { get;set; } = new List<CartItem>();

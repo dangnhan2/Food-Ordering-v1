@@ -29,8 +29,10 @@ namespace FoodOrdering.Application.Services.Services
         {
             var notifications = _unitOfWork.Notification
                 .GetAll();
-              
+
             var notificationToDto = await notifications
+                .OrderByDescending(n => n.CreatedAt)
+                .AsNoTracking()
                 .Select(n => new NotificationDto
                 {
                     Id = n.Id,

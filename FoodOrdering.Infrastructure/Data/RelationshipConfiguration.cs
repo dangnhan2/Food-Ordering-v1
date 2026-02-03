@@ -76,15 +76,27 @@ namespace FoodOrdering.Infrastructure.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Rating>()
-                .HasIndex(r => new { r.OrderId, r.MenuId })
-                .IsUnique();
+                .HasIndex(r => new { r.Stars });
 
-            builder.Entity<Menu>(m =>
-            {
-                m.Property(m => m.Description)
-                .HasColumnType("jsonb")
-                .IsRequired(false);
-            });
+            builder.HasPostgresExtension("unaccent");
+
+            builder.Entity<Menu>()
+                .HasIndex(m => new { m.Name })
+                .HasMethod("GIN")
+                .IsTsVectorExpressionIndex("vi_unaccent");
+
+            builder.Entity<Voucher>()
+                .HasIndex(v => new { v.Code })
+                .HasMethod("GIN")
+                .IsTsVectorExpressionIndex("vi_unaccent");
+
+            builder.Entity<Voucher>()
+                .HasIndex(v => new { v.StartDate, v.EndDate });
+
+            builder.Entity<User>()
+                .HasIndex(u => new { u.UserName, u.PhoneNumber, u.Email })
+                .HasMethod("GIN")
+                .IsTsVectorExpressionIndex("vi_unaccent");
 
             return builder;
         }

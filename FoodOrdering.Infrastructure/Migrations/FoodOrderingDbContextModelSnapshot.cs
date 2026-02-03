@@ -20,6 +20,7 @@ namespace FoodOrdering.Infrastructure.Migrations
                 .HasAnnotation("ProductVersion", "8.0.20")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "unaccent");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("FoodOrdering.Domain.Models.Address", b =>
@@ -188,7 +189,7 @@ namespace FoodOrdering.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
-                        .HasColumnType("jsonb");
+                        .HasColumnType("text");
 
                     b.Property<decimal?>("DiscountPrice")
                         .HasColumnType("numeric");
@@ -213,9 +214,17 @@ namespace FoodOrdering.Infrastructure.Migrations
                     b.Property<int>("SoldQuantity")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CategoriesId");
+
+                    b.HasIndex("Name")
+                        .HasAnnotation("Npgsql:TsVectorConfig", "vi_unaccent");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Name"), "GIN");
 
                     b.ToTable("Menu");
                 });
@@ -357,10 +366,11 @@ namespace FoodOrdering.Infrastructure.Migrations
 
                     b.HasIndex("MenuId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("OrderId");
 
-                    b.HasIndex("OrderId", "MenuId")
-                        .IsUnique();
+                    b.HasIndex("Stars");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Rating");
                 });
@@ -522,6 +532,11 @@ namespace FoodOrdering.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
 
+                    b.HasIndex("UserName", "PhoneNumber", "Email")
+                        .HasAnnotation("Npgsql:TsVectorConfig", "vi_unaccent");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("UserName", "PhoneNumber", "Email"), "GIN");
+
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
@@ -574,6 +589,13 @@ namespace FoodOrdering.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .HasAnnotation("Npgsql:TsVectorConfig", "vi_unaccent");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Code"), "GIN");
+
+                    b.HasIndex("StartDate", "EndDate");
 
                     b.ToTable("Voucher");
                 });
