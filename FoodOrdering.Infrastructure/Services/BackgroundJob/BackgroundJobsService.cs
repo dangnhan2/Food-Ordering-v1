@@ -1,6 +1,7 @@
 ﻿using Food_Ordering.Models.Enum;
 using FoodOrdering.Application;
 using FoodOrdering.Application.Repositories;
+using FoodOrdering.Application.Repositories.SignalRSender;
 using RedLockNet;
 using Serilog;
 
@@ -138,6 +139,7 @@ namespace FoodOrdering.Infrastructure.Services.BackgroundJob
             }
 
             Log.Information("Finish retrieving voucher");
+
         }
 
         public async Task RecurringResetVoucherRedemptionsJob_24hours()

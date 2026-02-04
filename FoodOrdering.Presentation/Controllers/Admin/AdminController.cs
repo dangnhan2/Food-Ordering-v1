@@ -43,7 +43,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             _advertisementService = advertisementService;
         }
 
-        // Category EndPoints
+        #region category endpoints
         [HttpGet("categories")]
         public async Task<IActionResult> GetAllCategories()
         {
@@ -76,8 +76,9 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             var response = ApiResponse<dynamic>.Success("Xóa thành công", null, StatusCodes.Status200OK);
             return Ok(response);
         }
+        #endregion
 
-        // Menu EndPoints
+        #region menu endpoints
         [HttpGet("menus")]
         public async Task<IActionResult> GetMenus([FromQuery] MenuParams menuParams)
         {
@@ -109,8 +110,9 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             var response = ApiResponse<dynamic>.Success("Xóa thành công", "", StatusCodes.Status200OK);
             return Ok(response);
         }
+        #endregion
 
-        // Order EndPoint
+        #region order endpoints
         [HttpGet("orders")]
         public async Task<IActionResult> GetOrders([FromQuery] OrderParams orderParams)
         {
@@ -118,8 +120,9 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             var response = ApiResponse<PagingReponse<OrderDTO>>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
             return Ok(response);
         }
+        #endregion
 
-        // User EndPoint
+        #region user endpoints
         [HttpGet("users")]
         public async Task<IActionResult> GetUsers([FromQuery] UserParams userParams)
         {
@@ -146,8 +149,9 @@ namespace FoodOrdering.Presentation.Controllers.Admin
 
             return Ok(response);
         }
+        #endregion
 
-        // Voucher EndPoints
+        #region  voucher endpoints
         [HttpGet("vouchers")]
         public async Task<IActionResult> GetVoucher([FromQuery] VoucherParams voucherParams)
         {        
@@ -179,8 +183,9 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             var response = ApiResponse<string>.Success("Xóa thành công", "", StatusCodes.Status200OK);
             return Ok(response);
         }
+        #endregion
 
-        // Dashboard EndPoint
+        #region dashboard endpoint
         [HttpGet("dashboard")]
         public async Task<IActionResult> DashBoard()
         {
@@ -188,8 +193,9 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             var response = ApiResponse<DashboardOverviewDTO>.Success("Lấy dữ liệu thành công", result,StatusCodes.Status200OK);
             return Ok(response);
         }
+        #endregion
 
-        // Notification Endpoint
+        #region notification endpoints
         [HttpGet("notifications")]
         public async Task<IActionResult> GetNotificationsByAdmin(Guid id)
         {
@@ -215,6 +221,15 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             return Ok(response);
         }
 
+        [HttpGet("notification/unread")]
+        public async Task<IActionResult> GetUnreadNotificationByAdmin(Guid id)
+        {
+            var result = await _notificationService.GetUnReadNotificationsByAdmin(id);
+            var response = ApiResponse<dynamic>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
+            return Ok(response);
+        }
+        #endregion
+
         [HttpPost("rating/responsing")]
         public async Task<IActionResult> ResponseRating([FromBody] ResponseRatingRequestDto responseRatingRequest)
         {
@@ -223,6 +238,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             return Ok(result);
         }
 
+        #region advertisement endpoints
         [HttpGet("advertisements")]
         public async Task<IActionResult> GetAllAdvertisements()
         {
@@ -247,13 +263,6 @@ namespace FoodOrdering.Presentation.Controllers.Admin
             var reponse = ApiResponse<dynamic>.Success("Cập nhật quảng cáo thành công", "", StatusCodes.Status200OK);
             return Ok(reponse);
         }
-
-        [HttpDelete("advertisement/{id}")]
-        public async Task<IActionResult> DeleteAdvertisement(Guid id)
-        {
-            await _advertisementService.RemoveAdvertisementAsync(id);
-            var reponse = ApiResponse<dynamic>.Success("Xóa quảng cáo thành công", "", StatusCodes.Status200OK);
-            return Ok(reponse);
-        }
+        #endregion
     }
 }

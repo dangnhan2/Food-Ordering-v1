@@ -186,6 +186,7 @@ namespace FoodOrdering.Application.Services.Services
             return new VoucherValidationDto(discountAmount, totalAmount);
         }
 
+        #region helper method
         private decimal GetTotalAmount(ICollection<CartItem> items)
         {   
             decimal subTotal = 0;
@@ -221,5 +222,6 @@ namespace FoodOrdering.Application.Services.Services
 
             return voucher;
         }
+        #endregion
     }
 }

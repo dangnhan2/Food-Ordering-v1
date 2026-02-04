@@ -9,7 +9,7 @@ namespace FoodOrdering.Application.DTOs.Response
     public class NotificationDto
     {  
         public Guid Id { get; set; }
-        public string Tiltle { get; set; }
+        public string Title { get; set; }
         public string Message { get; set; }
         public string Type { get; set; }
         public string Data { get; set; }

@@ -2,6 +2,8 @@
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Helper.Extensions;
+using FoodOrdering.Application.Repositories;
+using FoodOrdering.Application.Repositories.SignalRSender;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
@@ -16,13 +18,17 @@ namespace FoodOrdering.Application.Services.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICloudinaryService _cloudinaryService;
         private const string folder = "RatingImage";
+        private readonly INotificationSenderRepo _notificationSenderRepo;
 
         public RatingService(
             IUnitOfWork unitOfWork, 
-            ICloudinaryService cloudinaryService)
+            ICloudinaryService cloudinaryService,
+            INotificationSenderRepo notificationSenderRepo
+        )
         {
             _unitOfWork = unitOfWork;
             _cloudinaryService = cloudinaryService;
+            _notificationSenderRepo = notificationSenderRepo;
         }
         public async Task<PagingReponse<RatingDto>> GetAllRatingsByMenuAsync(Guid menuId, RatingParams ratingParams)
         {
@@ -89,6 +95,8 @@ namespace FoodOrdering.Application.Services.Services
 
             await _unitOfWork.Rating.AddAsync(newRating);
             await _unitOfWork.SaveChangeAsync();
+
+            await _notificationSenderRepo.NotifyAdminWhenMenuRatedAsync(request.Comment, request.UserName, menu.Name, menu.Id);
         }
 
         public async Task ResponseRatingAsync(ResponseRatingRequestDto responseRatingRequest)
@@ -107,6 +115,7 @@ namespace FoodOrdering.Application.Services.Services
             await _unitOfWork.SaveChangeAsync();
         }
 
+        #region
         private async Task<Rating> MappingRating(RatingRequestDto request)
         {
             var newRating = new Rating
@@ -149,6 +158,6 @@ namespace FoodOrdering.Application.Services.Services
 
             return responseRating;
         }
-        
+        #endregion
     }
 }

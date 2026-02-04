@@ -22,15 +22,6 @@ namespace FoodOrdering.Application.Validator
             RuleFor(x => x.OriginalPrice)
                 .GreaterThan(0).WithMessage("Giá gốc phải lớn hơn 0.");
 
-            When(x => x.IsOnSale, () =>
-            {
-                RuleFor(x => x.DiscountPrice)
-                    .NotNull().WithMessage("Khi bật trạng thái giảm giá, phải nhập giá giảm.")
-                    .NotEmpty().WithMessage("Giá giảm không được để trống.")
-                    .LessThan(x => x.OriginalPrice).WithMessage("Giá giảm phải nhỏ hơn giá gốc.")
-                    .GreaterThan(0).WithMessage("Giá giảm phải lớn hơn 0.");
-            });
-
             RuleFor(x => x.Description)
                .MaximumLength(500).WithMessage("Tên món ăn không được vượt quá 500 ký tự.");
         }

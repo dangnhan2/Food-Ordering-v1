@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 
-namespace FoodOrdering.Infrastructure.SignalR_Hub
+namespace FoodOrdering.Infrastructure.Services.SignalR.SignalR_Hub
 {   
     
     public sealed class NotificationHub : Hub

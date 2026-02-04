@@ -25,10 +25,10 @@ namespace FoodOrdering.Application.Services.Services
             await _unitOfWork.SaveChangeAsync();
         }
 
-        public async Task<IEnumerable<NotificationDto>> GetNotificationsByAdmin(Guid id)
+        public async Task<IEnumerable<NotificationDto>> GetNotificationsByAdmin(Guid adminId)
         {
             var notifications = _unitOfWork.Notification
-                .GetAll();
+                .GetAll().Where(n => n.UserId == adminId);
 
             var notificationToDto = await notifications
                 .OrderByDescending(n => n.CreatedAt)
@@ -36,7 +36,7 @@ namespace FoodOrdering.Application.Services.Services
                 .Select(n => new NotificationDto
                 {
                     Id = n.Id,
-                    Tiltle = n.Tiltle,
+                    Title = n.Tiltle,
                     Message = n.Message,
                     Type = n.Type,
                     Data = n.Data,
@@ -45,6 +45,32 @@ namespace FoodOrdering.Application.Services.Services
                 }).ToListAsync();
 
             return notificationToDto;
+        }
+
+        public async Task<UnreadNotificationDto> GetUnReadNotificationsByAdmin(Guid adminId)
+        {
+            var notifications = _unitOfWork.Notification
+               .GetAll()
+               .Where(n => !n.IsRead && n.UserId == adminId)
+               .Take(99);
+
+            var notificationToDto = await notifications
+                .OrderByDescending(n => n.CreatedAt)
+                .AsNoTracking()
+                .Select(n => new NotificationDto
+                {
+                    Id = n.Id,
+                    Title = n.Tiltle,
+                    Message = n.Message,
+                    Type = n.Type,
+                    Data = n.Data,
+                    IsRead = n.IsRead,
+                    CreatedAt = n.CreatedAt.FormatDateTime()
+                }).ToListAsync();
+
+            return new UnreadNotificationDto { 
+                Total = await notifications.CountAsync(),
+                UnreadNotifications = notificationToDto};
         }
 
         public async Task MarkAsReadAsync(MarkNotificationRequestDto notificationIds)
