@@ -1,7 +1,7 @@
 using Food_Ordering.Extensions;
 using FoodOrdering.Infrastructure.Configuration;
 using FoodOrdering.Infrastructure.Options;
-using FoodOrdering.Infrastructure.SignalR_Hub;
+using FoodOrdering.Infrastructure.Services.SignalR.SignalR_Hub;
 using FoodOrdering.Presentation.Configuration;
 using FoodOrdering.Presentation.Extensions;
 using FoodOrdering.Presentation.Middleware;
@@ -39,6 +39,18 @@ builder.Services.Configure<PayOsOptions>(
 builder.Services.Configure<EmailOptions>(
     builder.Configuration.GetSection("EmailOptions"));
 
+builder.Services.AddCors(o =>
+{
+    o.AddPolicy("Cors",
+        builder =>
+        {
+            builder.WithOrigins("http://localhost:3000")
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+        });
+});
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -56,7 +68,7 @@ await app.ApplyMigrationsAsync();
 await app.SeedAsync();
 app.UseHttpsRedirection();
 
-app.UseCors("Happy Food");
+app.UseCors("Cors");
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -167,7 +167,8 @@ namespace FoodOrdering.Application.Services.Services
             await _unitOfWork.SaveChangeAsync();
         }
 
-        public async Task<Advertisement> MappingAdvertisement(AdvertisementRequestDto advertisementRequest)
+        #region helper method
+        private async Task<Advertisement> MappingAdvertisement(AdvertisementRequestDto advertisementRequest)
         {   
             var url = await _cloudinaryService.UploadImage(advertisementRequest.BannerUrl, folder);
 
@@ -185,7 +186,6 @@ namespace FoodOrdering.Application.Services.Services
 
             return advertisement;
         }
-
-        
+        #endregion
     }
 }

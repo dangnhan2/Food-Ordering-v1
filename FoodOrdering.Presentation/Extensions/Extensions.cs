@@ -1,4 +1,5 @@
 ﻿using FoodOrdering.Presentation.Configuration;
+using FoodOrdering.Presentation.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Food_Ordering.Extensions
@@ -12,7 +13,6 @@ namespace Food_Ordering.Extensions
             services.AddDI();
             services.AddSwaggerConfigure();
             services.AddSignalR();
-            services.AddCorsConfiguration();
             return services;
         }
     }

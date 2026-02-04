@@ -1,15 +1,7 @@
 ﻿using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
-using DotNetEnv;
-using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Services.Interface;
 using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.Services.Services
 {
@@ -58,7 +50,8 @@ namespace FoodOrdering.Application.Services.Services
             return result.SecureUrl.ToString();
         }
 
-        public string ExtractPublicIdFromUrl(string imageUrl)
+        #region
+        private string ExtractPublicIdFromUrl(string imageUrl)
         {
             var uri = new Uri(imageUrl);
             var path = uri.AbsolutePath; // /dvdv4id16/image/upload/v1749660746/pho_hk86qj.jpg
@@ -82,5 +75,6 @@ namespace FoodOrdering.Application.Services.Services
 
             return publicId;
         }
+        #endregion
     }
 }

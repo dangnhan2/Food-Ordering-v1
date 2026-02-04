@@ -3,23 +3,16 @@ using Food_Ordering.Models.Enum;
 using FoodOrdering.Application;
 using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
+using FoodOrdering.Application.Repositories.SignalRSender;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Services.Payment;
-using FoodOrdering.Domain.Models;
 using FoodOrdering.Infrastructure.Options;
-using FoodOrdering.Infrastructure.SignalR_Hub;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Net.payOS;
 using Net.payOS.Types;
 using Newtonsoft.Json.Linq;
 using RedLockNet;
-using RedLockNet.SERedis;
-using Serilog;
-using Serilog.Core;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -29,12 +22,12 @@ namespace FoodOrdering.Infrastructure.Services.Payment
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly PayOS _payOS;
-        private readonly INotificationSenderService _notificationSenderServer;
+        private readonly INotificationSenderRepo _notificationSenderServer;
         private readonly PayOsOptions _options;
         private readonly IDistributedLockFactory _redLockFactory;
         public PayOsService(
-            IUnitOfWork unitOfWork, 
-            INotificationSenderService notificationSenderServer,
+            IUnitOfWork unitOfWork,
+            INotificationSenderRepo notificationSenderServer,
             PayOS payOS,
             IOptions<PayOsOptions> options,
             IDistributedLockFactory redLockFactory) {
@@ -136,7 +129,7 @@ namespace FoodOrdering.Infrastructure.Services.Payment
                     await _unitOfWork.SaveChangeAsync();
 
                     await _unitOfWork.CommitTransactionAsync();
-                    await _notificationSenderServer.NotifyAdminAsync(order.OrderCode, order.TotalAmount);
+                    await _notificationSenderServer.NotifyAdminWhenNewOrderCreatedAsync(order.OrderCode, order.TotalAmount);
                 }
                 catch
                 {

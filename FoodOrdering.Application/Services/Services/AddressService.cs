@@ -85,6 +85,7 @@ namespace FoodOrdering.Application.Services.Services
             await _cacheService.RemoveAsync(CacheKeys.UserAddresses(address.UserId));
         }
 
+        #region helper method
         private Address MappingAddress(AddressRequestDto request)
         {
             Address address = new Address
@@ -97,5 +98,6 @@ namespace FoodOrdering.Application.Services.Services
 
             return address;
         }
+        #endregion
     }
 }

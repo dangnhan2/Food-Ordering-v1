@@ -12,6 +12,7 @@ namespace FoodOrdering.Application.DTOs.Request
         public Guid MenuId { get; set; }
         public Guid OrderId { get; set; }
         public Guid UserId { get; set; }
+        public string UserName { get; set; }
         public int Stars { get; set; }
         public string? Comment { get; set; }
         public List<IFormFile> Images { get; set; } = new List<IFormFile>();

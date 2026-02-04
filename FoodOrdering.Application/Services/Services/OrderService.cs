@@ -7,6 +7,7 @@ using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Helper.Extensions;
 using FoodOrdering.Application.Repositories;
 using FoodOrdering.Application.Repositories.Caching;
+using FoodOrdering.Application.Repositories.SignalRSender;
 using FoodOrdering.Application.Services.Hangfire;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Services.Payment;
@@ -27,7 +28,7 @@ namespace FoodOrdering.Application.Services.Services
         private readonly IDistributedLockFactory _redLockFactory;
         private readonly int orderCode = int.Parse(DateTimeOffset.Now.ToString("ffffff"));
         private readonly ICachingRepo _cachingService;
-        private readonly INotificationSenderService _notificationSenderServer;
+        private readonly INotificationSenderRepo _notificationSenderServer;
         private readonly IBackgroundJobs _backgroundJobs;
         private readonly IBackgroundJobService _backgroundJobService;
    
@@ -36,7 +37,7 @@ namespace FoodOrdering.Application.Services.Services
             IPayOsService paymentGateway,
             IDistributedLockFactory redLockFactory, 
             ICachingRepo cachingService,
-            INotificationSenderService notificationSenderServer,
+            INotificationSenderRepo notificationSenderServer,
             IBackgroundJobs backgroundJobs,
             IBackgroundJobService backgroundJobService)
         {
@@ -257,7 +258,7 @@ namespace FoodOrdering.Application.Services.Services
             }
             
             Log.Information("Send notification to admin");
-            await _notificationSenderServer.NotifyAdminAsync(newOrder.OrderCode, newOrder.TotalAmount);
+            await _notificationSenderServer.NotifyAdminWhenNewOrderCreatedAsync(newOrder.OrderCode, newOrder.TotalAmount);
 
             Log.Information("Order created");
             return newOrder.OrderCode;
@@ -301,6 +302,7 @@ namespace FoodOrdering.Application.Services.Services
             return new PagingReponse<OrderDTO>(orderParams.Page, orderParams.PageSize, orders.Count(), await ordersToDTO.ToListAsync());               
         }
 
+        #region helper method
         private async Task CreateVouherRedemption(Guid voucherId, Guid userId, Guid orderId, VoucherRedemptionStatus status)
         {
             var voucherRedemption = new VoucherRedemptions
@@ -395,5 +397,6 @@ namespace FoodOrdering.Application.Services.Services
                 order.OrderMenus.Add(orderItem);
             }
         }
+        #endregion
     }
 }

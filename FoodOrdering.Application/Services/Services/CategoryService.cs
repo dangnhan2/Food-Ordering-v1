@@ -105,6 +105,7 @@ namespace FoodOrdering.Application.Services.Services
             await _cacheService.RemoveAsync(CacheKeys.CATEGORIES_PREFIX);
         }
 
+        #region helper method
         private Category MappingCategory(CategoryRequestDto request)
         {
             Category category = new Category
@@ -114,5 +115,6 @@ namespace FoodOrdering.Application.Services.Services
 
             return category;
         }
+        #endregion
     }
 }

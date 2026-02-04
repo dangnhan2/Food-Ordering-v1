@@ -305,6 +305,7 @@ namespace FoodOrdering.Application.Services.Services
             return response;
         }
 
+        #region helper method
         private async Task<Menu> MappingMenu(MenuRequestDto request)
         {      
             var menu = new Menu
@@ -327,7 +328,7 @@ namespace FoodOrdering.Application.Services.Services
 
             return menu;
         }
+        #endregion
 
-        
     }
 }

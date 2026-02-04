@@ -23,7 +23,6 @@ namespace FoodOrdering.Presentation.Controllers.Common
         private readonly IUserService _userService;
         private readonly IVoucherService _voucherService;
         private readonly IAddressService _addressService; 
-        private readonly INotificationService _notificationService;
         private readonly IRatingService _ratingService;
         private readonly ISearchService _searchService;
         private readonly IAdvertisementService _advertisementService;
@@ -35,7 +34,6 @@ namespace FoodOrdering.Presentation.Controllers.Common
             IUserService userService, 
             IVoucherService voucherService, 
             IAddressService addressService, 
-            INotificationService notificationService,
             IRatingService ratingService,
             ISearchService searchService,
             IAdvertisementService advertisementService)
@@ -47,13 +45,12 @@ namespace FoodOrdering.Presentation.Controllers.Common
             _userService = userService;
             _voucherService = voucherService;
             _addressService = addressService;
-            _notificationService = notificationService;
             _ratingService = ratingService;
             _searchService = searchService;
             _advertisementService = advertisementService;
         }
 
-        // Category EndPoint
+        #region category endpoints
         [HttpGet("categories")]
         [AllowAnonymous]
         public async Task<IActionResult> GetAllCategories()
@@ -62,8 +59,9 @@ namespace FoodOrdering.Presentation.Controllers.Common
             var response = ApiResponse<IEnumerable<CategoryDTO>>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
             return Ok(response);
         }
+        #endregion
 
-        // Menu EndPoints
+        #region menu endpoints
         [HttpGet("menus")]
         [AllowAnonymous]
         public async Task<IActionResult> GetMenus([FromQuery] MenuParams menuParams)
@@ -110,7 +108,9 @@ namespace FoodOrdering.Presentation.Controllers.Common
             var response = ApiResponse<PagingReponse<MenuDto>>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
             return Ok(response);
         }
+        #endregion
 
+        #region advertisement endpoint
         [HttpGet("advertisements")]
         [AllowAnonymous]
         public async Task<IActionResult> GetAdvertisement()
@@ -120,8 +120,9 @@ namespace FoodOrdering.Presentation.Controllers.Common
 
             return Ok(response);
         }
+        #endregion
 
-        // Cart EndPoints
+        #region cart endpoints
         [HttpGet("cart")]
         public async Task<IActionResult> GetCartByCustomer(Guid id)
         {          
@@ -137,8 +138,9 @@ namespace FoodOrdering.Presentation.Controllers.Common
             var response = ApiResponse<string>.Success("Thêm item thành công", "", StatusCodes.Status201Created);
             return Ok(response);
         }
+        #endregion
 
-        // Order EndPoints
+        #region order enpoints
         [HttpPost("order/qr")]
         public async Task<IActionResult> CreateOrderWithQR([FromBody] OrderRequestDto request)
         {
@@ -154,8 +156,9 @@ namespace FoodOrdering.Presentation.Controllers.Common
             var response = ApiResponse<int>.Success("Tạo đơn thành công", result, StatusCodes.Status201Created);
             return Ok(response);
         }
+        #endregion
 
-        // User's Order EndPoint
+        #region order history endpoint
         [AllowAnonymous]
         [HttpGet("user/{id}/orders")]
         public async Task<IActionResult> GetAllOrderByCustomer(Guid id, [FromQuery] OrderParams orderParams)
@@ -164,8 +167,9 @@ namespace FoodOrdering.Presentation.Controllers.Common
             var response = ApiResponse<PagingReponse<OrderDTO>>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
             return Ok(response);
         }
+        #endregion
 
-        // User's Account EndPoint
+        #region user's account endpoint
         [HttpPut("user/profile/{id}")]
         public async Task<IActionResult> UpdateUser(Guid id,[FromForm] UserRequestDto request)
         {
@@ -182,8 +186,9 @@ namespace FoodOrdering.Presentation.Controllers.Common
             var response = ApiResponse<UserDTO>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
             return Ok(response);
         }
+        #endregion
 
-        // User's Voucher Endpoints
+        #region voucher endpoints
         [HttpGet("user/vouchers")]
         public async Task<IActionResult> GetAllVoucherByCustomer()
         {
@@ -199,9 +204,9 @@ namespace FoodOrdering.Presentation.Controllers.Common
             var response = ApiResponse<dynamic>.Success("Áp dụng voucher thành công", result, StatusCodes.Status200OK);
             return Ok(response);
         }
+        #endregion
 
-
-        // User's Address EndPoints
+        #region user's address endpoints
         [HttpGet("user/{id}/addresses")]
         public async Task<IActionResult> GetAddresses(Guid id)
         {
@@ -234,8 +239,9 @@ namespace FoodOrdering.Presentation.Controllers.Common
             var response = ApiResponse<string>.Success("Xóa thành công",null, StatusCodes.Status200OK);
             return Ok(response);
         }
+        #endregion
 
-        // Rating Endpoints
+        #region rating endpoints
         [AllowAnonymous]
         [HttpGet("ratings/menu/{id}")]
         public async Task<IActionResult> GetAllRatingsByMenuId(Guid id,[FromQuery] RatingParams ratingParams)
@@ -255,7 +261,9 @@ namespace FoodOrdering.Presentation.Controllers.Common
             var response = ApiResponse<dynamic>.Success("Đánh giá thành công", null, StatusCodes.Status201Created);
             return Ok(response);
         }
+        #endregion
 
+        #region search endpoint
         [AllowAnonymous]
         [HttpGet("searching")]
         public async Task<IActionResult> SearchingMenu([FromQuery] SearchRequestDto searchRequest)
@@ -265,5 +273,6 @@ namespace FoodOrdering.Presentation.Controllers.Common
             var response = ApiResponse<dynamic>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
             return Ok(response);
         }
+        #endregion
     }
 }
