@@ -63,8 +63,8 @@ namespace FoodOrdering.Application.Services.Services
             if (!string.IsNullOrEmpty(voucherParams.Search))
                 vouchers = vouchers.Where(v => EF.Functions.ILike(EF.Functions.Unaccent(v.Code), "%" + EF.Functions.Unaccent(voucherParams.Search) + "%"));
             
-            if (voucherParams.StartDate.HasValue && voucherParams.EndDate.HasValue)
-                vouchers = vouchers.Where(v => v.StartDate == voucherParams.StartDate.Value && v.EndDate == voucherParams.EndDate.Value);            
+            if (voucherParams.From.HasValue && voucherParams.To.HasValue)
+                vouchers = vouchers.Where(v => v.StartDate == voucherParams.From.Value && v.EndDate == voucherParams.To.Value);            
 
             var voucherToDTO = vouchers
                     .Select(v => new VoucherDTO(v))

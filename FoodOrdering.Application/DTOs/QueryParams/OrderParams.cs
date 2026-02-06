@@ -6,9 +6,8 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.DTOs.QueryParams
 {
-    public class OrderParams
+    public class OrderParams : BaseQueryParams
     {
-        public int Page { get; set; }
-        public int PageSize { get; set; }
+
     }
 }

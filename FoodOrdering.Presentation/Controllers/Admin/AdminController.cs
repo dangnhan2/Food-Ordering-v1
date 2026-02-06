@@ -57,7 +57,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         {
             await _categoryService.AddAsync(request);
             var response = ApiResponse<dynamic>.Success("Thêm thành công", null, StatusCodes.Status201Created);
-            return Ok(response);
+            return CreatedAtAction(nameof(GetAllCategories), response);
         }
         
         [HttpPut("category/{id}")]
@@ -92,7 +92,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         {
             await _menuService.AddMenuAsync(request);
             var response = ApiResponse<dynamic>.Success("Thêm mới thành công", "", StatusCodes.Status201Created);
-            return Ok(response);
+            return CreatedAtAction(nameof(GetMenus), response);
         }
 
         [HttpPut("menu/{id}")]
@@ -165,7 +165,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         {
             await _voucherService.AddAsync(request);
             var response = ApiResponse<string>.Success("Thêm mới thành công", "", StatusCodes.Status201Created);
-            return Ok(response);
+            return CreatedAtAction(nameof(GetVoucher), response);
         }
 
         [HttpPut("voucher/{id}")]
@@ -230,13 +230,15 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         }
         #endregion
 
-        [HttpPost("rating/responsing")]
+        #region response rating endpoint
+        [HttpPost("rating/responsing")]    
         public async Task<IActionResult> ResponseRating([FromBody] ResponseRatingRequestDto responseRatingRequest)
         {
             await _ratingService.ResponseRatingAsync(responseRatingRequest);
             var result = ApiResponse<dynamic>.Success("Phản hồi đánh giá thành công", "", StatusCodes.Status201Created);
-            return Ok(result);
+            return CreatedAtAction(null, result);
         }
+        #endregion
 
         #region advertisement endpoints
         [HttpGet("advertisements")]
@@ -253,7 +255,7 @@ namespace FoodOrdering.Presentation.Controllers.Admin
         {
             await _advertisementService.AddAdvertisementAsync(advertisementRequest);
             var reponse = ApiResponse<dynamic>.Success("Thêm quảng cáo mới thành công", "", StatusCodes.Status201Created);
-            return Ok(reponse);
+            return CreatedAtAction(nameof(GetAllAdvertisements), reponse);
         }
 
         [HttpPut("advertisement/{id}")]

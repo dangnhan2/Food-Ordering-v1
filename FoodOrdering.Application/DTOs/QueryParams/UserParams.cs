@@ -7,15 +7,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.DTOs.QueryParams
 {
-    public class UserParams
+    public class UserParams : BaseQueryParams
     {
-        [JsonPropertyName("page")]          
-        public int Page { get; set; }
-
-        [JsonPropertyName("pageSize")]
-        public int PageSize { get; set; }
-
-        [JsonPropertyName("search")]
-        public string? Search { get; set; }
     }
 }

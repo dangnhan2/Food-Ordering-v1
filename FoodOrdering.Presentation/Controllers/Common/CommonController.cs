@@ -128,7 +128,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
         {          
             var result = await _cartService.GetCartByCustomer(id);
             var response = ApiResponse<CartDTO>.Success("Lấy dữ liệu thành công", result, StatusCodes.Status200OK);
-            return Ok(response);
+            return CreatedAtAction(null, response);
         }
 
         [HttpPost("cart")]
@@ -136,7 +136,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
         {
             await _cartService.AddToCartAsync(request);
             var response = ApiResponse<string>.Success("Thêm item thành công", "", StatusCodes.Status201Created);
-            return Ok(response);
+            return CreatedAtAction(null, response);
         }
         #endregion
 
@@ -146,7 +146,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
         {
             var result = await _orderService.CreateOrderByQRAsync(request);
             var response = ApiResponse<dynamic>.Success("Tạo đơn thành công", result, StatusCodes.Status201Created);
-            return Ok(response);
+            return CreatedAtAction(null, response);
         }
 
         [HttpPost("order/cod")]
@@ -154,7 +154,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
         {
             var result = await _orderService.CreateOrderByCODAsync(request);
             var response = ApiResponse<int>.Success("Tạo đơn thành công", result, StatusCodes.Status201Created);
-            return Ok(response);
+            return CreatedAtAction(null, response);
         }
         #endregion
 
@@ -221,7 +221,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
         {
             await _addressService.AddAsync(request);
             var response = ApiResponse<string>.Success("Thêm mới thành công", null, StatusCodes.Status201Created);
-            return Ok(response);
+            return CreatedAtAction(null, response);
         }
 
         [HttpPut("address/{id}")]
@@ -259,7 +259,7 @@ namespace FoodOrdering.Presentation.Controllers.Common
              await _ratingService.RatingPaidOrderAsync(request);
 
             var response = ApiResponse<dynamic>.Success("Đánh giá thành công", null, StatusCodes.Status201Created);
-            return Ok(response);
+            return CreatedAtAction(null, response);
         }
         #endregion
 
