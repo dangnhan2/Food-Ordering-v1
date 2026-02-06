@@ -13,12 +13,8 @@ namespace FoodOrdering.Application.DTOs.Response
         public string Address { get; set; }
         public string FullName { get; set; }
         public string PhoneNumber { get; set; }
-        public AddressDto() { }
-        public AddressDto(Address address) {
-           Id = address.Id;
-           Address = address.AddressName;
-           FullName = address.FullName;
-           PhoneNumber = address.PhoneNumber;
-        }
+        public string Province { get; set; }
+        public string District { get; set; }
+        public bool IsDefault { get; set; }
     }
 }

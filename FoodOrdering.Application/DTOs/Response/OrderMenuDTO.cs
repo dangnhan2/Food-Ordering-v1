@@ -17,6 +17,5 @@ namespace FoodOrdering.Application.DTOs.Response
         public decimal UnitPrice { get; set; }
         public decimal SubPrice { get; set; }
         public bool IsRated { get; set; }
-        public OrderMenuDTO() { }
     }
 }

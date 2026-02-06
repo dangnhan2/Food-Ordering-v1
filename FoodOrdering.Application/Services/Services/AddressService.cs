@@ -6,6 +6,7 @@ using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 
 namespace FoodOrdering.Application.Services.Services
@@ -24,10 +25,11 @@ namespace FoodOrdering.Application.Services.Services
         public async Task AddAsync(AddressRequestDto request)
         {   
             var result = await new AddressValidator().ValidateAsync(request);
+
             if (!result.IsValid)           
               throw new ValidationDictionaryException(result.ToDictionary());
 
-            var newAddress = MappingAddress(request);
+            var newAddress = await MappingAddress(request);
 
             await _unitOfWork.Address.AddAsync(newAddress);
             await _unitOfWork.SaveChangeAsync();
@@ -38,25 +40,40 @@ namespace FoodOrdering.Application.Services.Services
         public async Task DeleteAsync(Guid addressId)
         {
             var address = await _unitOfWork.Address.GetByIdAsync(addressId);
+
             if (address == null)
                 throw new KeyNotFoundException("Địa chỉ không tồn tại");
+
+            if (address.IsDefault)
+                throw new InvalidDataException("Địa chỉ của bạn đang là mặc định, hãy chọn địa chỉ khác làm địa chỉ mặc định");
+
             _unitOfWork.Address.Remove(address);
             await _unitOfWork.SaveChangeAsync();
             await _cacheService.RemoveAsync(CacheKeys.UserAddresses(address.UserId));
         }
 
-        public async Task<IEnumerable<AddressDto>> GetAllByUserAsync(Guid id)
+        public async Task<IEnumerable<AddressDto>> GetAllByUserAsync(Guid userId)
         {
-            string cacheKey = CacheKeys.UserAddresses(id);
+            string cacheKey = CacheKeys.UserAddresses(userId);
             var cacheAddresses = await _cacheService.GetAsync<IEnumerable<AddressDto>>(cacheKey);
             if (cacheAddresses != null)
                 return cacheAddresses;
 
-            var addresses = _unitOfWork.Address.GetAll().Where(a => a.UserId == id);
+            var addresses = _unitOfWork.Address.GetAll().Where(a => a.UserId == userId);
 
             var addressesToDto = await addresses
-                .Select(a => new AddressDto(a))
+                .OrderByDescending(a => a.IsDefault) 
                 .AsNoTracking()
+                .Select(a => new AddressDto
+                {
+                    Id = a.Id,
+                    Address = a.AddressName,
+                    FullName = a.FullName,
+                    PhoneNumber = a.PhoneNumber,
+                    Province = a.Province,
+                    District = a.District,
+                    IsDefault = a.IsDefault,
+                })               
                 .ToListAsync();
 
             await _cacheService.SetAsync(cacheKey, addressesToDto, TimeSpan.FromHours(1));
@@ -64,20 +81,54 @@ namespace FoodOrdering.Application.Services.Services
             return addressesToDto;
         }
 
+        public async Task SetAddressAsDefault(Guid addressId)
+        {
+            var address = await _unitOfWork.Address.GetByIdAsync(addressId) ?? throw new KeyNotFoundException("Không tìm thấy địa chỉ");
+
+            var addresses = _unitOfWork.Address
+                .GetAll()
+                .Where(a => a.UserId == address.UserId);
+
+            await addresses.ExecuteUpdateAsync(add => add.SetProperty(x => x.IsDefault, false));
+
+            address.IsDefault = true;
+
+            _unitOfWork.Address.Update(address);
+            await _unitOfWork.SaveChangeAsync();
+            await _cacheService.RemoveAsync(CacheKeys.UserAddresses(address.UserId));
+        }
+
         public async Task UpdateAsync(Guid addressId, AddressRequestDto request)
         {   
             var result = await new AddressValidator().ValidateAsync(request);
+
             if (!result.IsValid)
                 throw new ValidationDictionaryException(result.ToDictionary());
-            var address = await _unitOfWork.Address.GetByIdAsync(addressId);
+
+            var address = await _unitOfWork.Address
+                .GetByIdAsync(addressId);
 
             if (address == null)
                 throw new KeyNotFoundException("Địa chỉ không tồn tại");
+
+            var isDefault = address.IsDefault;
 
             address.FullName = request.FullName;
             address.PhoneNumber = request.PhoneNumber;
             address.AddressName = request.Address;
             address.UserId = request.UserId;
+            address.Province = request.Province;
+            address.District = request.District;
+             
+            if (isDefault != request.IsDefault)
+            {
+                var addresses = _unitOfWork.Address
+                    .GetAll()
+                    .Where(a => a.UserId == address.UserId);
+
+                await addresses.ExecuteUpdateAsync(a => a.SetProperty(x => x.IsDefault, false));
+                address.IsDefault = request.IsDefault;
+            }
 
             _unitOfWork.Address.Update(address);
             await _unitOfWork.SaveChangeAsync();
@@ -86,15 +137,27 @@ namespace FoodOrdering.Application.Services.Services
         }
 
         #region helper method
-        private Address MappingAddress(AddressRequestDto request)
+        private async Task<Address> MappingAddress(AddressRequestDto request)
         {
             Address address = new Address
             {
                 FullName = request.FullName,
                 PhoneNumber = request.PhoneNumber,
                 AddressName = request.Address,
+                Province = request.Province,
+                District = request.District,
                 UserId = request.UserId,
             };
+
+            if (request.IsDefault)
+            {
+                var addresses = _unitOfWork.Address
+                    .GetAll()
+                    .Where(a => a.UserId == request.UserId);
+
+                await addresses.ExecuteUpdateAsync(a => a.SetProperty(x => x.IsDefault, false));
+                address.IsDefault = request.IsDefault;
+            }          
 
             return address;
         }

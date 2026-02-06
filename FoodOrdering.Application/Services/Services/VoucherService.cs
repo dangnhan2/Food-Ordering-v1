@@ -67,7 +67,22 @@ namespace FoodOrdering.Application.Services.Services
                 vouchers = vouchers.Where(v => v.StartDate == voucherParams.From.Value && v.EndDate == voucherParams.To.Value);            
 
             var voucherToDTO = vouchers
-                    .Select(v => new VoucherDTO(v))
+                    .Select(v => new VoucherDTO
+                    {
+                        Id = v.Id,
+                        Code = v.Code,
+                        Description = v.Description,
+                        DiscountType = v.DiscountType,
+                        DiscountValue = v.DiscountValue,
+                        StartDate = v.StartDate.FormatDateTimeOffset(),
+                        EndDate = v.EndDate.FormatDateTimeOffset(),
+                        MaxDiscount = v.MaxDiscount,
+                        MinOrderAmount = v.MinOrderAmount,
+                        PerUserLimit = v.PerUserLimit,
+                        UsageLimit = v.UsageLimit,
+                        UsedCount = v.UsedCount,
+                        IsActive = v.IsActive
+                    })
                     .AsNoTracking();
 
             if (voucherParams.Page != 0 && voucherParams.PageSize != 0)           
@@ -88,7 +103,22 @@ namespace FoodOrdering.Application.Services.Services
 
             var vouchersToDTO = await vouchers
                 .Where(v => v.IsActive)
-                .Select(v => new VoucherDTO(v))
+                .Select(v => new VoucherDTO
+                {
+                    Id = v.Id,
+                    Code = v.Code,
+                    Description = v.Description,
+                    DiscountType = v.DiscountType,
+                    DiscountValue = v.DiscountValue,
+                    StartDate = v.StartDate.FormatDateTimeOffset(),
+                    EndDate = v.EndDate.FormatDateTimeOffset(),
+                    MaxDiscount = v.MaxDiscount,
+                    MinOrderAmount = v.MinOrderAmount,
+                    PerUserLimit = v.PerUserLimit,
+                    UsageLimit = v.UsageLimit,
+                    UsedCount = v.UsedCount,
+                    IsActive = v.IsActive
+                })
                 .AsNoTracking()
                 .ToListAsync();
 
@@ -105,7 +135,22 @@ namespace FoodOrdering.Application.Services.Services
 
             var voucher = await _unitOfWork.Voucher.GetByIdAsync(id) ?? throw new KeyNotFoundException("Mã giảm giá không tồn tại");
 
-            var voucherToDto = new VoucherDTO(voucher);
+            var voucherToDto = new VoucherDTO
+            {
+                Id = voucher.Id,
+                Code = voucher.Code,
+                Description = voucher.Description,
+                DiscountType = voucher.DiscountType,
+                DiscountValue = voucher.DiscountValue,
+                StartDate = voucher.StartDate.FormatDateTimeOffset(),
+                EndDate = voucher.EndDate.FormatDateTimeOffset(),
+                MaxDiscount = voucher.MaxDiscount,
+                MinOrderAmount = voucher.MinOrderAmount,
+                PerUserLimit = voucher.PerUserLimit,
+                UsageLimit = voucher.UsageLimit,
+                UsedCount = voucher.UsedCount,
+                IsActive = voucher.IsActive
+            };
 
             await _cacheService.SetAsync(cacheKey, voucherToDto, TimeSpan.FromHours(12));
             return voucherToDto;

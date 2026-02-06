@@ -64,6 +64,7 @@ namespace FoodOrdering.Application.Services.Services
                    FullName = o.Address.FullName,
                    PhoneNumber = o.Address.PhoneNumber,
                    Address = o.Address.AddressName,
+                   City = o.Address.Province + "," + o.Address.District,
                    Note = o.Note,
                    OrderStatus = o.Status,
                    TotalAmount = o.TotalAmount,

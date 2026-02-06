@@ -11,7 +11,8 @@ namespace FoodOrdering.Application.Services.Interface
 {
     public interface IAddressService
     {
-        public Task<IEnumerable<AddressDto>> GetAllByUserAsync(Guid id);
+        public Task SetAddressAsDefault(Guid addressId);
+        public Task<IEnumerable<AddressDto>> GetAllByUserAsync(Guid userId);
         public Task AddAsync(AddressRequestDto request);
         public Task UpdateAsync(Guid addressId , AddressRequestDto request);
         public Task DeleteAsync(Guid addressId);

@@ -11,7 +11,6 @@ namespace FoodOrdering.Application.DTOs.Response
         public decimal DiscountAmount { get; set; }
         public decimal TotalAmount { get; set; }
 
-        public VoucherValidationDto() { }
         public VoucherValidationDto(decimal discountAmount, decimal totalAmount)
         {
             DiscountAmount = discountAmount;
