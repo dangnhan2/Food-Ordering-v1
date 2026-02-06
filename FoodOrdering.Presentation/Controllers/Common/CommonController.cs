@@ -232,6 +232,14 @@ namespace FoodOrdering.Presentation.Controllers.Common
             return Ok(response);
         }
 
+        [HttpPut("address/default/{id}")]
+        public async Task<IActionResult> SetAddressDefault(Guid id)
+        {
+            await _addressService.SetAddressAsDefault(id);
+            var response = ApiResponse<string>.Success("Cập nhật thành công", null, StatusCodes.Status200OK);
+            return Ok(response);
+        }
+
         [HttpDelete("address/{id}")]
         public async Task<IActionResult> DeleteAddress(Guid id)
         {

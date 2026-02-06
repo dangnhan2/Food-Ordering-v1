@@ -17,24 +17,6 @@ namespace FoodOrdering.Application.DTOs.Response
         public int? UsageLimit { get; set; }
         public int UsedCount { get; set; }
         public int? PerUserLimit { get; set; }
-        public bool IsActive { get; set; }
-
-        public VoucherDTO() { }
-        public VoucherDTO(Voucher voucher)
-        {
-            Id = voucher.Id;
-            Code = voucher.Code; 
-            Description = voucher.Description;
-            DiscountType = voucher.DiscountType;
-            DiscountValue = voucher.DiscountValue;
-            MaxDiscount = voucher.MaxDiscount;
-            MinOrderAmount = voucher.MinOrderAmount;
-            StartDate = voucher.StartDate.FormatDateTimeOffset();
-            EndDate = voucher.EndDate.FormatDateTimeOffset();
-            UsageLimit = voucher.UsageLimit;
-            UsedCount = voucher.UsedCount;
-            PerUserLimit = voucher.PerUserLimit;
-            IsActive = voucher.IsActive;  
-        }
+        public bool IsActive { get; set; }      
     }
 }

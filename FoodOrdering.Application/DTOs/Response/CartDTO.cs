@@ -12,13 +12,5 @@ namespace FoodOrdering.Application.DTOs.Response
         public Guid Id { set; get; }
         public Guid UserId { get; set; }
         public ICollection<CartItemDTO> Items { get; set; }  = new List<CartItemDTO>();
-
-        public CartDTO() { }
-        public CartDTO(Cart cart, List<CartItemDTO> items)
-        {
-            Id = cart.Id;
-            UserId = cart.UserId;
-            Items = items;
-        }
     }
 }

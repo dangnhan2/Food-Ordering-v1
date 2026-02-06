@@ -33,7 +33,11 @@ namespace FoodOrdering.Application.Services.Services
 
             var categoriesToDTO = await categories
                 .OrderBy(c => c.Name)
-                .Select(c => new CategoryDTO(c))
+                .Select(c => new CategoryDTO
+                {  
+                    Id = c.Id,
+                    Name = c.Name
+                })
                 .AsNoTracking()
                 .ToListAsync();
 
