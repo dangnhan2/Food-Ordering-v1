@@ -8,16 +8,13 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.DTOs.QueryParams
 {
-    public class MenuParams
+    public class MenuParams : BaseQueryParams
     {
-        [JsonProperty("page")]           
-        public int Page { get; set; }
+        [JsonProperty("from")]
+        public decimal? From { get; set; }
 
-        [JsonProperty("pageSize")]
-        public int PageSize { get; set; }
-
-        [JsonProperty("search")]
-        public string? Search { get; set; }
+        [JsonProperty("to")]
+        public decimal? To { get; set; }
   
         [JsonProperty("sortBy")]
         public string? SortBy { get; set; }

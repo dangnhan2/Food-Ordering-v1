@@ -32,7 +32,7 @@ namespace FoodOrdering.Presentation.Controllers.Auth
         {
             var result = await _authService.RegisterAsync(request);
             var response = ApiResponse<string>.Success("Email đã được gửi. Hãy nhập mã để xác nhận", result, StatusCodes.Status201Created);
-            return Ok(response);
+            return CreatedAtAction(null, response);
         }
 
         [HttpPost("refresh")]
@@ -40,8 +40,8 @@ namespace FoodOrdering.Presentation.Controllers.Auth
         public async Task<IActionResult> RefreshToken()
         {
             var result = await _authService.RefreshTokenAsync(HttpContext);
-            var response = ApiResponse<AuthResponse>.Success("Refresh token successfull", result, StatusCodes.Status200OK);
-            return Ok(response);
+            var response = ApiResponse<AuthResponse>.Success("Refresh token successfull", result, StatusCodes.Status201Created);
+            return CreatedAtAction(null, response);
         }
 
         [HttpPost("logout")]
@@ -58,8 +58,8 @@ namespace FoodOrdering.Presentation.Controllers.Auth
         public async Task<IActionResult> ChangePassword([FromBody] PasswordRequestDto request)
         {
             await _authService.ChangePasswordAsync(request);
-            var response = ApiResponse<dynamic>.Success("Đổi mật khẩu thành công", null, StatusCodes.Status200OK);
-            return Ok(response);
+            var response = ApiResponse<dynamic>.Success("Đổi mật khẩu thành công", null, StatusCodes.Status201Created);
+            return CreatedAtAction(null, response);
         }
 
         [HttpPost("email/verify")]
@@ -77,7 +77,7 @@ namespace FoodOrdering.Presentation.Controllers.Auth
         {
             await _authService.ForgotPasswordAsync(request);
             var response = ApiResponse<dynamic>.Success("Email đã được gửi. Hãy nhập mã để xác nhận", null, StatusCodes.Status200OK);
-            return Ok(response);
+            return Ok(request);
         }
 
         [HttpPost("email/resend")]
@@ -85,17 +85,17 @@ namespace FoodOrdering.Presentation.Controllers.Auth
         {
             await _authService.ResendEmailAsync(resendEmailRequest);
 
-            var response = ApiResponse<string>.Success("Email đã được gửi. Hãy nhập mã để xác nhận", "", StatusCodes.Status200OK);
+            var response = ApiResponse<string>.Success("Email đã được gửi. Hãy nhập mã để xác nhận", "", StatusCodes.Status201Created);
 
-            return Ok(response);
+            return CreatedAtAction(null, response);
         }
 
         [HttpPost("password/reset")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto request)
         {
             await _authService.ResetPasswordAsync(request);
-            var response = ApiResponse<dynamic>.Success("Thiết lập mật khẩu mới thành công", null, StatusCodes.Status200OK);
-            return Ok(response);
+            var response = ApiResponse<dynamic>.Success("Thiết lập mật khẩu mới thành công", null, StatusCodes.Status201Created);
+            return CreatedAtAction(null, response);
         }
 
     }

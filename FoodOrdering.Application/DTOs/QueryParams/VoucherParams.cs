@@ -7,19 +7,12 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Application.DTOs.QueryParams
 {
-    public class VoucherParams
+    public class VoucherParams : BaseQueryParams
     {
-        [JsonPropertyName("page")]           
-        public int Page { get; set; }
-        [JsonPropertyName("pageSize")]
-        public int PageSize { get; set; }
-      
-        [JsonPropertyName("search")]
-        public string? Search { get; set; }
+        [JsonPropertyName("from")]
+        public DateTime? From { get; set; }
 
-        [JsonPropertyName("startDate")]
-        public DateTime? StartDate { get; set; }
-        [JsonPropertyName("endDate")]
-        public DateTime? EndDate { get; set; }
+        [JsonPropertyName("to")]
+        public DateTime? To { get; set; }
     }
 }

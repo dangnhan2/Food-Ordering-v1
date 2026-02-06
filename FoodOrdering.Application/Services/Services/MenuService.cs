@@ -66,7 +66,13 @@ namespace FoodOrdering.Application.Services.Services
 
             if (!string.IsNullOrEmpty(menuParams.Search))
                 menus = menus.Where(m => EF.Functions.ILike(EF.Functions.Unaccent(m.Name), "%" + EF.Functions.Unaccent(menuParams.Search) + "%")
-                || m.Category.Name.Trim().ToLower().Contains(menuParams.Search.Trim().ToLower()));   
+                || m.Category.Name.Trim().ToLower().Contains(menuParams.Search.Trim().ToLower()));
+
+            if (menuParams.From.HasValue && menuParams.To.HasValue)
+                menus = menus.Where(m => 
+                (m.IsOnSale ? m.DiscountPrice : m.OriginalPrice) >= menuParams.From.Value
+                &&
+                (m.IsOnSale ? m.DiscountPrice : m.OriginalPrice) <= menuParams.To.Value);
 
             //sort
             if (!string.IsNullOrEmpty(menuParams.SortBy))
