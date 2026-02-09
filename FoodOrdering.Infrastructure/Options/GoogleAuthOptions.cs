@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Infrastructure.Options
 {
-    public sealed class CloudinaryOptions
+    public sealed class GoogleAuthOptions
     {
-        public string CloudName { get; set; }
-        public string ApiKey { get; set; }
-        public string ApiSecret { get; set; }
+        public string ClientId { get; set; }
+        public string ClientSecret { get; set; }
     }
 }

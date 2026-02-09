@@ -95,9 +95,13 @@ services:
       - PayOsOptions__ApiKey=${PayOsOptions__ApiKey}
       - PayOsOptions__ChecksumKey=${PayOsOptions__ChecksumKey}
       - PayOsOptions__ReturnUrl=${PayOsOptions__ReturnUrl}
-      - PayOsOptions__CancelUrl=${PayOsOptions__CancelUrl}    
+      - PayOsOptions__CancelUrl=${PayOsOptions__CancelUrl}  
+      
+      - GoogleAuthOptions__ClientId=${GoogleAuthOptions__ClientId}
+      - GoogleAuthOptions__ClientSecret=${GoogleAuthOptions__ClientSecret}
 
       - DEFAULT_AVATAR=${DEFAULT_AVATAR}
+      - Frontend__URI=${Frontend__URI}
   
     ports:
       - "8080:8080"

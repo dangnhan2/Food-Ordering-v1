@@ -8,8 +8,10 @@ using FoodOrdering.Application.Repositories.Caching;
 using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 namespace FoodOrdering.Application.Services.Services
 {
     public class UserService : IUserService
@@ -178,6 +180,6 @@ namespace FoodOrdering.Application.Services.Services
                 throw new KeyNotFoundException("Người dùng không tồn tại");
 
             await _userManager.SetLockoutEndDateAsync(user, null);
-        }
+        }       
     }
 }

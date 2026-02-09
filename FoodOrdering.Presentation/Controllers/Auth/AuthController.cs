@@ -1,11 +1,11 @@
-﻿using FoodOrdering.Application.DTOs.Request;
+﻿using DotNetEnv;
+using FoodOrdering.Application.DTOs.Request;
 using FoodOrdering.Application.DTOs.Response;
 using FoodOrdering.Application.Services.Auth;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Sprache;
+using Newtonsoft.Json.Linq;
+
 
 namespace FoodOrdering.Presentation.Controllers.Auth
 {
@@ -25,6 +25,22 @@ namespace FoodOrdering.Presentation.Controllers.Auth
             var result = await _authService.LoginAsync(request, HttpContext);
             var response = ApiResponse<AuthResponse>.Success("Đăng nhập thành công", result, StatusCodes.Status200OK);
             return Ok(response);
+        }
+
+        [HttpGet("login/google")]
+        public IResult LoginWithGoogle()
+        {
+            var result = _authService.LoginWithGoogle(HttpContext);
+
+            return result;
+        }
+
+        [HttpGet("login/google/callback")]
+        public async Task<IActionResult> GoogleCallBack()
+        {
+            Env.Load();
+            var result = await _authService.GoogleCallBackAsync(HttpContext);
+            return Redirect($"{Env.GetString($"Frontend__URI")}?token={result.AccessToken}");
         }
 
         [HttpPost("register")]

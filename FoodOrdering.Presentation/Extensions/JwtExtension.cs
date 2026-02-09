@@ -54,7 +54,7 @@ namespace Food_Ordering.Extensions
                 {
                     OnMessageReceived = conntext =>
                     {
-                        var accessToken = conntext.Request.Query["access_token"];
+                        var accessToken = conntext.Request.Query["accessToken"];
 
                         if (!string.IsNullOrEmpty(accessToken) && conntext.HttpContext.Request.Path.StartsWithSegments("/hubs"))
                         {
