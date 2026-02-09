@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Infrastructure.Options
 {
-    public class PayOsOptions
+    public sealed class PayOsOptions
     {
         public string ClientId { get; set; }
         public string ApiKey { get; set; }

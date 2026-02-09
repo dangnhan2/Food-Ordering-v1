@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FoodOrdering.Infrastructure.Options
 {
-    public class EmailOptions
+    public sealed class EmailOptions
     {
         public string SMTP_HOST { get; set; }
         public int SMTP_PORT { get; set; }

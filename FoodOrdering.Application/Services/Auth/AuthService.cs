@@ -7,9 +7,13 @@ using FoodOrdering.Application.Services.Interface;
 using FoodOrdering.Application.Validator;
 using FoodOrdering.Domain.Models;
 using Hangfire;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Serilog;
+using System.Security.Claims;
 
 
 namespace FoodOrdering.Application.Services.Auth
@@ -20,17 +24,15 @@ namespace FoodOrdering.Application.Services.Auth
         private readonly ITokenService _tokenService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly string _avatar;
-        private readonly IEmailRepo _emailService;
         private readonly IBackgroundJobService _backgroundJobService;
 
-        public AuthService(UserManager<User> userManager, ITokenService tokenService, IUnitOfWork unitOfWork, IEmailRepo emailService, IBackgroundJobService backgroundJobService)
+        public AuthService(UserManager<User> userManager, ITokenService tokenService, IUnitOfWork unitOfWork, IBackgroundJobService backgroundJobService)
         {
             Env.Load();
             _userManager = userManager;
             _tokenService = tokenService;
             _unitOfWork = unitOfWork;
             _avatar = Env.GetString("DEFAULT_AVATAR");
-            _emailService = emailService;
             _backgroundJobService = backgroundJobService;
         }
 
@@ -117,14 +119,7 @@ namespace FoodOrdering.Application.Services.Auth
             _unitOfWork.RefreshToken.Remove(existToken);
             await _unitOfWork.SaveChangeAsync();
 
-            context.Response.Cookies.Delete("refreshToken",
-                new CookieOptions
-                {
-                    HttpOnly = true,
-                    SameSite = SameSiteMode.None,
-                    Secure = false,                 
-                    Path = "/"
-                });
+            SetupToken(context);
         }
 
         public async Task<AuthResponse> RefreshTokenAsync(HttpContext context)
@@ -236,6 +231,90 @@ namespace FoodOrdering.Application.Services.Auth
            SendEmail(user.Id, user.Email, newOtp);
         }
 
+        public IResult LoginWithGoogle(HttpContext context)
+        {
+            var props = new AuthenticationProperties
+            {
+                RedirectUri = "/api/auth/login/google/callback"
+            };
+
+            return Results.Challenge(props, new[] { GoogleDefaults.AuthenticationScheme });
+        }
+
+        public async Task<AuthResponse> GoogleCallBackAsync(HttpContext context)
+        {
+            try
+            {
+                // Authenticate với Google scheme thay vì Cookie scheme
+                var result = await context.AuthenticateAsync(GoogleDefaults.AuthenticationScheme);
+
+                if (!result.Succeeded)
+                {
+                    throw new Exception("Google authentication failed");
+                }
+
+                // Lấy claims
+                var claims = result.Principal.Claims.ToList();
+
+                // Debug: Log tất cả claims để xem có gì
+                foreach (var claim in claims)
+                {
+                    Console.WriteLine($"Claim Type: {claim.Type}, Value: {claim.Value}");
+                }
+
+                var email = result.Principal?.FindFirstValue(ClaimTypes.Email)
+                            ?? result.Principal?.FindFirstValue("email");
+
+                var name = result.Principal?.FindFirstValue(ClaimTypes.Name)
+                           ?? result.Principal?.FindFirstValue("name");
+
+                var avatar = result.Principal?.FindFirst("picture")?.Value
+                             ?? result.Principal?.FindFirst("urn:google:picture")?.Value;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    throw new Exception("Email not found in Google claims");
+                }
+
+                var user = await _userManager.FindByEmailAsync(email);
+
+                if (user != null)
+                {
+                    return await _tokenService.GenerateToken(user, context);
+                }
+
+                var newUser = MappingUserWhenLoginWithGoogle(name, email, avatar);
+                await _userManager.CreateAsync(newUser);
+                await _userManager.AddToRoleAsync(newUser, "Customer");
+
+                var authResponse = await _tokenService.GenerateToken(newUser, context);
+                return authResponse;
+            }
+            catch (Exception ex)
+            {
+                // Log lỗi cụ thể
+                Console.WriteLine($"Error: {ex.Message}");
+                throw;
+            }
+
+        }
+
+        #region helper method
+        private void SetupToken(HttpContext context)
+        {
+            context.Response.Cookies.Append(
+                "refreshToken",
+                string.Empty,
+                new CookieOptions
+                {
+                    HttpOnly = true,
+                    SameSite = SameSiteMode.None,
+                    Secure = true,
+                    Expires = DateTime.UnixEpoch,
+                    Path = ""
+                });
+        }
+
         private async Task<string> GenerateOtp(Guid userId)
         {
             var otp = new Random().Next(100000, 999999).ToString();
@@ -264,5 +343,23 @@ namespace FoodOrdering.Application.Services.Auth
             _backgroundJobService.Enqueue<IEmailRepo>(x => x.EmailSender(email, "Một email đã gửi đến email của bạn . Hãy nhập mã xác nhận", htmlBody));
         }
 
+        private User MappingUserWhenLoginWithGoogle(string userName, string email, string avatar)
+        {
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                UserName = userName,
+                ImageUrl = avatar,
+                Email = email,
+                NormalizedEmail = email.ToUpper(),
+                PhoneNumber = null,
+                PhoneNumberConfirmed = true,
+            };
+
+            return user;
+        }
+        #endregion
+
+        
     }
 }

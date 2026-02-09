@@ -8,6 +8,8 @@ namespace FoodOrdering.Application.Services.Auth
     {
         public Task<string> RegisterAsync(RegisterRequestDto request);
         public Task<AuthResponse> LoginAsync(LoginRequestDto request, HttpContext context);
+        public IResult LoginWithGoogle(HttpContext context);
+        public Task<AuthResponse> GoogleCallBackAsync(HttpContext context);
         public Task<AuthResponse> RefreshTokenAsync(HttpContext context);
         public Task LogoutAsync(HttpContext context);
         public Task<string> VerifyEmail(EmailVerifyRequestDto request);

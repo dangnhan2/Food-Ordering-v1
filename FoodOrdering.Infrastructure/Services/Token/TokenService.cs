@@ -70,21 +70,11 @@ namespace FoodOrdering.Infrastructure.Services.Token
                     Email = user.Email,
                     IsActive = user.LockoutEnd.HasValue ? false : true,
                     Role = userRole.First()
-                },               
+                },    
                 AccessToken = token
             };
 
-            context.Response.Cookies.Append(
-                "refreshToken",
-                refresh,
-                new CookieOptions
-                {
-                    HttpOnly = true,
-                    SameSite = SameSiteMode.None,
-                    Secure = true,
-                    Expires = DateTime.UtcNow.AddMonths(3),
-                    Path = "/"
-                });
+            SetupToken(context, refresh);
             return authResponse;
         }
 
@@ -106,7 +96,7 @@ namespace FoodOrdering.Infrastructure.Services.Token
             return authResponse;
         }
 
-        // save refresh token to db
+        #region helper method
         private async Task<string> RefreshTokenAsync(Guid userId, string tokenId)
         {
             var user = await _unitOfWork.User.GetByIdAsync(userId);
@@ -133,5 +123,21 @@ namespace FoodOrdering.Infrastructure.Services.Token
 
             return refresh;
         }
+
+        private void SetupToken(HttpContext context, string refresh)
+        {
+            context.Response.Cookies.Append(
+                "refreshToken",
+                refresh,
+                new CookieOptions
+                {
+                    HttpOnly = true,
+                    SameSite = SameSiteMode.None,
+                    Secure = true,
+                    Expires = DateTime.UtcNow.AddMonths(3),
+                    Path = "/"
+                });           
+        }
+        #endregion
     }
 }
